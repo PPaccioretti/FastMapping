@@ -1128,8 +1128,8 @@ shinyServer(function(input, output, session) {
                 ),
                 mainPanel(width = 9,
                           # fluidRow(
-                          plotlyOutput('DepuratedPlot', height = "600px"),
-                          plotOutput('PublicationPlot')
+                          plotlyOutput('DepuratedPlot', height = "600px")
+                          # ,plotOutput('PublicationPlot')
                             
                           # ), 
                           # )
