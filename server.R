@@ -565,9 +565,17 @@ shinyServer(function(input, output, session) {
     # table(data$Condition)
     #   need(all(is.na(MyFile()$CondicionDeDepuracion)), 'Superman va de paseo!'))
     data <- MyFile()$CondicionDeDepuracion
+    if (all(is.na(data))) {
+      ValoresOutput$DataDep <- MyFile()$UtilizadosDep
+      if (all(is.na(MyFile()$UtilizadosDep))) {
+        return(MyFile()$Datos)
+      }
+      return(MyFile()$UtilizadosDep)
+      }
     if (is.null(data)) {
       ValoresOutput$DataDep <- data
-      return(data)} else{
+      return(data)
+      } else{
         if (ncol(data) == 4 | !is.null(data)) {
           if (ncol(data) >= 4) {
             data[,4] <-  addNA(data[,4])
@@ -576,9 +584,7 @@ shinyServer(function(input, output, session) {
             return(data)}} else {
               ValoresOutput$DataDep <- data
               return(data)}}
-    if (all(is.na(data))) {
-      ValoresOutput$DataDep <- MyFile()$UtilizadosDep
-      return(MyFile()$UtilizadosDep)}
+
   })
   
   nombresCol <- reactive({
@@ -612,7 +618,7 @@ shinyServer(function(input, output, session) {
     # build graph with ggplot syntax
     library("RColorBrewer")
     library(cowplot)
-    browser()
+    # browser()
     PaletaColorFun <- function(Variable, namepal = 'Set1') {
       if (is.factor(Variable)) {
         PaletaColorVariable <- brewer.pal(n = nlevels(Variable), name = namepal)
@@ -748,11 +754,7 @@ shinyServer(function(input, output, session) {
     if (input$tKriging == 1) {return(as.formula(paste0(MiZ,"~1")))}
     if (input$tKriging == 2) {return(as.formula(paste0(MiZ,"~",MiX,"+",MiY)))}
     if (input$tKriging == 3) {return(as.formula(paste0(MiZ,"~",MiX,"+",MiY, "+I(",MiX,"^2)", "+I(", MiY,"^2)", "+I(",MiX,"*",MiY,")")))}     
-    
-        
-    # if (input$tKriging == 1) {return(as.formula("Z~1"))}
-    # if (input$tKriging == 2) {return(as.formula("Z~X+Y"))}
-    # if (input$tKriging == 3) {return(as.formula("Z~X + Y + I(X^2) + I(Y^2) + I(X*Y)"))}     
+  
   })
   ####### Compara los modelos que se especificaron ####
   
@@ -784,8 +786,13 @@ shinyServer(function(input, output, session) {
       # dev.new()
       #Esta funcion si no puede usar la funcion compare.cv, calcula el RMSE a mano y lo repite 11 vecces
       ModList=lapply(MyMod,function (x) tryCatch(compare.cv(x),error=function(e) {
-        cat("Calculating CV by hand")
-        matrix(sqrt(sum(x$krige.cv_output$residual^2, na.rm=TRUE)/sum(complete.cases(x$krige.cv_output$residual))),nrow=11)}))
+        cat("Calculating CV by hand\n")
+        if(any(c("simpleError","error","condition" ) %in% class(e) )) {
+          return(matrix(NA,nrow=11))
+        }
+
+        matrix(sqrt(sum(x$krige.cv_output$residual^2, na.rm=TRUE)/sum(complete.cases(x$krige.cv_output$residual))),nrow=11)
+        }))
       f=do.call("cbind",ModList)
       colnames(f)=SelectedModels()
       # browser()
@@ -921,7 +928,7 @@ shinyServer(function(input, output, session) {
   output$KrigingPlot <- renderImage ({
     validate(
       need(input$file, 'Check input file!'))
-    browser()
+    # browser()
     if(input$SelectPlot == 2 & length(MyFile()$Datos) != 0){
       outfile <- tempfile(fileext='.png')
       png(outfile, width=900, height=900)
