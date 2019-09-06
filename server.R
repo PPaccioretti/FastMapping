@@ -15,7 +15,7 @@
 library(shiny)
 library(shinythemes)
 library(data.table)
-# 
+#
 # # Moran Plot
 # moran.plot1 <-function (x, listw, zero.policy = NULL, spChk = NULL, labels = NULL,
 #                         xlab = NULL, ylab = NULL, quiet = NULL, ...){
@@ -911,12 +911,57 @@ shinyServer(function(input, output, session) {
       # MiVariograma<-Variogram()
       # browser()
       
-      #### Ver si poner los parametros del semivariograma en el plot
-      plot(Variogram()$exp_var$dist,Variogram()$exp_var$gamma,xlim=c(min(attributes(Variogram()$exp_var)$boundaries),max(Variogram()$exp_var$dist)),
-           xlab="Distance", ylab="Semi-variance",
-           main="Experimental variogram and \n fitted variogram model",pch=16, ylim=c(0, max(Variogram()$exp_var$gamma)) )
-      lines(variogramLine(vgm(psill=Variogram()$var_model$psill[2], as.character(Variogram()$var_model$model[2]),
-                              range=Variogram()$var_model$range[2],nugget=Variogram()$var_model$psill[1]),max(Variogram()$exp_var$dist)),col="blue")
+      mo <- cbind(Variogram()$var_model)
+      nug <- mo[1,2]
+      
+      if ((nug)==0 ) {param <-2}
+      if ((nug)>0) {param <-3}
+      
+      np <- nrow(Variogram()$exp_var)
+      
+      mod <- cbind(Variogram()$var_model[,1:4],Variogram()$sserr)
+      names(mod)=c("Model", "Parcial Sill","Range","Kappa","SCE")
+      Nugget <- mod[1,2]
+      Modelo <- mod[2,-4]
+      Modelo <- cbind(Modelo,Nugget)
+      Modelo <- Modelo[,c(1,2,3,4,5)]
+      row.names(Modelo)=NULL
+      
+      # ValidationTable=MiKrige()
+      # MiMejorModelo=MejorModelo()
+      ValidationTable=MiKrige()
+      MiMejorModelo=MejorModelo()
+      MiError= ValidationTable[8,MiMejorModelo][[1]]/mean(MyFile()$Datos[,3])*100
+      RMSE=ValidationTable[8,MiMejorModelo][[1]]
+      
+      Modelo=cbind(Modelo,"RMSE"=RMSE, "Percentage.Error"=MiError)
+      suppressWarnings({
+      Parametros <- paste(
+        c("Model",paste( stack(Modelo[-ncol(Modelo)])[,2]), "Error (%)"),
+        c(as.character(Modelo[1,1]),paste(round(stack(Modelo)[,1],1))),
+        sep = ": ", collapse = "\n")
+      })
+
+     variogg <- ggplot(data = variogramLine(vgm(psill=Variogram()$var_model$psill[2], as.character(Variogram()$var_model$model[2]),
+                                      range=Variogram()$var_model$range[2],nugget=Variogram()$var_model$psill[1]),max(Variogram()$exp_var$dist))) +
+        geom_point(data = Variogram()$exp_var, aes(x=dist,y=gamma), size = 2) + 
+        geom_line(aes(x = dist, y = gamma), color = "blue", size = 1.2) +
+        xlab("Distance") +
+        ylab("Semi-variance") +
+        annotate("text", label = Parametros, x = Inf, y = -Inf, hjust = 1, vjust = -0.1, size = 3)+
+        scale_y_continuous(limits = c(0, NA)) +
+       ggtitle("Experimental variogram and fitted variogram model")
+     
+     print(variogg) 
+      # 
+      # 
+      #       #### Ver si poner los parametros del semivariograma en el plot
+      # plot(Variogram()$exp_var$dist,Variogram()$exp_var$gamma,xlim=c(min(attributes(Variogram()$exp_var)$boundaries),max(Variogram()$exp_var$dist)),
+      #      xlab="Distance", ylab="Semi-variance",
+      #      main="Experimental variogram and \n fitted variogram model",pch=16, ylim=c(0, max(Variogram()$exp_var$gamma)) )
+      # lines(variogramLine(vgm(psill=Variogram()$var_model$psill[2], as.character(Variogram()$var_model$model[2]),
+      #                         range=Variogram()$var_model$range[2],nugget=Variogram()$var_model$psill[1]),max(Variogram()$exp_var$dist)),col="blue")
+      
       
       
       # dev.new()
@@ -946,7 +991,7 @@ shinyServer(function(input, output, session) {
         zmin <- input$min 
         zmax <- max(kriging()$var1.pred,na.rm=T)}
       image(kriging(), zlim=c(zmin,zmax),"var1.pred", col =terrain.colors(100))
-      image.plot(zlim=c(zmin,zmax), legend.only=TRUE, horizontal=F, col=terrain.colors(100))
+      image.plot(zlim=c(zmin,zmax), legend.only=TRUE, horizontal=F, col=terrain.colors(100), legend.cex=2)
       dev.off()
       list(src = outfile,
            contentType = 'image/png',
@@ -977,7 +1022,7 @@ shinyServer(function(input, output, session) {
         zmin_var <- input$min_var 
         zmax_var <- max(kriging()$var1.var)}
       image(kriging(), zlim=c(zmin_var,zmax_var),"var1.var", col =terrain.colors(100))
-      image.plot(zlim=c(zmin_var,zmax_var), legend.only=TRUE, horizontal=F, col=terrain.colors(100))
+      image.plot(zlim=c(zmin_var,zmax_var), legend.only=TRUE, horizontal=F, col=terrain.colors(100), legend.cex = 2)
       dev.off()
       list(src = outfile,
            contentType = 'image/png',
