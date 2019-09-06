@@ -604,7 +604,7 @@ shinyServer(function(input, output, session) {
     # build graph with ggplot syntax
     p <- ggplot(dataset(), aes_string(x = input$x, y = input$y, color = input$color)) +
       geom_point()
-    browser()
+    # browser()
     ggplotly(p) %>%
       layout(autosize = TRUE)
     # layout(height = input$plotHeight, autosize=TRUE)
