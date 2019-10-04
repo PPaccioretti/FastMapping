@@ -223,6 +223,7 @@ shinyUI(
                                   uiOutput("Clasificador"))
                         
                         ,tabPanel("Report",
+                                  p("This section is being developed. It may contain problems when the report is generated. Please, if it happens, contact", a("pablopaccioretti@agro.unc.edu.ar", href = "mailto:pablopaccioretti@agro.unc.edu.ar")),
                                   radioButtons('format', 'Document format','HTML',  #c('PDF', 'HTML', 'Word'),
                                                inline = TRUE),
                                   downloadButton("report", "Generate report"))

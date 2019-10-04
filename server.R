@@ -12,6 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###### FUNCIONES #####
+
+
+
+# list_of_packages <- c("shiny" ,
+#                       "shinythemes" ,
+#                       "knitr" ,
+#                       "ggplot2" ,
+#                       "geoR" ,
+#                       "plotly" ,
+#                       "automap" ,
+#                       "fields" ,
+#                       "spdep" ,
+#                       "raster" ,
+#                       "sp" ,
+#                       "rgeos" ,
+#                       "gstat" ,
+#                       "e1071" ,
+#                       "ade4" ,
+#                       "rmarkdown")
+# 
+# 
+# invisible(lapply(list_of_packages, 
+#                  function(x) if(!require(x,character.only = TRUE)) install.packages(x)))
+
+
+
+
 library(shiny)
 library(shinythemes)
 library(data.table)
@@ -83,8 +110,16 @@ shinyServer(function(input, output, session) {
     showModal(modalDialog(
       title = "FastMapping", 
       h1('Welcome to FastMapping'),
-      p('If you have any question please write to marianoacba@agro.unc.edu.ar or pablopaccioretti@agro.unc.edu.ar, tutorial is available in ',
-        a("this link", href = "https://drive.google.com/open?id=118RGWv1Ve_rkWhkojgbrPhmZ5O-DScQ8",  target = "_blank"),"."),
+      p('If you have any question please write to marianoacba@agro.unc.edu.ar or pablopaccioretti@agro.unc.edu.ar, brief tutorial is available in ',
+        a("this link", href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",  target = "_blank"),"."),
+      h2("Example datasets:"),
+      p("Spatial variability mapping: ",
+        a("Yield data in a barley field",
+          href = "https://drive.google.com/uc?export=download&id=10TP3taI-BtkeCi59o48Fwypq3mmRSWvN"),"."),
+      p("Delineation of homogeneous zones: ",
+        a("Yield and soil proprieties within a wheat field",
+          href = "https://drive.google.com/uc?export=download&id=1sNR0dl__1V8aKKbq9yUNDobvapz7MD9a"),"."),
+      h4("Software is uploading packages. Please wait..."),
       p(strong("This is a beta version."))
       , footer = NULL
     ))
@@ -104,6 +139,8 @@ shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = 'Attaching packages',
                  detail = 'This may take a while...')
+
+    
     progress$set(value = 1)
     library(geoR)
     progress$set(value = 2)
@@ -138,8 +175,15 @@ shinyServer(function(input, output, session) {
     showModal(modalDialog(
       title = "FastMapping", 
       h1('Welcome to FastMapping'),
-      p('If you have any question please write to marianoacba@agro.unc.edu.ar or pablopaccioretti@agro.unc.edu.ar, tutorial is available in ',
-        a("this link", href = "https://drive.google.com/open?id=118RGWv1Ve_rkWhkojgbrPhmZ5O-DScQ8",  target = "_blank"),"."),
+      p('If you have any question please write to marianoacba@agro.unc.edu.ar or pablopaccioretti@agro.unc.edu.ar, brief tutorial is available in ',
+        a("this link", href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",  target = "_blank"),"."),
+      h2("Example datasets:"),
+      p("Spatial variability mapping: ",
+        a("Yield data in a barley field",
+          href = "https://drive.google.com/uc?export=download&id=10TP3taI-BtkeCi59o48Fwypq3mmRSWvN"),"."),
+      p("Delineation of homogeneous zones: ",
+        a("Yield and soil proprieties within a wheat field",
+          href = "https://drive.google.com/uc?export=download&id=1sNR0dl__1V8aKKbq9yUNDobvapz7MD9a"),"."),
       p(strong("This is a beta version."))
       
     ))
@@ -226,8 +270,10 @@ shinyServer(function(input, output, session) {
   
   ##### TRANSFORMACION DE COORDENADAS
   TransfCoord<- reactive({
+    # browser()
     MyFile <- data()
     MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
+    MyFile <- data()[complete.cases(MyFile[,1:2]),]
     if(quantile(MyFile[,1],0.5)<0 &  quantile(MyFile[,2],0.5)<0) {
       if(input$hemisferio==1) {Hemisfer<- " +north"} else {Hemisfer<-" +south"}
       cordsist <- paste0("+proj=utm +zone=",input$zona,Hemisfer ," +ellps=WGS84 +datum=WGS84")
@@ -240,9 +286,7 @@ shinyServer(function(input, output, session) {
     ValoresOutput$TablaCoordTrans<-MyFile
     return(MyFile)
   })
-  
-  
-  
+
   output$table <- renderDataTable({
     
     if(is.null(data())){return()}
@@ -294,8 +338,8 @@ shinyServer(function(input, output, session) {
     progress$set(message = 'Depuration in progress',
                  detail = 'This may take a while...')
     MyFile <- TransfCoord()                      ####  #####################  #####################  #####################  ############
-    DatosCrudos <- MyFile
-    MyFile <- MyFile[complete.cases(MyFile),]
+    DatosCrudos <- MyFile[,c(input$xmapa, input$ymapa, input$rto)]
+    MyFile <- MyFile[complete.cases(MyFile),c(input$xmapa, input$ymapa, input$rto)]
     
     # MyFile <- data()
     # MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
@@ -532,7 +576,6 @@ shinyServer(function(input, output, session) {
     
   })
   
-  
   output$TextoAviso <- renderUI({
     validate(
       need(data(),"")) 
@@ -540,8 +583,10 @@ shinyServer(function(input, output, session) {
     textOutput("msgTxt")})
   
   output$msgTxt <- renderText({
-    #browser()
-    try(if (quantile(data()[,input$xmapa],0.5) < 0 &  quantile(data()[,input$ymapa],0.5) < 0) {"Projection system will be change from latlong to UTM"})
+    try({
+     MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
+    MyFile <- data()[complete.cases(MyFile[,1:2]), ]
+   if(quantile(MyFile[, 1],0.5) < 0 &  quantile(MyFile[, 2],0.5) < 0) {"Projection system will be transform from latlong to UTM automatically"}})
   })
   
   output$DepuratedTable <- renderDataTable({
@@ -768,22 +813,17 @@ shinyServer(function(input, output, session) {
       MyMod=list()
       # browser()
       for (i in SelectedModels()) {
-        MyAK=tryCatch(autoKrige.cv(Formula, MyFile, model = c(i), nfold = 10, nmax=25),error=function(e)print(e))
+        MyAK=tryCatch({autoKrige.cv(Formula, MyFile, model = c(i), 
+                                   nfold = 10, 
+                                   nmax=as.numeric(input$nmax), 
+                                   nmin=as.numeric(input$nmin),
+                                   maxdist=as.numeric(input$distmax))},
+                      error=function(e)print(e))
         MyMod[[i]]=MyAK
         incProgress(1/length(SelectedModels()), detail = paste("Doing model", names(myChoice)[myChoice==i]))
         
       }
-      # dim(MyMod[[1]])
-      # lapply(MyMod, function(x) {sqrt(sum(x$krige.cv_output$residual^2, na.rm=TRUE)/sum(complete.cases(x$krige.cv_output$residual)))})
-      # RMSEc<-sqrt(sum(MyMod[[1]]$krige.cv_output$residual^2, na.rm=TRUE)/sum(complete.cases(MyMod[[1]]$krige.cv_output$residual)))
-      # # summary(MyMod[[1]])
-      # i<-SelectedModels()[[2]]
-      # x<-MyMod[[2]]
-      # class(MyFile)
-      # class(MyFile@data[,])
-      # TRUE %in% unique(MyFile), MARGIN = 0)
-      # compare.cv(x)
-      # dev.new()
+
       #Esta funcion si no puede usar la funcion compare.cv, calcula el RMSE a mano y lo repite 11 vecces
       ModList=lapply(MyMod,function (x) tryCatch(compare.cv(x),error=function(e) {
         cat("Calculating CV by hand\n")
@@ -825,7 +865,7 @@ shinyServer(function(input, output, session) {
     MyFile <- MyFile()$Datos
     if(is.null(MyFile)) {return()}
     coordinates(MyFile) <- c(1,2)
-    Mod<-autofitVariogram(Formula, MyFile, model = MejorModelo())
+    Mod<-autofitVariogram(Formula, MyFile, model = MejorModelo(), cutoff = 10000)
     ValoresOutput$Variograma<- Mod
     return(Mod)
   })  
@@ -869,8 +909,11 @@ shinyServer(function(input, output, session) {
       Modelo <- MejorModelo()
       kriging <- autoKrige(Formula, MyFile, Mygr, model = Modelo,
                            # kriging <- autoKrige(Formula, MyFile, Mygr, model = SelectedModels(),
-                           nmax=as.numeric(input$nmax), nmin=as.numeric(input$nmin),maxdist=as.numeric(input$distmax),
-                           block = c(as.numeric(input$block,as.numeric(input$block))), kappa=c(0.05, seq(0.2, 2, 0.1), 5, 10))
+                           nmax=as.numeric(input$nmax), 
+                           nmin=as.numeric(input$nmin),
+                           maxdist=as.numeric(input$distmax),
+                           block = c(as.numeric(input$block,as.numeric(input$block))),
+                           kappa=c(0.05, seq(0.2, 2, 0.1), 5, 10))
       ValoresOutput$kriging <- kriging$krige_output
       return(kriging$krige_output)
     }
@@ -941,14 +984,14 @@ shinyServer(function(input, output, session) {
         c(as.character(Modelo[1,1]),paste(round(stack(Modelo)[,1],1))),
         sep = ": ", collapse = "\n")
       })
-
-     variogg <- ggplot(data = variogramLine(vgm(psill=Variogram()$var_model$psill[2], as.character(Variogram()$var_model$model[2]),
-                                      range=Variogram()$var_model$range[2],nugget=Variogram()$var_model$psill[1]),max(Variogram()$exp_var$dist))) +
+# browser()
+VariogramData <- variogramLine(vgm(psill=Variogram()$var_model$psill[2], as.character(Variogram()$var_model$model[2]),range=Variogram()$var_model$range[2],nugget=Variogram()$var_model$psill[1]),max(Variogram()$exp_var$dist))
+variogg <- ggplot(data =VariogramData ) +
         geom_point(data = Variogram()$exp_var, aes(x=dist,y=gamma), size = 2) + 
         geom_line(aes(x = dist, y = gamma), color = "blue", size = 1.2) +
         xlab("Distance") +
         ylab("Semi-variance") +
-        annotate("text", label = Parametros, x = Inf, y = -Inf, hjust = 1, vjust = -0.1, size = 3)+
+        annotate("text", label = Parametros, x = Inf, y = -Inf, hjust = 1, vjust = -0.1, size = 3) +
         scale_y_continuous(limits = c(0, NA)) +
        ggtitle("Experimental variogram and fitted variogram model")
      
@@ -1279,7 +1322,7 @@ shinyServer(function(input, output, session) {
     progress$set(value = 1)
     # TransfCoord()[, c(input$xmapa, input$ymapa)]
     
-    
+
 
     if(length(input$rto)==1) {
       Mydata <- as.data.frame(kriging())[,seq_along(c(input$xmapa, input$ymapa,input$rto))]
