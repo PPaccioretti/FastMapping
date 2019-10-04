@@ -9,7 +9,7 @@ bidimensional coordinates and the variable to be mapped.
 You can run the Application locally in R:
 
 
-```{r}
+```r
 list_of_packages <- c("shiny" ,
                       "shinythemes" ,
                       "knitr" ,
