@@ -14,7 +14,7 @@
 
 require(shiny)
 require(shinythemes)
-
+library(plotly)
 shinyUI(
   fluidPage(title="FastMapping",
             theme = shinytheme("united"),
@@ -219,8 +219,57 @@ shinyUI(
                         ,tabPanel("Results",
                                   uiOutput("resultados"))
                         
-                        ,tabPanel("Clusters",
-                                  uiOutput("Clasificador"))
+                        ,tabPanel(title = "Cluster", # textOutput("tabPanel_title"), #
+                                  # uiOutput("Clasificador")
+                                  tabsetPanel(
+                                    tabPanel("Parameters for KM-sPC classification",
+                                             column(width = 12/4,
+                                                    checkboxInput("centrado", "Centered", value = TRUE),
+                                                    checkboxInput("vecindarionulo", "Data with null neighbor", value = FALSE),
+                                                    radioButtons("distancia", "Distance", choices= c("Euclidean"= "euclidean", "Manhattan"="manhattan"))
+                                             ),
+                                             column(width = 12/4,
+                                                    sliderInput("clusters","Number of Cluster to evaluate", min=2, max=15, value = c(2,6)),
+                                                    numericInput("iteraciones","Iterations", value=1000, min=1, step=10),
+                                                    numericInput("ExpDif", "Degree of fuzzification", value=1.3, step=0.05)
+                                             ),
+                                             column(width = 12/4,
+                                                    h3("Neighborhood network"),
+                                                    sliderInput("distanciavecino","Distance between neighbors", min=0, max=1000, value = c(0,35)),
+                                                    sliderInput("varexplicada", "Explained variance (%)", min=0, max=100, value = 70)
+                                                    
+                                                    
+                                             )), 
+                                    tabPanel("Classification results",
+                                             fluidPage(
+                                               fluidRow(column( width = 8,dataTableOutput("TablaIndicesConglo")) ),##
+                                               fluidRow(column( width = 6,dataTableOutput("TablaResultadosConglom"))  ) )
+                                    ),
+                                    tabPanel("Cluster Plot",
+                                             fluidPage(
+                                               column(width = 12/4,
+                                                      fluidPage(uiOutput("SelectorCong"))),
+                                               column(width = 12-12/4,
+                                                      fluidPage(plotlyOutput('ClasificationPlot', height = "600px")))))
+                                    
+                                    #   ,tabPanel("Plot Classification",
+                                    #            sidebarPanel(width = 3,
+                                    #                         # selectInput('x', 'X', choices = nombresCol(), selected = nombresCol()[1]),
+                                    #                         # selectInput('y', 'Y', choices = nombresCol(), selected = nombresCol()[2]),
+                                    #                         selectInput('NumClust', 'Clusters',choices = colnames(Clasificacion()$DatosConCongl), selected = NULL)#[NROW(nombresCol())])#,
+                                    #                         # , textOutput("Mensaje")
+                                    #                         
+                                    #            ),
+                                    #            mainPanel(width = 9,
+                                    #                      plotlyOutput('ClasificationPlot', height = "600px"))
+                                    #   
+                                    #   
+                                    # )
+                                  )
+                                  
+                                  
+                                  
+                                  )
                         
                         ,tabPanel("Report",
                                   p("This section is being developed. It may contain problems when the report is generated. Please, if it happens, contact", a("pablopaccioretti@agro.unc.edu.ar", href = "mailto:pablopaccioretti@agro.unc.edu.ar")),

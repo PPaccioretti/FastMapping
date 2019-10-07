@@ -42,6 +42,7 @@
 library(shiny)
 library(shinythemes)
 library(data.table)
+library(plotly)
 #
 # # Moran Plot
 # moran.plot1 <-function (x, listw, zero.policy = NULL, spChk = NULL, labels = NULL,
@@ -97,7 +98,7 @@ library(data.table)
 
 
 
-
+options(shiny.sanitize.errors = FALSE)
 options(shiny.maxRequestSize = 20*1024^2)
 shinyServer(function(input, output, session) {
   
@@ -167,6 +168,7 @@ shinyServer(function(input, output, session) {
     library(ade4)
     progress$set(value = 13)
     library(rmarkdown)
+    library(shinyjs)
     progress$set(value = 14)
     source("Functions.R")
     progress$set(value = 15)
@@ -1238,58 +1240,58 @@ variogg <- ggplot(data =VariogramData ) +
   #########################################
   ##############  CLASIFICACION KM-sPC   ##
   #########################################
-  output$Clasificador <- renderUI({
-    # validate(
-    #   need(input$file, 'Check input file!'))
-    
-    tabsetPanel(
-      tabPanel("Parameters for KM-sPC classification",
-               column(width = 12/4,
-                      checkboxInput("centrado", "Centered", value = TRUE),
-                      checkboxInput("vecindarionulo", "Data with null neighbor", value = FALSE),
-                      radioButtons("distancia", "Distance", choices= c("Euclidean"= "euclidean", "Manhattan"="manhattan"))
-               ),
-               column(width = 12/4,
-                      sliderInput("clusters","Number of Cluster to evaluate", min=2, max=15, value = c(2,6)),
-                      numericInput("iteraciones","Iterations", value=1000, min=1, step=10),
-                      numericInput("ExpDif", "Degree of fuzzification", value=1.3, step=0.05)
-               ),
-               column(width = 12/4,
-                      h3("Neighborhood network"),
-                      sliderInput("distanciavecino","Distance between neighbors", min=0, max=1000, value = c(0,35)),
-                      sliderInput("varexplicada", "Explained variance (%)", min=0, max=100, value = 70)
-                      
-                      
-               )), 
-      tabPanel("Classification results",
-               fluidPage(
-                 fluidRow(column( width = 8,dataTableOutput("TablaIndicesConglo")) ),##
-                 fluidRow(column( width = 6,dataTableOutput("TablaResultadosConglom"))  ) )
-      ),
-      tabPanel("Cluster Plot",
-               fluidPage(
-                 column(width = 12/4,
-                        fluidPage(uiOutput("SelectorCong"))),
-                 column(width = 12-12/4,
-                        fluidPage(plotlyOutput('ClasificationPlot', height = "600px")))))
-      
-      #   ,tabPanel("Plot Classification",
-      #            sidebarPanel(width = 3,
-      #                         # selectInput('x', 'X', choices = nombresCol(), selected = nombresCol()[1]),
-      #                         # selectInput('y', 'Y', choices = nombresCol(), selected = nombresCol()[2]),
-      #                         selectInput('NumClust', 'Clusters',choices = colnames(Clasificacion()$DatosConCongl), selected = NULL)#[NROW(nombresCol())])#,
-      #                         # , textOutput("Mensaje")
-      #                         
-      #            ),
-      #            mainPanel(width = 9,
-      #                      plotlyOutput('ClasificationPlot', height = "600px"))
-      #   
-      #   
-      # )
-    )
-    
-  })
-  
+  # output$Clasificador <- renderUI({
+  #   # validate(
+  #   #   need(input$file, 'Check input file!'))
+  #   
+  #   tabsetPanel(
+  #     tabPanel("Parameters for KM-sPC classification",
+  #              column(width = 12/4,
+  #                     checkboxInput("centrado", "Centered", value = TRUE),
+  #                     checkboxInput("vecindarionulo", "Data with null neighbor", value = FALSE),
+  #                     radioButtons("distancia", "Distance", choices= c("Euclidean"= "euclidean", "Manhattan"="manhattan"))
+  #              ),
+  #              column(width = 12/4,
+  #                     sliderInput("clusters","Number of Cluster to evaluate", min=2, max=15, value = c(2,6)),
+  #                     numericInput("iteraciones","Iterations", value=1000, min=1, step=10),
+  #                     numericInput("ExpDif", "Degree of fuzzification", value=1.3, step=0.05)
+  #              ),
+  #              column(width = 12/4,
+  #                     h3("Neighborhood network"),
+  #                     sliderInput("distanciavecino","Distance between neighbors", min=0, max=1000, value = c(0,35)),
+  #                     sliderInput("varexplicada", "Explained variance (%)", min=0, max=100, value = 70)
+  #                     
+  #                     
+  #              )), 
+  #     tabPanel("Classification results",
+  #              fluidPage(
+  #                fluidRow(column( width = 8,dataTableOutput("TablaIndicesConglo")) ),##
+  #                fluidRow(column( width = 6,dataTableOutput("TablaResultadosConglom"))  ) )
+  #     ),
+  #     tabPanel("Cluster Plot",
+  #              fluidPage(
+  #                column(width = 12/4,
+  #                       fluidPage(uiOutput("SelectorCong"))),
+  #                column(width = 12-12/4,
+  #                       fluidPage(plotlyOutput('ClasificationPlot', height = "600px")))))
+  #     
+  #     #   ,tabPanel("Plot Classification",
+  #     #            sidebarPanel(width = 3,
+  #     #                         # selectInput('x', 'X', choices = nombresCol(), selected = nombresCol()[1]),
+  #     #                         # selectInput('y', 'Y', choices = nombresCol(), selected = nombresCol()[2]),
+  #     #                         selectInput('NumClust', 'Clusters',choices = colnames(Clasificacion()$DatosConCongl), selected = NULL)#[NROW(nombresCol())])#,
+  #     #                         # , textOutput("Mensaje")
+  #     #                         
+  #     #            ),
+  #     #            mainPanel(width = 9,
+  #     #                      plotlyOutput('ClasificationPlot', height = "600px"))
+  #     #   
+  #     #   
+  #     # )
+  #   )
+  #   
+  # })
+  # 
   output$TablaIndicesConglo <- renderDataTable({
     Clasificacion()$Indices}, options = list(paging = FALSE, searching = FALSE, digits=2
                                              #,rowCallback = I("function( nRow, aData) {ind = 2; $('td:eq('+ind+')', nRow).html( parseFloat(aData[ind]).toFixed(2) );}")
@@ -1555,7 +1557,8 @@ variogg <- ggplot(data =VariogramData ) +
       hideTab(inputId = "PanelTabSet", target = "Adjustments")
       hideTab(inputId = "PanelTabSet", target = "Results")
       hideTab(inputId = "PanelTabSet", target = "Report")
-      hideTab(inputId = "PanelTabSet", target = "Multivariate")}
+      # hideTab(inputId = "PanelTabSet", target = "Cluster")
+      }
     
     
     if(length(input$rto)==1){
@@ -1563,14 +1566,16 @@ variogg <- ggplot(data =VariogramData ) +
       showTab(inputId = "PanelTabSet", target = "Adjustments")
       showTab(inputId = "PanelTabSet", target = "Results")
       showTab(inputId = "PanelTabSet", target = "Report")
-      showTab(inputId = "PanelTabSet", target = "Multivariate")}
+      # showTab(inputId = "PanelTabSet", target = "Cluster")
+      }
     
     if(length(input$rto)>1){
       hideTab(inputId = "PanelTabSet", target = "Depuration")
       hideTab(inputId = "PanelTabSet", target = "Adjustments")
       hideTab(inputId = "PanelTabSet", target = "Results")
       showTab(inputId = "PanelTabSet", target = "Report")
-      showTab(inputId = "PanelTabSet", target = "Multivariate")}
+      # showTab(inputId = "PanelTabSet", target = "Cluster")
+      }
     
     # if(length(input$rto)==0){
     #   hideTab(inputId = "PanelTabSet", target = "Depuration")
@@ -1582,6 +1587,10 @@ variogg <- ggplot(data =VariogramData ) +
     
   })
   
-  
+  # output$tabPanel_title = renderText({
+  #   if(length(input$rto)>1) {return("Multivariate")}
+  #   "Cluster"
+  #   # ifelse(length(input$rto)>1,"Multivariate", "Cluster")
+  # })
   
 })
