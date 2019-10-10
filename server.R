@@ -1587,10 +1587,10 @@ variogg <- ggplot(data =VariogramData ) +
     
   })
   
-  # output$tabPanel_title = renderText({
-  #   if(length(input$rto)>1) {return("Multivariate")}
-  #   "Cluster"
-  #   # ifelse(length(input$rto)>1,"Multivariate", "Cluster")
-  # })
+  output$tabPanel_title = renderText({
+    if(length(input$rto)>1) {return("Multivariate")}
+    "Cluster"
+    # ifelse(length(input$rto)>1,"Multivariate", "Cluster")
+  })
   
 })

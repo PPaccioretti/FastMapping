@@ -219,7 +219,7 @@ shinyUI(
                         ,tabPanel("Results",
                                   uiOutput("resultados"))
                         
-                        ,tabPanel(title = "Cluster", # textOutput("tabPanel_title"), #
+                        ,tabPanel(title =  textOutput("tabPanel_title"), #"Cluster",#
                                   # uiOutput("Clasificador")
                                   tabsetPanel(
                                     tabPanel("Parameters for KM-sPC classification",
