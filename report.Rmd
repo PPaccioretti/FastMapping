@@ -86,7 +86,13 @@ VariablesTarget <- params$input$rto
 
 kable(summary(TablaOriginal[VariablesTarget]))
 
-if(length(VariablesTarget)==1){boxplot(TablaOriginal[VariablesTarget], las=1, col="#FFBF00")}
+if(length(VariablesTarget)==1){
+  ggplot(TablaOriginal) +
+    geom_boxplot(data = TablaOriginal, aes_string(y = VariablesTarget),  fill="#FFBF00") +
+    theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+}
 
 ```
 
@@ -105,34 +111,55 @@ VariablesTarget <- params$input$rto
 
 kable(summary(TablaOriginalDep[VariablesTarget]))
 try(
-if(length(VariablesTarget)==1){boxplot(TablaOriginalDep[VariablesTarget], las=1, col="#FFA700")}
+  if(length(VariablesTarget)==1) {
+    
+      ggplot(TablaOriginalDep) +
+    geom_boxplot(aes_string(y = VariablesTarget),  fill="#FFA700") +
+    theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+    
+  }
 )
+
 ```
 
 
 
+```{r, eval= !is.null(params$output$DataDep) && !is.null(params$output$Tabla)}
+BothData <- rbind(
+  data.frame("myData" = "Raw data", "myValues" = TablaOriginal[[VariablesTarget]]),
+  data.frame("myData" = "Depurated data", "myValues" = TablaOriginalDep[[VariablesTarget]]))
+ggplot(BothData) +
+  geom_boxplot(aes(y = myValues, x = myData),  fill="#FFA700") +
+  labs(x = "Condition", y = VariablesTarget)
+```
+
+
 `r if(sum(!do.call(rbind, lapply(params$output, is.null)))==1) {"You dont run a procedure"}`
 
-`r if(!is.null(params$output$MiKrige)) {cat("##Interpolation result")}`
+`r if(!is.null(params$output$MiKrige)) {cat("##Interpolation cross-validation results")}`
 
 ```{r, eval=!is.null(params$output$MiKrige), results='asis'}
 # names(params$output)
 
-
 if(length(params$output$SelectedMdls)>1) {
   cat(paste(names(myChoice[myChoice %in% params$output$SelectedMdls ]), collapse = ", "),"models were adjusted. \n\n\n")
-} else {cat(names(myChoice[myChoice %in% params$output$SelectedMdls ]),"model were adjusted. \n\n\n")}
+} else {
+  cat(names(myChoice[myChoice %in% params$output$SelectedMdls ]),"model were adjusted. \n\n\n")
+}
 
-
-kable(params$output$MiKrige)
+kable(params$output$MiKrige[ , sapply(params$output$MiKrige, function(x) !all(is.na(x))) ])
 
 
 plot(params$output$Variograma)
+print(params$output$variogg)
 #   # ValoresOutput <- reactiveValues(Tabla=NULL, TablaCoordTrans=NULL,DataDep=NULL,NombresCol=NULL,
 #   #                                 SelectedMdls=NULL,  MiKrige=NULL,
 #   #                                 Variograma=NULL, Mygr=NULL, kriging=NULL, GeoTiff=NULL,
 #   #                                 Clasificacion=NULL, GraficoConglom=NULL)
 # # browser()
+
 if(!is.null(params$output$kriging)) plot(params$output$kriging)
 # if(!is.null(params$output$GeoTiff)) plot(params$output$GeoTiff)
 # if(!is.null(params$output$Clasificacion)) plot(params$output$Clasificacion)
@@ -144,6 +171,7 @@ if(!is.null(params$output$kriging)) plot(params$output$kriging)
 
 ```{r, eval=!is.null(params$output$Clasificacion)}
 
+# paste("Minimun value of summary index suggets", Min, "clusters")
 kable(params$output$Clasificacion$ResultadosConglom)
 
 
@@ -152,7 +180,7 @@ kable(params$output$Clasificacion$Indices)
 
 ggplot(params$output$Clasificacion$DatosConCongl, 
        aes_string(x=Coordenadas[1], y=Coordenadas[2], colour=params$input$NumClust)) + 
-  geom_point()
+  geom_point(size = 5)
 
 
 ```

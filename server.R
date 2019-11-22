@@ -30,7 +30,8 @@
 #                       "gstat" ,
 #                       "e1071" ,
 #                       "ade4" ,
-#                       "rmarkdown")
+#                       "rmarkdown",
+#                       "V8")
 # 
 # 
 # invisible(lapply(list_of_packages, 
@@ -38,110 +39,89 @@
 
 
 
+suppressPackageStartupMessages({
+  library(shiny)
+  library(shinythemes)
+  library(data.table)
+  library(plotly) 
+  
+})
 
-library(shiny)
-library(shinythemes)
-library(data.table)
-library(plotly)
-#
-# # Moran Plot
-# moran.plot1 <-function (x, listw, zero.policy = NULL, spChk = NULL, labels = NULL,
-#                         xlab = NULL, ylab = NULL, quiet = NULL, ...){
-#   # browser()
-#   if (!inherits(listw, "listw"))
-#     stop(paste(deparse(substitute(listw)), "is not a listw object"))
-#   if (is.null(quiet))
-#     quiet <- !get("verbose", envir = .spdepOptions)
-#   stopifnot(is.vector(x))
-#   stopifnot(is.logical(quiet))
-#   if (is.null(zero.policy))
-#     zero.policy <- get("zeroPolicy", envir = .spdepOptions)
-#   stopifnot(is.logical(zero.policy))
-#   xname <- deparse(substitute(x))
-#   if (!is.numeric(x))
-#     stop(paste(xname, "is not a numeric vector"))
-#   if (any(is.na(x)))
-#     stop("NA in X")
-#   n <- length(listw$neighbours)
-#   if (n != length(x))
-#     stop("objects of different length")
-#   if (is.null(spChk))
-#     spChk <- get.spChkOption()
-#   if (spChk && !chkIDs(x, listw))
-#     stop("Check of data and weights ID integrity failed")
-#   labs <- TRUE
-#   if (is.logical(labels) && !labels)
-#     labs <- FALSE
-#   if (is.null(labels) || length(labels) != n)
-#     labels <- as.character(attr(listw, "region.id"))
-#   wx <- lag.listw(listw, x, zero.policy = zero.policy)
-#   if (is.null(xlab))
-#     xlab <- xname
-#   if (is.null(ylab))
-#     ylab <- paste("spatially lagged", xname)
-#   if (zero.policy) {
-#     n0 <- wx == 0
-#     if (any(n0)) {
-#       symbols(x[n0], wx[n0], inches = FALSE, circles = rep(diff(range(x))/50,
-#                                                            length(which(n0))), bg = "grey", add = TRUE)
-#     }
-#   }
-#   xwx.lm <- lm(wx ~ x)
-#   infl.xwx <- influence.measures(xwx.lm)
-#   is.inf <- which(apply(infl.xwx$is.inf, 1, any))
-#   if (!quiet)
-#     summary(infl.xwx)
-#   invisible(infl.xwx)
-# }
-# 
+
 ###### #####
-
-
-
-options(shiny.sanitize.errors = FALSE)
-options(shiny.maxRequestSize = 20*1024^2)
 shinyServer(function(input, output, session) {
   
-  library(plotly)
+  suppressPackageStartupMessages(library(plotly))
   
   histdata <- rnorm(2)
   
-  observeEvent(once = TRUE,ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = histdata, {
-    # event will be called when histdata changes, which only happens once, when it is initially calculated
-    showModal(modalDialog(
-      title = "FastMapping", 
-      h1('Welcome to FastMapping'),
-      p('If you have any question please write to marianoacba@agro.unc.edu.ar or pablopaccioretti@agro.unc.edu.ar, brief tutorial is available in ',
-        a("this link", href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",  target = "_blank"),"."),
-      h2("Example datasets:"),
-      p("Spatial variability mapping: ",
-        a("Yield data in a barley field",
-          href = "https://drive.google.com/uc?export=download&id=10TP3taI-BtkeCi59o48Fwypq3mmRSWvN"),"."),
-      p("Delineation of homogeneous zones: ",
-        a("Yield and soil proprieties within a wheat field",
-          href = "https://drive.google.com/uc?export=download&id=1sNR0dl__1V8aKKbq9yUNDobvapz7MD9a"),"."),
-      h4("Software is uploading packages. Please wait..."),
-      p(strong("This is a beta version."))
-      , footer = NULL
-    ))
-    
-    hideTab(inputId = "PanelTabSet", target = "Depuration")
-    hideTab(inputId = "PanelTabSet", target = "Adjustments")
-    hideTab(inputId = "PanelTabSet", target = "Results")
-    hideTab(inputId = "PanelTabSet", target = "Report")
-    hideTab(inputId = "PanelTabSet", target = "Multivariate")
-    
+  
+  observeEvent(input$startApl, {
+    shinyjs::show(selector = '#PanelTabSet li a[data-value="DatasetTab"]')
+    showTab(inputId = "PanelTabSet", target = "DatasetTab")
+    updateTabsetPanel(session, "PanelTabSet", selected = "DatasetTab")
   })
   
+  # observeEvent(once = TRUE,ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = histdata, {
+  #   # event will be called when histdata changes, which only happens once, when it is initially calculated
+  #   # showModal(modalDialog(
+  #   #   title = "FastMapping",
+  #   #   h1('Welcome to FastMapping'),
+  #   #   p('If you have any question please write to marianoacba@agro.unc.edu.ar or pablopaccioretti@agro.unc.edu.ar, brief tutorial is available in ',
+  #   #     a("this link", href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",  target = "_blank"),"."),
+  #   #   h2("Example datasets:"),
+  #   #   p("Spatial variability mapping: ",
+  #   #     a("Yield data in a barley field",
+  #   #       href = "https://drive.google.com/uc?export=download&id=10TP3taI-BtkeCi59o48Fwypq3mmRSWvN"),"."),
+  #   #   p("Delineation of homogeneous zones: ",
+  #   #     a("Yield and soil proprieties within a wheat field",
+  #   #       href = "https://drive.google.com/uc?export=download&id=1sNR0dl__1V8aKKbq9yUNDobvapz7MD9a"),"."),
+  #   #   h4("Software is uploading packages. Please wait..."),
+  #   #   p(strong("This is a beta version."))
+  #   #   , footer = NULL
+  #   # ))
+  #   
+  #   hideTab(inputId = "PanelTabSet", target = "datosTab")
+  #   # hideTab(inputId = "PanelTabSet", target = "Dataset") 
+  #   hideTab(inputId = "PanelTabSet", target = "Depuration")
+  #   hideTab(inputId = "PanelTabSet", target = "Prediction")
+  #   hideTab(inputId = "PanelTabSet", target = "Results")
+  #   hideTab(inputId = "PanelTabSet", target = "Report")
+  #   hideTab(inputId = "PanelTabSet", target = "Cluster")
+  #    
+  # })
+
+  
+  
+  # observeEvent(once = TRUE,ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = histdata, {
+  #   # event will be called when histdata changes, which only happens once, when it is initially calculated
+  #   showModal(modalDialog(
+  #     title = "FastMapping",
+  #     h1('Welcome to FastMapping'),
+  #     p('If you have any question please write to fastmapping@agro.unc.edu.ar, brief tutorial is available in ',
+  #       a("this link", href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",  target = "_blank"),"."),
+  #     p("Packages are loading... pleae wait...")
+  #     , footer = NULL
+  #   ))
+  # 
+  #   hideTab(inputId = "PanelTabSet", target = "Depuration")
+  #   hideTab(inputId = "PanelTabSet", target = "Prediction")
+  #   hideTab(inputId = "PanelTabSet", target = "Results")
+  #   hideTab(inputId = "PanelTabSet", target = "Report")
+  #   hideTab(inputId = "PanelTabSet", target = "Cluster")
+  # 
+  # })
+
   
   observeEvent(once = TRUE,ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = histdata, {
-    
+
+
     progress <- Progress$new(session, min = 1, max = 15)
     on.exit(progress$close())
     progress$set(message = 'Attaching packages',
                  detail = 'This may take a while...')
 
-    
+suppressPackageStartupMessages({
     progress$set(value = 1)
     library(geoR)
     progress$set(value = 2)
@@ -164,81 +144,55 @@ shinyServer(function(input, output, session) {
     library(e1071)
     progress$set(value = 11)
     library(spdep)
+    library(DT)
     progress$set(value = 12)
     library(ade4)
+    library(V8)
     progress$set(value = 13)
     library(rmarkdown)
-    library(shinyjs)
+    # library(shinyjs)
     progress$set(value = 14)
-    source("Functions.R")
+    # source("Functions.R")
     progress$set(value = 15)
-    removeModal()
-    
-    showModal(modalDialog(
-      title = "FastMapping", 
-      h1('Welcome to FastMapping'),
-      p('If you have any question please write to marianoacba@agro.unc.edu.ar or pablopaccioretti@agro.unc.edu.ar, brief tutorial is available in ',
-        a("this link", href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",  target = "_blank"),"."),
-      h2("Example datasets:"),
-      p("Spatial variability mapping: ",
-        a("Yield data in a barley field",
-          href = "https://drive.google.com/uc?export=download&id=10TP3taI-BtkeCi59o48Fwypq3mmRSWvN"),"."),
-      p("Delineation of homogeneous zones: ",
-        a("Yield and soil proprieties within a wheat field",
-          href = "https://drive.google.com/uc?export=download&id=1sNR0dl__1V8aKKbq9yUNDobvapz7MD9a"),"."),
-      p(strong("This is a beta version."))
-      
-    ))
-    
+    # removeModal()
+})
   })
-  
+
   
   
   
   session$onSessionEnded(stopApp)
   
-  myChoice <- list(Exponential ="Exp",
-                   Shperical = "Sph",
-                   Gaussian = "Gau",
-                   Matern = "Mat",
-                   "M. Stein's" ="Ste",
-                   Circular = "Cir",
-                   Linear = "Lin",
-                   Power = "Pow",
-                   Wave = "Wav",
-                   Pentaspherical = "Pen",
-                   Hole = "Hol")
+  # MyChoiceSepdata <- c(Semicolon =';',Tabulator='\t', Space=' ',Comma=',')
   
-  MyChoiceSepdata <- c(Semicolon =';',Tabulator='\t', Space=' ',Comma=',')
-  
-  output$SepData <- renderUI({
-    validate(
-      need(input$file,""))
-    # browser()
-    if(!is.null(input$file)) {
-      File <- input$file
-      i <- 1
-      # if(is.null(input$sep)) {input$sep<-MyChoiceSepdata[1]}
-      MiTabla <- tryCatch({
-        list("Tabla" = fread(file = File$datapath),
-             "Decimal" = ".")
-      },error = function(e) {
-        list("Tabla" = fread(file = File$datapath, dec = ","),
-             "Decimal" = ",")
-      })
-      
-      MiTabla_df <- data.frame(MiTabla$Tabla)  
-      
-        
-      MisCol <- ncol(MiTabla$Tabla)
-      while (MisCol == 1 && !is.null(MisCol)) {
-        i <- i + 1 
-        MisCol <- ncol(read.table(file = File$datapath, sep = MyChoiceSepdata[i], header = input$header, dec = MiTabla$Decimal))
-        next}
-    }
-    radioButtons('sep', 'Separator character', choices = MyChoiceSepdata, selected = MyChoiceSepdata[i])
-    
-  })
+  # output$SepData <- renderUI({
+  #   validate(
+  #     need(input$file,""))
+  #   # browser()
+  #   if(!is.null(input$file)) {
+  #     File <- input$file
+  #     i <- 1
+  #     # if(is.null(input$sep)) {input$sep<-MyChoiceSepdata[1]}
+  #     MiTabla <- tryCatch({
+  #       list("Tabla" = fread(file = File$datapath),
+  #            "Decimal" = ".")
+  #     },error = function(e) {
+  #       list("Tabla" = fread(file = File$datapath, dec = ","),
+  #            "Decimal" = ",")
+  #     })
+  # 
+  #     MiTabla_df <- data.frame(MiTabla$Tabla)
+  # 
+  # 
+  #     MisCol <- ncol(MiTabla$Tabla)
+  #     while (MisCol == 1 && !is.null(MisCol)) {
+  #       i <- i + 1
+  #       MisCol <- ncol(read.table(file = File$datapath, sep = MyChoiceSepdata[i], header = input$header, dec = MiTabla$Decimal))
+  #       next}
+  #   }
+  #   radioButtons('sep', 'Separator character', choices = MyChoiceSepdata, selected = MyChoiceSepdata[i])
+  # 
+  # })
   
   output$ModelosA <- renderUI({
     if(input$bar){return( )
@@ -255,17 +209,20 @@ shinyServer(function(input, output, session) {
   data <- reactive({#browser()
     File <- input$file
     if(is.null(File)){return()}
-    if(is.null(input$sep)){return()}
+    # if(is.null(input$sep)){return()}
     
     # MiTabla<-tryCatch({
     #   read.table(file = File$datapath, sep = input$sep, header = input$header)
     # },error = function(e) {
     #   read.table(file = File$datapath, sep = input$sep, header = input$header, dec=",")
     # })
-    MiTabla<-data.frame(fread(File$datapath))
-    if(sum(sapply(MiTabla, is.numeric))<= 1) {
-      MiTabla<-try(read.table(file = File$datapath, sep = input$sep, header = input$header, dec=","))
-    }
+    MiTabla <- fread(File$datapath, data.table = FALSE)
+    # if(sum(sapply(MiTabla, is.numeric))<= 1) {
+    #   
+    #   
+    #   
+    #   MiTabla<-try(read.table(file = File$datapath, sep = input$sep, header = input$header, dec=","))
+    # }
     ValoresOutput$Tabla<-MiTabla
     MiTabla
   })
@@ -289,7 +246,7 @@ shinyServer(function(input, output, session) {
     return(MyFile)
   })
 
-  output$table <- renderDataTable({
+  output$table <- DT::renderDataTable({
     
     if(is.null(data())){return()}
     # if(ncol(data())==1) {return()}
@@ -301,15 +258,41 @@ shinyServer(function(input, output, session) {
       error= function (e) {data()[,c(input$xmapa, input$ymapa, input$rto)]}, 
       error= function (e) {data()})
     
-  }, options = list(pageLength = 5,lengthMenu = list(c(seq(10, nrow(data()), length.out = 5), -1)[-5], c(seq(10, nrow(data()), length.out = 5)[-5], 'All'))))#   seq(10, nrow(data()), length.out = 5)))
+  }, options = list(pageLength = 5,
+                    scrollX = TRUE,
+                    lengthMenu = list(c(seq(10, nrow(data()), length.out = 5), -1)[-5], c(seq(10, nrow(data()), length.out = 5)[-5], 'All'))))#   seq(10, nrow(data()), length.out = 5)))
   # initComplete = I("function(settings, json) {alert('Done.');}")))#paging = FALSE))
+  
+  
+  output$edgesTable <- DT::renderDataTable({
+    
+    if(is.null(Bordes())){return()}
+    # if(ncol(data())==1) {return()}
+    validate(
+      need(ncol(Bordes())!=1, "Please check Separator character"))
+    ### AQUI DEBERIA VER SI TIENE COMA COMO DECIMAL, A LO MEJOR DESPUES DEL TYRCATCH
+      Bordes()
+    
+  }, options = list(
+                    scrollX = TRUE
+                    ))#
   
   
   output$tb <- renderUI({
     
     if(is.null(data())){return ()}
-    else {
-      tabsetPanel(tabPanel("Data", dataTableOutput("table")))}
+    if(!is.null(data())) {
+      if(is.null(Bordes())) {
+        return(tabsetPanel(tabPanel("Data", DT::dataTableOutput("table"))))
+      }
+      if(!is.null(Bordes())) {
+        return(
+          tabsetPanel(tabPanel("Data", DT::dataTableOutput("table")),
+                      tabPanel("Edges", DT::dataTableOutput("edgesTable")))
+        )
+      
+      }}
+    
   })
   
   output$bordesFile <- renderUI({
@@ -320,14 +303,14 @@ shinyServer(function(input, output, session) {
   Bordes <- reactive({
     File <- input$bordes
     if(is.null(File)){return()} 
-    if(is.null(input$sep)){return()}
+    # if(is.null(input$sep)){return()}
     
     MiTabla<-fread(File$datapath, data.table=FALSE)
     # MiTabla<-read.table(file = File$datapath, sep = input$sep, header = input$header)
     
-    if(sum(sapply(MiTabla, is.numeric))<= 1) {
-      MiTabla<-try(read.table(file = File$datapath, sep = input$sep, header = input$header, dec=","))
-    }
+    # if(sum(sapply(MiTabla, is.numeric))<= 1) {
+    #   MiTabla<-try(read.table(file = File$datapath, sep = input$sep, header = input$header, dec=","))
+    # }
     MiTabla
     
   })
@@ -363,6 +346,18 @@ shinyServer(function(input, output, session) {
     condicion <- data.frame("Filas" = mapa$Filas, "Duplicated" = Duplicados)
     mapa <- mapa[!Duplicados,]
     progress$set(value = 1)
+    
+    
+    #########
+    # if(input$AutomaticDep == 'Automatico') {
+    #   
+    #   
+    # }
+    #   
+    
+    
+    
+    #########
     
     Logi0 <- TRUE %in% c(input$AutomaticDep == 'Automatico',  input$mDepuration %in% c("Outliers", "Inliers"))
     if (as.logical(Logi0))  {
@@ -560,7 +555,13 @@ shinyServer(function(input, output, session) {
       validate(
         need(ncol(data())>=3,""))
       NombesColumnasData<- colnames(data())[!colnames(data())%in%c(input$xmapa, input$ymapa)]
-      selectInput('rto', 'Target variable',choices = NombesColumnasData, multiple=TRUE, selected=NombesColumnasData)
+      
+      tipify(el = selectInput('rto', 'Target variable',choices = NombesColumnasData, multiple=TRUE, selected=NombesColumnasData), 
+             title = tagetVariableHelp, 
+             placement = "top", 
+             trigger = "hover", 
+             options = NULL)
+
       
     }})
   
@@ -585,6 +586,7 @@ shinyServer(function(input, output, session) {
     textOutput("msgTxt")})
   
   output$msgTxt <- renderText({
+    # browser()
     try({
      MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
     MyFile <- data()[complete.cases(MyFile[,1:2]), ]
@@ -597,7 +599,7 @@ shinyServer(function(input, output, session) {
     MyFile()$UtilizadosDep
   })
   
-  output$tablePrueba1 <- renderDataTable({
+  output$tableDataExtracted <- renderDataTable({
     validate(
       need(input$file, 'Check input file!'),
       need(ncol(dataset()) == 4, 'No extracted data'))
@@ -663,8 +665,11 @@ shinyServer(function(input, output, session) {
       #need(ncol(dataset())==4, 'No depurated data')
     )
     # build graph with ggplot syntax
-    library("RColorBrewer")
-    library(cowplot)
+    suppressPackageStartupMessages({
+      library("RColorBrewer")
+      library(cowplot)
+    })
+    
     # browser()
     PaletaColorFun <- function(Variable, namepal = 'Set1') {
       if (is.factor(Variable)) {
@@ -814,21 +819,47 @@ shinyServer(function(input, output, session) {
       coordinates (MyFile) <- c(1,2)
       MyMod=list()
       # browser()
+      
+      if(nrow(MyFile) > nrow(remove.duplicates(MyFile))) {
+        difRow <- nrow(MyFile) - nrow(remove.duplicates(MyFile))
+        if(difRow == 1) {
+          mensajeElim <- paste("To perform cross-validation,",difRow, "point pairs with equal spatial coordinate was removed")
+        } else { mensajeElim <-  paste("To perform cross-validation,",difRow, "point pairs with equal spatial coordinates were removed")}
+        
+        
+        showNotification(mensajeElim , 
+                         type = "default", duration = 3)
+      }
+      
       for (i in SelectedModels()) {
-        MyAK=tryCatch({autoKrige.cv(Formula, MyFile, model = c(i), 
+        # autoKrige.cv command does not take in account the blocks of your data. It performs the cross-validation point-by-point and not by blocks.
+        # 
+        # Cross validation takes in account the accuracy of the estimates of the interpolation (or prediction) for POINTS while block kriging is a smoothing method that divides the whole area into several BLOCKS and calculate the local average of your estimations for each of those area. In other words, for the area 'block' you don't have a 'value' to compare your estimation made by kriging
+
+
+        MyAK=tryCatch({autoKrige.cv(Formula, remove.duplicates(MyFile), model = c(i), 
                                    nfold = 10, 
                                    nmax=as.numeric(input$nmax), 
                                    nmin=as.numeric(input$nmin),
-                                   maxdist=as.numeric(input$distmax))},
+                                   # block = c(as.numeric(input$block,as.numeric(input$block))),
+                                   maxdist=as.numeric(input$distmax),
+                                   miscFitOptions = list(cressie = input$cressie))},
                       error=function(e)print(e))
         MyMod[[i]]=MyAK
         incProgress(1/length(SelectedModels()), detail = paste("Doing model", names(myChoice)[myChoice==i]))
         
       }
-
+# browser()
+# 
+# compare.cv(MyMod[[2]])
+      
       #Esta funcion si no puede usar la funcion compare.cv, calcula el RMSE a mano y lo repite 11 vecces
       ModList=lapply(MyMod,function (x) tryCatch(compare.cv(x),error=function(e) {
         cat("Calculating CV by hand\n")
+        
+        showNotification(paste("Something went wrong while cross-validation"), 
+                         type = "warning", duration = 5, id = "Aviso")
+        
         if(any(c("simpleError","error","condition" ) %in% class(e) )) {
           return(matrix(NA,nrow=11))
         }
@@ -867,7 +898,8 @@ shinyServer(function(input, output, session) {
     MyFile <- MyFile()$Datos
     if(is.null(MyFile)) {return()}
     coordinates(MyFile) <- c(1,2)
-    Mod<-autofitVariogram(Formula, MyFile, model = MejorModelo(), cutoff = 10000)
+    Mod<-autofitVariogram(Formula, MyFile, model = MejorModelo(), 
+                          cutoff = 10000, cressie = input$cressie)
     ValoresOutput$Variograma<- Mod
     return(Mod)
   })  
@@ -915,7 +947,8 @@ shinyServer(function(input, output, session) {
                            nmin=as.numeric(input$nmin),
                            maxdist=as.numeric(input$distmax),
                            block = c(as.numeric(input$block,as.numeric(input$block))),
-                           kappa=c(0.05, seq(0.2, 2, 0.1), 5, 10))
+                           kappa=c(0.05, seq(0.2, 2, 0.1), 5, 10),
+                           miscFitOptions = list(cressie = input$cressie))
       ValoresOutput$kriging <- kriging$krige_output
       return(kriging$krige_output)
     }
@@ -979,25 +1012,29 @@ shinyServer(function(input, output, session) {
       MiError= ValidationTable[8,MiMejorModelo][[1]]/mean(MyFile()$Datos[,3])*100
       RMSE=ValidationTable[8,MiMejorModelo][[1]]
       
-      Modelo=cbind(Modelo,"RMSE"=RMSE, "Percentage.Error"=MiError)
+      Modelo=data.frame(Modelo,"RMSE"=RMSE, "Error (%)"=MiError, check.names=FALSE)
       suppressWarnings({
-      Parametros <- paste(
-        c("Model",paste( stack(Modelo[-ncol(Modelo)])[,2]), "Error (%)"),
-        c(as.character(Modelo[1,1]),paste(round(stack(Modelo)[,1],1))),
-        sep = ": ", collapse = "\n")
+        Parametros <- paste(
+          c("Model",paste( stack(Modelo[-ncol(Modelo)])[,2]), "Error (%)"),
+          c(as.character(Modelo[1,1]),paste(round(stack(Modelo)[,1],1))),
+          sep = ": ", collapse = "\n")
       })
-# browser()
-VariogramData <- variogramLine(vgm(psill=Variogram()$var_model$psill[2], as.character(Variogram()$var_model$model[2]),range=Variogram()$var_model$range[2],nugget=Variogram()$var_model$psill[1]),max(Variogram()$exp_var$dist))
-variogg <- ggplot(data =VariogramData ) +
+      # browser()
+      
+      
+      VariogramData <- variogramLine(Variogram()$var_model,max(Variogram()$exp_var$dist))
+      variogg <- ggplot(data =VariogramData ) +
         geom_point(data = Variogram()$exp_var, aes(x=dist,y=gamma), size = 2) + 
         geom_line(aes(x = dist, y = gamma), color = "blue", size = 1.2) +
         xlab("Distance") +
         ylab("Semi-variance") +
         annotate("text", label = Parametros, x = Inf, y = -Inf, hjust = 1, vjust = -0.1, size = 3) +
         scale_y_continuous(limits = c(0, NA)) +
-       ggtitle("Experimental variogram and fitted variogram model")
-     
-     print(variogg) 
+        ggtitle("Experimental variogram and fitted variogram model")
+      
+      ValoresOutput$variogg <- variogg
+      
+      print(variogg) 
       # 
       # 
       #       #### Ver si poner los parametros del semivariograma en el plot
@@ -1141,24 +1178,36 @@ variogg <- ggplot(data =VariogramData ) +
     MiError= ValidationTable[8,MiMejorModelo][[1]]/mean(MyFile()$Datos[,3])*100
     RMSE=ValidationTable[8,MiMejorModelo][[1]]
     
-    Modelo=cbind(Modelo,"RMSE"=RMSE, "Percentage.Error"=MiError)
+    Modelo=data.frame(Modelo,"RMSE"=RMSE, "Error (%)"=MiError, check.names=FALSE)
     ####
     
-    data.frame(Modelo)
+    data.frame(Modelo, check.names=FALSE)
   })
   
   # Predichos: Tabla y Descarga
-  output$tablita <- renderDataTable({
+  output$tablita <- DT::renderDataTable({
     validate(
       need(input$file, 'Check input file!'))
+    # browser()
     
-    myresultado <- as.data.frame(kriging())
-    data.frame(myresultado)
-  })    
+    myresultado <- data.frame(kriging())
+
+    datatable(myresultado, rownames = FALSE)
+  }) 
+  
+  
+  output$predictedSummary <- renderPrint({
+    validate(
+      need(input$file, ''))
+    # browser()
+    
+    myresultado <- data.frame(kriging())
+    summary(myresultado)
+  })
   
   output$Predicted.txt <- downloadHandler(  
     filename = function() {paste('Predicted-', Sys.Date(), '.txt', sep='')},
-    content = function(con) {write.table(kriging(), con)},
+    content = function(con) {write.table(kriging(), con, row.names = FALSE)},
     contentType =  "text/csv"
   )  
   
@@ -1180,7 +1229,7 @@ variogg <- ggplot(data =VariogramData ) +
   #   # browser()
   #   # conditionalPanel(condition = "ncol(dataset())>4",    
   #                    tabPanel("Depurated Data", dataTableOutput("tablePrueba")) 
-  #                    tabPanel("Data Extracted", dataTableOutput("tablePrueba1")) 
+  #                    tabPanel("Data Extracted", dataTableOutput("tableDataExtracted")) 
   #                    tabPanel("Plot Condition Depurated", 
   #                              sidebarPanel(width = 3,
   #                                           selectInput('x', 'X', choices = nombresCol(), selected = nombresCol()[1]),
@@ -1208,13 +1257,18 @@ variogg <- ggplot(data =VariogramData ) +
                               uiOutput('Plots'))),
       tabPanel("Experimental Variogram", tableOutput("varPred")),
       tabPanel("Fitted Variogram Model", tableOutput("semivAju")),
-      tabPanel("Predicted", downloadButton("Predicted.txt","Save File"),dataTableOutput("tablita"))
+      tabPanel("Predicted", 
+               downloadButton("Predicted.txt","Save File"),
+               DT::dataTableOutput("tablita"),
+               h4("Predicted values summary"),
+               verbatimTextOutput("predictedSummary"))
+               
       ,
       
       # uiOutput("TablasDepuradas")
       # conditionalPanel(condition = "ncol(dataset())==4",
       tabPanel("Depurated Data",downloadButton("downloadDepurated","Save File"), dataTableOutput("DepuratedTable"))
-      ,tabPanel("Data Extracted", dataTableOutput("tablePrueba1"))
+      ,tabPanel("Data Extracted", dataTableOutput("tableDataExtracted"))
       ,tabPanel("Plot Condition Data",
                 sidebarPanel(width = 3,
                              selectInput('x', 'X', choices = nombresCol(), selected = nombresCol()[1]),
@@ -1292,19 +1346,65 @@ variogg <- ggplot(data =VariogramData ) +
   #   
   # })
   # 
-  output$TablaIndicesConglo <- renderDataTable({
-    Clasificacion()$Indices}, options = list(paging = FALSE, searching = FALSE, digits=2
-                                             #,rowCallback = I("function( nRow, aData) {ind = 2; $('td:eq('+ind+')', nRow).html( parseFloat(aData[ind]).toFixed(2) );}")
-    )
-  )
-  # reactiveValuesToList(input)
+  output$TablaIndicesConglo <- DT::renderDataTable({
+    datatable(Clasificacion()$Indices, rownames = FALSE, 
+              options = list(
+                searching = FALSE,
+                paging = FALSE))
+  })
   
-  output$TablaResultadosConglom<- renderDataTable({
+  output$GraficoIndicesConglo <- renderPlotly({
+
     
-    Clasificacion()$ResultadosConglom}, options = list(paging = FALSE, searching = FALSE#, digits=5
-                                                       # ,rowCallback = I("function( nRow, aData) {ind = 2; $('td:eq('+ind+')', nRow).html( parseFloat(aData[ind]).toFixed(2) );}")
+    dataIndicConglWide <- data.frame("Cluster" = Clasificacion()$Indices[,1],
+                                     scale(Clasificacion()$Indices[,-1]),
+                                     check.names = FALSE)
+    
+    dataIndicesConglomLong <- reshape(dataIndicConglWide, 
+                                  idvar = "Cluster",# ids = row.names(state.x77),
+                                  times = names(dataIndicConglWide)[-1],
+                                  timevar = "Index",
+                                  v.names= "Value",
+                                  varying = list(names(dataIndicConglWide)[-1]),
+                                  direction = "long")
+    dataIndicesConglomLong$Index <- factor(dataIndicesConglomLong$Index,
+           labels = unique(dataIndicesConglomLong$Index),
+           levels = unique(dataIndicesConglomLong$Index)
     )
-  )
+
+    dataIndicesConglomLong$isSummary <- as.numeric(dataIndicesConglomLong$Index == "Summary Index")+1
+    
+    
+    ggplotCongl <-  ggplot(dataIndicesConglomLong,
+                           aes(x = Cluster, y = Value, color = Index)) +
+      geom_point() + 
+      geom_line(linetype = dataIndicesConglomLong$isSummary) +
+      labs(y = "Standardized value") 
+    
+    ggplotly(ggplotCongl) %>%
+      layout(autosize=TRUE)
+    
+  })
+  
+  output$TablaResultadosConglom <- DT::renderDataTable({
+    # browser()
+    datatable(Clasificacion()$ResultadosConglom, rownames = FALSE, 
+              options = list(
+                searching = FALSE,
+                paging = FALSE))
+  })
+  
+  output$GraficoResultadosConglom <- renderPlotly({
+    
+    ggPlotResCong <- ggplot(Clasificacion()$ResultadosConglom,
+                            aes(x = Cluster, y = SSDW)) +
+                        geom_point() +
+                        geom_line()
+    
+    ggplotly(ggPlotResCong) %>%
+      layout(autosize=TRUE)
+    
+  })
   
   output$SelectorCong<-renderUI({
     ListaChoices<-colnames(Clasificacion()$DatosConCongl)[!colnames(Clasificacion()$DatosConCongl) %in% c(input$xmapa, input$ymapa)]
@@ -1313,8 +1413,6 @@ variogg <- ggplot(data =VariogramData ) +
   
   
   Clasificacion <- reactive({
-    
-    
     # browser()
     
     progress <- Progress$new(session, min=1, max=13)
@@ -1372,10 +1470,10 @@ variogg <- ggplot(data =VariogramData ) +
               pca <- dudi.pca(MyY, center=T,scannf = FALSE, nf=ncol(MyY)),
               pca <- dudi.pca(MyY, center=F,scannf = FALSE, nf=ncol(MyY)))
       
-      # ms <- adespatial::multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))  ##################################################################################################################
-      ms <- multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))
+      ms <- adespatial::multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))  ##################################################################################################################
+      # ms <- multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))
       
-      capture.output(resms<- summary(ms), file='NUL')
+      capture.output(resms <- summary(ms), file="NULL")
       var_ms <- as.data.frame(resms[,2])
       nfila_ms <- length(ms$eig)
       propvar_ms <- var_ms/nfila_ms
@@ -1417,12 +1515,15 @@ variogg <- ggplot(data =VariogramData ) +
     
     Ind <- function (obj) {
       # browser()
-      fclustIndex_modif(y=obj,MyY, index=c("xie.beni", "fukuyama.sugeno",
+      fclustIndex_modif(y=obj,MyY, index=c("xie.beni", #"fukuyama.sugeno",
                                            "partition.coefficient", "partition.entropy"))
     }
+
+    
     progress$set(value = 9)
     Indices <- lapply(clasificaciones,Ind)
     Indices <- do.call("rbind",Indices)
+    
     progress$set(value = 10)
     norm <- function (div) {
       # browser()
@@ -1434,7 +1535,7 @@ variogg <- ggplot(data =VariogramData ) +
     #######################################################################################3
     Cluster <- seq(as.numeric(input$clusters[1]),as.numeric(input$clusters[2]))
     ResultadosIndices <- data.frame(cbind(Cluster,Indices, IndN))
-    names(ResultadosIndices)=c("Num. Cluster", "Xie Beni", "Fukuyama Sugeno",
+    names(ResultadosIndices)=c("Num. Cluster", "Xie Beni", #"Fukuyama Sugeno",
                                "Partition Coefficient", "Entropy of Partition","Summary Index")
     
     #tryCatch({data.frame(Cluster,Indices, IndN)}, error=function (e) {data.frame(cbind(Cluster,Indices, t(IndN)))})
@@ -1534,7 +1635,7 @@ variogg <- ggplot(data =VariogramData ) +
       # Knit the document, passing in the `paramts` list, and eval it in a
       # child of the global environment (this isolates the code in the document
       # from the code in this app).
-      
+      # browser()
       rmarkdown::render(input=tempReport, output_format=switch(
         input$format,
         PDF = pdf_document(), HTML = html_document(), Word = word_document()),
@@ -1547,50 +1648,52 @@ variogg <- ggplot(data =VariogramData ) +
   
   ValoresOutput <- reactiveValues(Tabla=NULL, TablaCoordTrans=NULL,DataDep=NULL,NombresCol=NULL,
                                   SelectedMdls=NULL,  MiKrige=NULL,
-                                  Variograma=NULL, Mygr=NULL, kriging=NULL, GeoTiff=NULL,
+                                  Variograma=NULL, Mygr=NULL, kriging=NULL, GeoTiff=NULL, variogg = NULL,
                                   Clasificacion=NULL, GraficoConglom=NULL)
   
   observeEvent(input$rto, {
     
+    shinyjs::show(selector = '#PanelTabSet li a[data-value="DatasetTab"]')
+    shinyjs::show(selector = '#PanelTabSet li a[data-value="DepurationTab"]')
+    shinyjs::show(selector = '#PanelTabSet li a[data-value="PredictionTab"]')
+    shinyjs::show(selector = '#PanelTabSet li a[data-value="ResultsTab"]')
+    shinyjs::show(selector = '#PanelTabSet li a[data-value="ClusterTab"]')
+    shinyjs::show(selector = '#PanelTabSet li a[data-value="ReportTab"]')
+    
     if(is.null(input$rto)){
-      hideTab(inputId = "PanelTabSet", target = "Depuration")
-      hideTab(inputId = "PanelTabSet", target = "Adjustments")
-      hideTab(inputId = "PanelTabSet", target = "Results")
-      hideTab(inputId = "PanelTabSet", target = "Report")
-      # hideTab(inputId = "PanelTabSet", target = "Cluster")
-      }
+      hideTab(inputId = "PanelTabSet", target = "DepurationTab")
+      hideTab(inputId = "PanelTabSet", target = "PredictionTab")
+      hideTab(inputId = "PanelTabSet", target = "ResultsTab")
+      hideTab(inputId = "PanelTabSet", target = "ReportTab")
+      hideTab(inputId = "PanelTabSet", target = "ClusterTab")
+    }
     
     
     if(length(input$rto)==1){
-      showTab(inputId = "PanelTabSet", target = "Depuration")
-      showTab(inputId = "PanelTabSet", target = "Adjustments")
-      showTab(inputId = "PanelTabSet", target = "Results")
-      showTab(inputId = "PanelTabSet", target = "Report")
-      # showTab(inputId = "PanelTabSet", target = "Cluster")
-      }
+      showTab(inputId = "PanelTabSet", target = "DepurationTab")
+      showTab(inputId = "PanelTabSet", target = "PredictionTab")
+      showTab(inputId = "PanelTabSet", target = "ResultsTab")
+      showTab(inputId = "PanelTabSet", target = "ReportTab")
+      showTab(inputId = "PanelTabSet", target = "ClusterTab")
+    }
     
     if(length(input$rto)>1){
-      hideTab(inputId = "PanelTabSet", target = "Depuration")
-      hideTab(inputId = "PanelTabSet", target = "Adjustments")
-      hideTab(inputId = "PanelTabSet", target = "Results")
-      showTab(inputId = "PanelTabSet", target = "Report")
-      # showTab(inputId = "PanelTabSet", target = "Cluster")
-      }
+      hideTab(inputId = "PanelTabSet", target = "DepurationTab")
+      hideTab(inputId = "PanelTabSet", target = "PredictionTab")
+      hideTab(inputId = "PanelTabSet", target = "ResultsTab")
+      showTab(inputId = "PanelTabSet", target = "ReportTab")
+      showTab(inputId = "PanelTabSet", target = "ClusterTab")
+    }
     
-    # if(length(input$rto)==0){
-    #   hideTab(inputId = "PanelTabSet", target = "Depuration")
-    #   hideTab(inputId = "PanelTabSet", target = "Adjustments")
-    #   hideTab(inputId = "PanelTabSet", target = "Results")
-    #   hideTab(inputId = "PanelTabSet", target = "Report")
-    #   hideTab(inputId = "PanelTabSet", target = "Multivariate")
-    # }
+    output$tabPanel_title <- renderText({
+      if(length(input$rto)>1) {return("Multivariate")}
+      "Cluster"
+      # ifelse(length(input$rto)>1,"Multivariate", "Cluster")
+    })
     
   })
   
-  output$tabPanel_title = renderText({
-    if(length(input$rto)>1) {return("Multivariate")}
-    "Cluster"
-    # ifelse(length(input$rto)>1,"Multivariate", "Cluster")
-  })
+  
+  
   
 })
