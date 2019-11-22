@@ -10,22 +10,27 @@ You can run the Application locally in R:
 
 
 ```r
-list_of_packages <- c("shiny" ,
-                      "shinythemes" ,
-                      "knitr" ,
-                      "ggplot2" ,
-                      "geoR" ,
-                      "plotly" ,
-                      "automap" ,
-                      "fields" ,
-                      "spdep" ,
-                      "raster" ,
-                      "sp" ,
-                      "rgeos" ,
-                      "gstat" ,
-                      "e1071" ,
-                      "ade4" ,
-                      "rmarkdown")
+list_of_packages <- c("shiny",
+                      "shinythemes",                    
+                      "geoR",
+                      "automap",
+                      "fields",
+                      "raster",
+                      "sp",
+                      "ggplot2",
+                      "rgeos",
+                      "gstat",
+                      "e1071",
+                      "spdep",
+                      "DT",
+                      "ade4",
+                      "V8",
+                      "knitr",
+                      "rmarkdown",
+                      "plotly", 
+                      "data.table",
+                      "RColorBrewer",
+                      "cowplot")
 
 
 invisible(lapply(list_of_packages,

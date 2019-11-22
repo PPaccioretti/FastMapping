@@ -1630,7 +1630,7 @@ suppressPackageStartupMessages({
       # Set up parameters to pass to Rmd document
       params <- list(input=isolate(reactiveValuesToList(input)),
                      output=isolate(reactiveValuesToList(ValoresOutput)))
-      
+      library(knitr)
       # save(paramts, file="C:/Users/Pablo/Data1.RData")
       # Knit the document, passing in the `paramts` list, and eval it in a
       # child of the global environment (this isolates the code in the document
