@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
   library(shinythemes)
   library(shinyBS)
   library(shinyjs)
+  library(shinycssloaders)
 })
 # library(shinycssloaders)
 # library(data.table)
@@ -22,6 +23,10 @@ suppressPackageStartupMessages({
 # library(rmarkdown)
 # library(shinyjs)
 source("src/Functions.R")
+
+library(shinycssloaders)
+options(spinner.color = "#e95420",
+        spinner.type = 6)
 
 options(shiny.sanitize.errors = FALSE)
 options(shiny.maxRequestSize = 20*1024^2)
@@ -76,5 +81,8 @@ distanciavecinoClusterHelp <- ""
 varexplicadaClusterHelp <- ""
 
 CressieHelp <- " if selected, use Cressie”s robust variogram estimate; if not use the classical method of moments variogram estimate"
+
+
+
 
   

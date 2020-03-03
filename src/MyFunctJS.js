@@ -6,4 +6,3 @@ shinyjs.init = function(){
   $('#PanelTabSet li a[data-value="ClusterTab"]').hide();
   $('#PanelTabSet li a[data-value="ReportTab"]').hide();
 }
-

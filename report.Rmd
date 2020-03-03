@@ -20,9 +20,16 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r, setup, echo=FALSE}
+```{r, setup, echo=FALSE, message=FALSE, warning=FALSE}
 library(knitr)
 library(ggplot2)
+
+options(knitr.table.format = function() {
+  if (knitr::is_latex_output()) 
+  "latex" else "pandoc"
+})
+
+knitr::opts_chunk$set(echo = FALSE)
 
 #        ##Data statistics
 # DescrStatistics <- function (DataF) {
@@ -48,7 +55,6 @@ library(ggplot2)
 # table(addNA(CondicFinal[,4]))
 
 
-
 myChoice <- list(Exponential ="Exp",
                  Shperical = "Sph",
                  Gaussian = "Gau",
@@ -61,16 +67,25 @@ myChoice <- list(Exponential ="Exp",
                  Pentaspherical = "Pen",
                  Hole = "Hol")
 
+Coordenadas <- c(params$input$xmapa,params$input$ymapa)
+VariablesTarget <- params$input$rto
 
-knitr::opts_chunk$set(echo = FALSE)
 ```
 
 
+```{r}
+if (identical(rmarkdown::metadata$runtime, "shiny"))
+  shiny::setProgress(0.25)  # set progress to 25%
+```
+
+
+
+
 ```{r, eval = FALSE}
-params
-
-
-structure(params)
+# params
+# 
+# 
+# structure(params)
 ```
 
 
@@ -106,9 +121,6 @@ TablaOriginalDep <- params$output$DataDep
 
 TablaOriginalDep <- TablaOriginalDep[TablaOriginalDep$Condition=="NormalPoint",]
 
-Coordenadas <- c(params$input$xmapa,params$input$ymapa)
-VariablesTarget <- params$input$rto
-
 kable(summary(TablaOriginalDep[VariablesTarget]))
 try(
   if(length(VariablesTarget)==1) {
@@ -136,9 +148,15 @@ ggplot(BothData) +
 ```
 
 
-`r if(sum(!do.call(rbind, lapply(params$output, is.null)))==1) {"You dont run a procedure"}`
 
-`r if(!is.null(params$output$MiKrige)) {cat("##Interpolation cross-validation results")}`
+```{r}
+if (identical(rmarkdown::metadata$runtime, "shiny"))
+  shiny::setProgress(0.50)  # set progress to 50%
+```
+
+`r if(sum(!do.call(rbind, lapply(params$output, is.null)))==1) {"You did not execute a procedure"}`
+
+`r if(!is.null(params$output$MiKrige)) {"## Interpolation cross-validation results"}`
 
 ```{r, eval=!is.null(params$output$MiKrige), results='asis'}
 # names(params$output)
@@ -167,20 +185,67 @@ if(!is.null(params$output$kriging)) plot(params$output$kriging)
 
 
 
-`r if(!is.null(params$output$Clasificacion)) {cat("# Clasification result")} `
+`r if(!is.null(params$output$Clasificacion)) {"# Clasification result"} `
 
-```{r, eval=!is.null(params$output$Clasificacion)}
+
+`r if(!is.null(params$output$Clasificacion)& length(VariablesTarget)>1) {"## Correlation matrix"} `
+
+
+```{r, eval=!is.null(params$output$Clasificacion) & length(VariablesTarget)>1, message=FALSE}
 
 # paste("Minimun value of summary index suggets", Min, "clusters")
-kable(params$output$Clasificacion$ResultadosConglom)
+# kable(params$output$Clasificacion$ResultadosConglom)
+# kable(params$output$Clasificacion$Indices)
+kable(
+  cor(params$output$Clasificacion$DatosConCongl[, VariablesTarget])
+)
 
+```
 
-kable(params$output$Clasificacion$Indices)
+`r if(!is.null(params$output$Clasificacion)) {"## Clasification plot"} `
 
+```{r}
 
 ggplot(params$output$Clasificacion$DatosConCongl, 
        aes_string(x=Coordenadas[1], y=Coordenadas[2], colour=params$input$NumClust)) + 
-  geom_point(size = 5)
+  geom_point(size = 2)
+
+print(params$output$corrVariables)
+print(params$output$corrVariablesClust)
+
+```
+
+
+`r if(!is.null(params$output$Clasificacion)) {"## Descriptive statistics"} `
+
+
+```{r, eval=!is.null(params$output$Clasificacion)}
+## Zone Validation
+# names(params$output)
+kable(params$output$zoneValidationTables$Descriptivo)
+
+```
+`r if(!is.null(params$output$Clasificacion)) {"In parenthesis coefficient of variation"}`
+
+
+`r if(!is.null(params$output$Clasificacion)) {"## Validation tables"} `
+
+```{r, eval=!is.null(params$output$Clasificacion), results='asis', out.width="25%"}
+myValidTables <- params$output$zoneValidationTables$Diferencias
+for (i in seq_len(length(myValidTables))) {
+  cat(paste('###', names(myValidTables)[i]))
+  cat('\n\n')
+  print(kable(myValidTables[[i]]))
+  cat("\n\n\n")
+  
+}
 
 
 ```
+
+
+```{r}
+if (identical(rmarkdown::metadata$runtime, "shiny"))
+  shiny::setProgress(1)  # set progress to 100%
+```
+

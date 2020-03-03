@@ -10,31 +10,47 @@ You can run the Application locally in R:
 
 
 ```r
-list_of_packages <- c("shiny",
-                      "shinythemes",                    
-                      "geoR",
-                      "automap",
-                      "fields",
-                      "raster",
-                      "sp",
-                      "ggplot2",
-                      "rgeos",
-                      "gstat",
-                      "e1071",
-                      "spdep",
-                      "DT",
-                      "ade4",
-                      "V8",
-                      "knitr",
-                      "rmarkdown",
-                      "plotly", 
-                      "data.table",
-                      "RColorBrewer",
-                      "cowplot")
+
+list_of_packages <- c(
+  "shiny",
+  "shinythemes",
+  "shinyBS",
+  "shinyjs",
+  "shinycssloaders",
+  "waiter",
+  "DT",
+  "data.table",
+  "dplyr",
+  "ggplot2",
+  "plotly",
+  "GGally",
+  "RColorBrewer",
+  "cowplot",
+  "knitr",
+  "rmarkdown",
+  "V8",
+  "geoR",
+  "automap",
+  "fields",
+  "raster",
+  "sp",
+  "rgeos",
+  "gstat",
+  "e1071",
+  "spdep",
+  "ade4",
+  "adespatial"
+)
 
 
 invisible(lapply(list_of_packages,
-                 function(x) if(!require(x,character.only = TRUE)) install.packages(x)))
+                 function(x)
+                   if (!require(x, character.only = TRUE))
+                   {
+                     install.packages(x)
+                     library(x, character.only = TRUE)
+                   }))
 
-shiny::runGitHub( "FastMapping", "PPaccioretti")
+shiny::runGitHub("FastMapping", "PPaccioretti")
+
 ```

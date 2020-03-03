@@ -14,31 +14,6 @@
 ###### FUNCIONES #####
 
 
-
-# list_of_packages <- c("shiny" ,
-#                       "shinythemes" ,
-#                       "knitr" ,
-#                       "ggplot2" ,
-#                       "geoR" ,
-#                       "plotly" ,
-#                       "automap" ,
-#                       "fields" ,
-#                       "spdep" ,
-#                       "raster" ,
-#                       "sp" ,
-#                       "rgeos" ,
-#                       "gstat" ,
-#                       "e1071" ,
-#                       "ade4" ,
-#                       "rmarkdown",
-#                       "V8")
-# 
-# 
-# invisible(lapply(list_of_packages, 
-#                  function(x) if(!require(x,character.only = TRUE)) install.packages(x)))
-
-
-
 suppressPackageStartupMessages({
   library(shiny)
   library(shinythemes)
@@ -112,7 +87,7 @@ shinyServer(function(input, output, session) {
   # 
   # })
 
-  
+
   observeEvent(once = TRUE,ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = histdata, {
 
 
@@ -154,8 +129,49 @@ suppressPackageStartupMessages({
     progress$set(value = 14)
     # source("Functions.R")
     progress$set(value = 15)
+
+        list_of_packages <- c(
+      "shiny",
+      "shinythemes",
+      "shinyBS",
+      "shinyjs",
+      "shinycssloaders",
+      "DT",
+      "data.table",
+      "dplyr",
+      "ggplot2",
+      "plotly",
+      "GGally",
+      "RColorBrewer",
+      "cowplot",
+      "knitr",
+      "rmarkdown",
+      "V8",
+      "geoR",
+      "automap",
+      "fields",
+      "raster",
+      "sp",
+      "rgeos",
+      "gstat",
+      "e1071",
+      "spdep",
+      "ade4",
+      "adespatial"
+    )
+    
+    
+    
+    invisible(lapply(list_of_packages,
+                     function(x)
+                       if (!require(x, character.only = TRUE))
+                       {
+                         install.packages(x)
+                         library(x, character.only = TRUE)
+                       }))
     # removeModal()
 })
+waiter_hide()
   })
 
   
@@ -168,7 +184,6 @@ suppressPackageStartupMessages({
   # output$SepData <- renderUI({
   #   validate(
   #     need(input$file,""))
-  #   # browser()
   #   if(!is.null(input$file)) {
   #     File <- input$file
   #     i <- 1
@@ -206,43 +221,45 @@ suppressPackageStartupMessages({
     return(Mdl)
   })
   
-  data <- reactive({#browser()
+  data <- reactive({
     File <- input$file
     if(is.null(File)){return()}
     # if(is.null(input$sep)){return()}
-    
-    # MiTabla<-tryCatch({
-    #   read.table(file = File$datapath, sep = input$sep, header = input$header)
-    # },error = function(e) {
-    #   read.table(file = File$datapath, sep = input$sep, header = input$header, dec=",")
-    # })
+
     MiTabla <- fread(File$datapath, data.table = FALSE)
-    # if(sum(sapply(MiTabla, is.numeric))<= 1) {
-    #   
-    #   
-    #   
-    #   MiTabla<-try(read.table(file = File$datapath, sep = input$sep, header = input$header, dec=","))
-    # }
+
+    if(all(!sapply(MiTabla[, !sapply(MiTabla, is.integer)], is.numeric))) {
+      MiTabla<-try(fread(File$datapath, data.table = FALSE, dec=","))
+    }
+    
     ValoresOutput$Tabla<-MiTabla
     MiTabla
   })
   
   ##### TRANSFORMACION DE COORDENADAS
   TransfCoord<- reactive({
-    # browser()
     MyFile <- data()
     MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
     MyFile <- data()[complete.cases(MyFile[,1:2]),]
+    
+    
+    Hemisfer <- switch(input$hemisferio,
+  
+      "1" = " +north",
+      "2" = " +south"
+    )
+    cordsist <- paste0("+proj=utm +zone=",input$zona,Hemisfer ," +ellps=WGS84 +datum=WGS84")
+    
     if(quantile(MyFile[,1],0.5)<0 &  quantile(MyFile[,2],0.5)<0) {
-      if(input$hemisferio==1) {Hemisfer<- " +north"} else {Hemisfer<-" +south"}
-      cordsist <- paste0("+proj=utm +zone=",input$zona,Hemisfer ," +ellps=WGS84 +datum=WGS84")
       coordinates (MyFile) <- c(1,2)
       proj4string(MyFile) <- CRS("+proj=longlat + datum=dat")
       Mydata_t <- spTransform(MyFile, CRS(cordsist))
       Mydata_t <- as.data.frame(Mydata_t)[,c(input$xmapa, input$ymapa, input$rto)]
       MyFile<-Mydata_t
     }
-    ValoresOutput$TablaCoordTrans<-MyFile
+    
+    ValoresOutput$TablaCoordTrans <-
+      list(TablaCoords = MyFile, coordproj = cordsist)
     return(MyFile)
   })
 
@@ -317,7 +334,6 @@ suppressPackageStartupMessages({
   
   #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  ##################### 
   MyFile <- reactive({
-    # browser()
     progress <- Progress$new(session, min = 1, max = 15)
     on.exit(progress$close())
     progress$set(message = 'Depuration in progress',
@@ -439,7 +455,6 @@ suppressPackageStartupMessages({
         progress$set(value = 12)
         datos_LM <- data.frame(datos,LM)
         
-        # browser()
         MP <- moran.plot1(datos_LM$Z, lw,quiet = TRUE,labels = FALSE,
                           col = 3, xlab = "Variable", ylab = "Variable Spatially Lagged", zero.policy = FALSE)
         Influ <- MP$is.inf #Influyentes por MoranPlot
@@ -473,7 +488,6 @@ suppressPackageStartupMessages({
         
         datos <- subset(MyYdepIn,MyYdepIn$Ii > 0 | MyYdepIn$Pr.z...0. > 0.05 | !SpMP)[, c("X","Y","Z")]
         # datos <- datos[,c(1:3)]
-        # browser()
         Inliers <- data.frame("Filas" = MyYdepIn$Filas, 
                              "SpatialOutlier" = (MyYdepIn$Ii <= 0 | MyYdepIn$Pr.z...0. <= 0.05), 
                              "SpatialOutlier_MoranPlot" = SpMP)
@@ -484,9 +498,6 @@ suppressPackageStartupMessages({
     
     progress$set(value = 13)
     condicion <- unique(condicion)
-    
-    
-    # browser()
     
     MisVerd <- which(condicion[,-1, drop=FALSE] == TRUE, arr.ind = TRUE)
     # nrow(MisVerd)
@@ -523,7 +534,6 @@ suppressPackageStartupMessages({
     } else {
       DatosProcedimiento <- DatosUtilizadosProcedSinOutliers_Inlierns
     }
-    # browser()
 
         return(list("Datos" = DatosProcedimiento, #DatosUtilizadosProcedSinOutliers_Inlierns,#DatosProcedimientoOriginales, 
                 "CondicionDeDepuracion" = CondicFinal, 
@@ -573,9 +583,16 @@ suppressPackageStartupMessages({
   })
   
   output$Zona <- renderUI({
-    validate(
-      need(data(),""))
-    numericInput("zona","Area", 20 ,width = "100%", min = 1, max = 60, step = 1)  
+    validate(need(data(), ""))
+    numericInput(
+      "zona",
+      "UTM area",
+      20 ,
+      width = "100%",
+      min = 1,
+      max = 60,
+      step = 1
+    )
     
   })
   
@@ -586,7 +603,6 @@ suppressPackageStartupMessages({
     textOutput("msgTxt")})
   
   output$msgTxt <- renderText({
-    # browser()
     try({
      MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
     MyFile <- data()[complete.cases(MyFile[,1:2]), ]
@@ -599,20 +615,25 @@ suppressPackageStartupMessages({
     MyFile()$UtilizadosDep
   })
   
-  output$tableDataExtracted <- renderDataTable({
+  output$tableDataExtracted <- DT::renderDataTable({
     validate(
       need(input$file, 'Check input file!'),
       need(ncol(dataset()) == 4, 'No extracted data'))
+    # browser()
+    # table(MyFile()$CondicionDeDepuracion[complete.cases( MyFile()$Datos),"Condition"], useNA = "always")
+    # prop.table(table(data[complete.cases( MyFile()$Datos),"Condition"], useNA = "always"))*100
+    
     data <- MyFile()$CondicionDeDepuracion
+    
+    sd(MyFile()$CondicionDeDepuracion[complete.cases(MyFile()$CondicionDeDepuracion),]$Rinde)
+    sd(MyFile()$CondicionDeDepuracion$Rinde)
+    
     data[complete.cases(data),]
     
   })
   
   dataset <- reactive({
-    # validate(
-    # browser()
-    # table(data$Condition)
-    #   need(all(is.na(MyFile()$CondicionDeDepuracion)), 'Superman va de paseo!'))
+
     data <- MyFile()$CondicionDeDepuracion
     if (all(is.na(data))) {
       ValoresOutput$DataDep <- MyFile()$UtilizadosDep
@@ -637,9 +658,6 @@ suppressPackageStartupMessages({
   })
   
   nombresCol <- reactive({
-    # browser()
-    # validate(
-    #   need(try(colnames(dataset())), 'Need colnames!!'))
     Nombre <- try(colnames(dataset()))
     ValoresOutput$NombresCol <- Nombre
     return(Nombre)
@@ -653,9 +671,9 @@ suppressPackageStartupMessages({
     # build graph with ggplot syntax
     p <- ggplot(dataset(), aes_string(x = input$x, y = input$y, color = input$color)) +
       geom_point()
-    # browser()
+    
     ggplotly(p) %>%
-      layout(autosize = TRUE)
+      plotly::layout(autosize = TRUE)
     # layout(height = input$plotHeight, autosize=TRUE)
   })
   #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  ##################### 
@@ -670,7 +688,6 @@ suppressPackageStartupMessages({
       library(cowplot)
     })
     
-    # browser()
     PaletaColorFun <- function(Variable, namepal = 'Set1') {
       if (is.factor(Variable)) {
         PaletaColorVariable <- brewer.pal(n = nlevels(Variable), name = namepal)
@@ -818,8 +835,7 @@ suppressPackageStartupMessages({
       MyFile[,3] <- as.numeric(as.character(MyFile[,3]))
       coordinates (MyFile) <- c(1,2)
       MyMod=list()
-      # browser()
-      
+
       if(nrow(MyFile) > nrow(remove.duplicates(MyFile))) {
         difRow <- nrow(MyFile) - nrow(remove.duplicates(MyFile))
         if(difRow == 1) {
@@ -849,10 +865,8 @@ suppressPackageStartupMessages({
         incProgress(1/length(SelectedModels()), detail = paste("Doing model", names(myChoice)[myChoice==i]))
         
       }
-# browser()
-# 
-# compare.cv(MyMod[[2]])
-      
+
+
       #Esta funcion si no puede usar la funcion compare.cv, calcula el RMSE a mano y lo repite 11 vecces
       ModList=lapply(MyMod,function (x) tryCatch(compare.cv(x),error=function(e) {
         cat("Calculating CV by hand\n")
@@ -868,7 +882,6 @@ suppressPackageStartupMessages({
         }))
       f=do.call("cbind",ModList)
       colnames(f)=SelectedModels()
-      # browser()
       ValoresOutput$MiKrige <- f
       return(f)
     }
@@ -893,7 +906,6 @@ suppressPackageStartupMessages({
   })
   
   Variogram <- reactive({
-    # browser()
     Formula <- Formula()
     MyFile <- MyFile()$Datos
     if(is.null(MyFile)) {return()}
@@ -981,14 +993,9 @@ suppressPackageStartupMessages({
   #       Plots
   
   output$VariogramPlot <- renderPlot({
-    # browser()
     validate(
       need(input$file, 'Check input file!'))
     if(input$SelectPlot == 1 & length(MyFile()$Datos) != 0){
-      # dev.new()
-      # MiVariograma<-Variogram()
-      # browser()
-      
       mo <- cbind(Variogram()$var_model)
       nug <- mo[1,2]
       
@@ -1019,9 +1026,7 @@ suppressPackageStartupMessages({
           c(as.character(Modelo[1,1]),paste(round(stack(Modelo)[,1],1))),
           sep = ": ", collapse = "\n")
       })
-      # browser()
-      
-      
+
       VariogramData <- variogramLine(Variogram()$var_model,max(Variogram()$exp_var$dist))
       variogg <- ggplot(data =VariogramData ) +
         geom_point(data = Variogram()$exp_var, aes(x=dist,y=gamma), size = 2) + 
@@ -1055,7 +1060,6 @@ suppressPackageStartupMessages({
   output$KrigingPlot <- renderImage ({
     validate(
       need(input$file, 'Check input file!'))
-    # browser()
     if(input$SelectPlot == 2 & length(MyFile()$Datos) != 0){
       outfile <- tempfile(fileext='.png')
       png(outfile, width=900, height=900)
@@ -1123,7 +1127,7 @@ suppressPackageStartupMessages({
   #     render UI plot
   
   output$Plots <- renderUI({
-    # browser()
+
     validate(
       need(input$file, 'Check input file!'))
     if (input$SelectPlot == 1){plotOutput("VariogramPlot")} else if (input$SelectPlot == 2) {
@@ -1143,7 +1147,6 @@ suppressPackageStartupMessages({
   #Tabla semivariograma experimental
   
   output$varPred <- renderTable({
-    #browser()
     validate(
       need(input$file, 'Check input file!'))
     myresultado <- as.data.frame(Variogram()$exp_var)[,1:3]
@@ -1156,7 +1159,7 @@ suppressPackageStartupMessages({
   output$semivAju <- renderTable({
     validate(
       need(input$file, 'Check input file!'))
-    # browser()
+
     mo <- cbind(Variogram()$var_model)
     nug <- mo[1,2]
     
@@ -1188,19 +1191,17 @@ suppressPackageStartupMessages({
   output$tablita <- DT::renderDataTable({
     validate(
       need(input$file, 'Check input file!'))
-    # browser()
-    
+
     myresultado <- data.frame(kriging())
 
     datatable(myresultado, rownames = FALSE)
   }) 
   
-  
+
   output$predictedSummary <- renderPrint({
     validate(
       need(input$file, ''))
-    # browser()
-    
+
     myresultado <- data.frame(kriging())
     summary(myresultado)
   })
@@ -1226,7 +1227,6 @@ suppressPackageStartupMessages({
   )
   
   # output$TablasDepuradas<- renderUI({ 
-  #   # browser()
   #   # conditionalPanel(condition = "ncol(dataset())>4",    
   #                    tabPanel("Depurated Data", dataTableOutput("tablePrueba")) 
   #                    tabPanel("Data Extracted", dataTableOutput("tableDataExtracted")) 
@@ -1268,7 +1268,7 @@ suppressPackageStartupMessages({
       # uiOutput("TablasDepuradas")
       # conditionalPanel(condition = "ncol(dataset())==4",
       tabPanel("Depurated Data",downloadButton("downloadDepurated","Save File"), dataTableOutput("DepuratedTable"))
-      ,tabPanel("Data Extracted", dataTableOutput("tableDataExtracted"))
+      ,tabPanel("Data Extracted", DT::dataTableOutput("tableDataExtracted"))
       ,tabPanel("Plot Condition Data",
                 sidebarPanel(width = 3,
                              selectInput('x', 'X', choices = nombresCol(), selected = nombresCol()[1]),
@@ -1279,7 +1279,8 @@ suppressPackageStartupMessages({
                 ),
                 mainPanel(width = 9,
                           # fluidRow(
-                          plotlyOutput('DepuratedPlot', height = "600px")
+                          plotlyOutput('DepuratedPlot', height = "600px") %>% 
+                            withSpinner()
                           # ,plotOutput('PublicationPlot')
                             
                           # ), 
@@ -1382,39 +1383,67 @@ suppressPackageStartupMessages({
       labs(y = "Standardized value") 
     
     ggplotly(ggplotCongl) %>%
-      layout(autosize=TRUE)
+      plotly::layout(autosize=TRUE)
     
   })
   
   output$TablaResultadosConglom <- DT::renderDataTable({
-    # browser()
+
     datatable(Clasificacion()$ResultadosConglom, rownames = FALSE, 
               options = list(
                 searching = FALSE,
                 paging = FALSE))
   })
   
-  output$GraficoResultadosConglom <- renderPlotly({
+  # output$GraficoResultadosConglom <- renderPlotly({
+  #   
+  #   ggPlotResCong <- ggplot(Clasificacion()$ResultadosConglom,
+  #                           aes(x = Cluster, y = SSDW)) +
+  #                       geom_point() +
+  #                       geom_line()
+  #   
+  #   ggplotly(ggPlotResCong) %>%
+  #     layout(autosize=TRUE)
+  #   
+  # })
+  SelectBestCluster <- reactive({
+    Indices <- Clasificacion()$Indices
+    Selec <-
+      names(Clasificacion()$Conglomerado)[which.min(Indices[, ncol(Indices)])]
+    Selec
+  })
+
+  
+  
+  output$SelectorCong<-renderUI({
     
-    ggPlotResCong <- ggplot(Clasificacion()$ResultadosConglom,
-                            aes(x = Cluster, y = SSDW)) +
-                        geom_point() +
-                        geom_line()
     
-    ggplotly(ggPlotResCong) %>%
-      layout(autosize=TRUE)
+    ListaChoices <-
+      colnames(Clasificacion()$DatosConCongl)[!colnames(Clasificacion()$DatosConCongl) %in% c(input$xmapa, input$ymapa)]
+    selectInput('NumClust',
+                'Clusters',
+                choices = ListaChoices ,
+                selected = SelectBestCluster())
+    })
+  
+  
+  output$changedistanciavecinomax <- renderUI(
+    if(input$distanciavecino[2] >= 1000) {
+      fluidRow(
+        h5("It seems that you want more distance than 1000 m between neighbours... which one do you want?"),
+        numericInput("maxdistNeigh", "Max distance", value = input$distanciavecino[2])
+      )
+    }
+  )
+  
+  observeEvent(input$maxdistNeigh, {
+    # if(input$distanciavecino) {
+      updateNumericInput(session, "distanciavecino", max = max(c(1000, input$maxdistNeigh)))
+    # }
     
   })
   
-  output$SelectorCong<-renderUI({
-    ListaChoices<-colnames(Clasificacion()$DatosConCongl)[!colnames(Clasificacion()$DatosConCongl) %in% c(input$xmapa, input$ymapa)]
-    selectInput('NumClust', 'Clusters',choices =ListaChoices 
-                , selected = tail(colnames(Clasificacion()$DatosConCongl),1))})
-  
-  
   Clasificacion <- reactive({
-    # browser()
-    
     progress <- Progress$new(session, min=1, max=13)
     on.exit(progress$close())
     progress$set(message = 'KM-sPC classification in progress',
@@ -1426,6 +1455,7 @@ suppressPackageStartupMessages({
 
     if(length(input$rto)==1) {
       Mydata <- as.data.frame(kriging())[,seq_along(c(input$xmapa, input$ymapa,input$rto))]
+      Mydata <- na.omit(Mydata)
       colnames(Mydata) <- c(input$xmapa, input$ymapa,input$rto)
     } else {
       MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa,c(input$rto))]
@@ -1433,28 +1463,42 @@ suppressPackageStartupMessages({
       
     }
      MyZ <- Mydata[, c(input$xmapa, input$ymapa)]
-    MyY <- Mydata[, c(input$rto), drop=F]
-    
+     MyY <- Mydata[, c(input$rto), drop=F]
+     
+     
+      clusterKM <-function(cen, datos){
+        MC <- cmeans(datos, dist=input$distancia,centers=cen,
+                     iter.max = as.numeric(input$iteraciones), method="cmeans", m=as.numeric(input$ExpDif))
+      }   
+      
     if(ncol(MyY)==1) {
       progress$set(message = 'Fuzzy classification in progress')
-      
-      clusterKM <-function(cen){
-        MC <- cmeans(MyY, dist=input$distancia,centers=cen,
-                     iter.max = as.numeric(input$iteraciones), method="cmeans", m=as.numeric(input$ExpDif))
-      }
+
       progress$set(value = 3)
       clasificaciones <- apply(matrix(seq(as.numeric(input$clusters[1])
-                                          ,as.numeric(input$clusters[2]),by=1)),1,clusterKM)
+                                          ,as.numeric(input$clusters[2]),by=1)),1,clusterKM,datos = MyY)
       progress$set(value = 4)
     }
     
     if(ncol(MyY)>1) {
-      if (input$vecindarionulo)  {
-        set.ZeroPolicyOption(TRUE) }
       
-      cord <- coordinates (MyZ[,1:2])
+        set.ZeroPolicyOption(input$vecindarionulo)
+      
+      cord <- coordinates(MyZ[,1:2])
       gri <- dnearneigh(cord, as.numeric(input$distanciavecino[1]), as.numeric(input$distanciavecino[2]))
-      lw <- try(nb2listw(gri, style = "W"), silent = TRUE)
+      # lw <- try(nb2listw(gri, style = "W"), silent = TRUE)
+      
+      lw <- tryCatch(nb2listw(gri, style = "W"), silent = TRUE,
+               error = function(e){
+                 if(agrepl("Empty neighbour sets found", e)){
+                   showNotification("Try with more distance between neighbors.\n
+                                    Or select data with null neighbor ", type = "error")
+                   updateTabsetPanel(session, "ClustersTabs", selected = "ClasifParameters")
+                   stop("Empty neighbour sets found",call. = FALSE)
+                 }
+               })
+      
+      
       progress$set(value = 2)
       # if (lw[1]!="W") {
       #   rm("MyResults")
@@ -1464,41 +1508,42 @@ suppressPackageStartupMessages({
       
       #  Analisis de Componentes Principales (PCA)
       
+      
       # Biplot, autovalores asociados a cada CP (grafico de barras) y calculo de correlaciones de las CP1 y CP2 del PCA.
+      ###### PCA con Coords ------
+      # pca <- dudi.pca(Mydata, center=input$centrado,scannf = FALSE, nf=ncol(Mydata))
+      # ms <- adespatial::multispati(pca, lw, scannf = F, nfnega= ncol(Mydata), nfposi = ncol(Mydata))  ########################################################################
+      ### PCA SIN COORDS -----
       
-      ifelse (input$centrado,
-              pca <- dudi.pca(MyY, center=T,scannf = FALSE, nf=ncol(MyY)),
-              pca <- dudi.pca(MyY, center=F,scannf = FALSE, nf=ncol(MyY)))
       
-      ms <- adespatial::multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))  ##################################################################################################################
+      pca <- dudi.pca(MyY, center=input$centrado,scannf = FALSE, nf=ncol(MyY))
+      ms <- adespatial::multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))  #########################################################################
+      ### Error cuando no encuentra vecinos Error in adespatial::multispati: object of class 'listw' expected
       # ms <- multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))
-      
-      capture.output(resms <- summary(ms), file="NULL")
-      var_ms <- as.data.frame(resms[,2])
+
+      invisible(capture.output(resms <- summary(ms)))
+      var_ms <- resms[,2, drop = F]
       nfila_ms <- length(ms$eig)
       propvar_ms <- var_ms/nfila_ms
       propvaracum_ms <- cumsum(propvar_ms)*100
       
-      eje_ms <-c(1: nfila_ms)
-      resultado_ms <- cbind(eje_ms,resms$eig,resms$"var",propvar_ms,propvaracum_ms)
+      eje_ms <-c(1:nfila_ms)
+      resultado_ms <- data.frame(eje_ms,resms$eig,resms$"var",propvar_ms,propvaracum_ms)
       names(resultado_ms) <- c("Eje","Autovalores","Varianza Espacial","Proporcion","Prop. Acum.")
       filares_ms <- length(ms$li)
-      resultado_ms <-resultado_ms[1:filares_ms,]
+      resultado_ms <- resultado_ms[1:filares_ms,]
       
-      num_sPC <- min(which((resultado_ms[,5])>=as.numeric(input$varexplicada)))
+      num_sPC <- min(which(resultado_ms[,5]>as.numeric(input$varexplicada)))
       sPC <- ms$li[1:num_sPC]
-      
-      clusterKM <-function(cen){
-        MC <- cmeans(sPC, dist=input$distancia,centers=cen,
-                     iter.max = as.numeric(input$iteraciones), method="cmeans", m=as.numeric(input$ExpDif))
-      }
-      
+#cor(data.frame(MyY, sPC))
+
       clasificaciones <- apply(matrix(seq(as.numeric(input$clusters[1])
-                                          ,as.numeric(input$clusters[2]),by=1)),1,clusterKM)
+                                          ,as.numeric(input$clusters[2]),by=1)),
+                               1,clusterKM, datos = sPC)#sPCCoords) ######### ------
     }
     res_clas <- lapply(clasificaciones,function(Clus) c(Clus$cluster))
     res_clas <- data.frame(do.call("cbind",res_clas))
-    Name <- paste("Cluster", " ", seq(input$clusters[1], input$clusters[2]), sep="")
+    Name <- paste("Cluster", "_", seq(input$clusters[1], input$clusters[2]), sep="")
     names(res_clas)=c(Name)
     
     res_iter <- lapply(clasificaciones,function(x) c("Iterations"=x$iter))
@@ -1513,8 +1558,7 @@ suppressPackageStartupMessages({
     progress$set(value = 4)
     
     
-    Ind <- function (obj) {
-      # browser()
+    Ind <- function(obj) {
       fclustIndex_modif(y=obj,MyY, index=c("xie.beni", #"fukuyama.sugeno",
                                            "partition.coefficient", "partition.entropy"))
     }
@@ -1526,7 +1570,6 @@ suppressPackageStartupMessages({
     
     progress$set(value = 10)
     norm <- function (div) {
-      # browser()
       div/max(div)}                     #######################################################################################3
     if(nrow(Indices)>1) {
       IndN <-apply(Indices,2,norm)                              #######################################################################################3
@@ -1534,44 +1577,31 @@ suppressPackageStartupMessages({
     } else {IndN <- Indices}  #######################################################################################3
     #######################################################################################3
     Cluster <- seq(as.numeric(input$clusters[1]),as.numeric(input$clusters[2]))
-    ResultadosIndices <- data.frame(cbind(Cluster,Indices, IndN))
+    ResultadosIndices <- data.frame(Cluster,Indices, IndN)
     names(ResultadosIndices)=c("Num. Cluster", "Xie Beni", #"Fukuyama Sugeno",
                                "Partition Coefficient", "Entropy of Partition","Summary Index")
     
-    #tryCatch({data.frame(Cluster,Indices, IndN)}, error=function (e) {data.frame(cbind(Cluster,Indices, t(IndN)))})
-    
-    #     par(mfrow=c(2,2))
-    #     plot(seq(as.numeric(input$clusters[1]),as.numeric(input$clusters[2])),
-    #          ResultadosIndices[,2],xlab = "N?mero de Cluster", ylab="Xie Beni")
-    #     plot(seq(as.numeric(input$clusters[1]),as.numeric(input$clusters[2])),
-    #          ResultadosIndices[,3],xlab = "N?mero de Cluster", ylab="Fukuyama Sugeno")
-    #     plot(seq(as.numeric(input$clusters[1]),as.numeric(input$clusters[2])),
-    #          ResultadosIndices[,4],xlab = "N?mero de Cluster", ylab="Coeficiente de Partici?n")
-    #     plot(seq(as.numeric(input$clusters[1]),as.numeric(input$clusters[2])),
-    #          ResultadosIndices[,5],xlab = "N?mero de Cluster", ylab="Entrop?a de Partici?n")
+  
     progress$set(value = 11)
-    resultados <- data.frame(cbind(Cluster,res_iter,res_scdd))
-    # x11()
-    # plot(seq(as.numeric(input$clusters[1]),as.numeric(input$clusters[2]),by=1),
-    #      resultados[,3],xlab = "N?mero de Cluster", ylab="SCDD")
+    resultados <- data.frame(Cluster,res_iter,res_scdd)
+    
     progress$set(value = 12)
 
-    MisClus <-data.frame("Con" = as.numeric(rownames(res_clas)),res_clas)
- 
+    # MisClus <-data.frame("Con" = as.numeric(rownames(res_clas)),res_clas)
+    MisClus <- data.frame(res_clas)
     progress$set(value = 13)
-    
     if(length(input$rto)==1) {
        resultados<-list("Conglomerado" = MisClus ,"ResultadosConglom"=resultados,
                      "Indices" = ResultadosIndices, "DatosConCongl"=data.frame(Mydata,apply(MisClus,2,as.factor)),
                      "NombresColCluster" = colnames(data.frame(Mydata,MisClus)))
       
     } else {
-      
+      MisClus <-data.frame("Con" = as.numeric(rownames(res_clas)),res_clas)
       MydataNA_Con <- cbind("Con" = as.numeric(rownames(MydataNA)),MydataNA)
       MydataNA_Con_Cluster <- merge(MydataNA_Con,MisClus, by="Con",all.x=TRUE)
       
       MisClus_1 <- MydataNA_Con_Cluster[,-c(1:length(MydataNA_Con))]
-      
+
       resultados<-list("Conglomerado" = MisClus_1 ,"ResultadosConglom"=resultados,
                        "Indices" = ResultadosIndices, "DatosConCongl"=data.frame(Mydata,apply(MisClus_1,2,as.factor)),
                        "NombresColCluster" = colnames(data.frame(Mydata,MisClus_1)))
@@ -1580,37 +1610,170 @@ suppressPackageStartupMessages({
     }
    
     ValoresOutput$Clasificacion<-resultados
-    
     return(resultados)
     
   })
   
   
   # output$DatosClusters
+  output$corrPlotClasif<-renderPlot({
+    if(length(input$rto)==1) {
+      plotClasifVar <- ggplot(Clasificacion()$DatosConCongl, aes_string(input$rto)) +
+        geom_density()
+    } else {
+      plotClasifVar <- ggpairs(Clasificacion()$DatosConCongl,
+                               columns = input$rto,
+                               progress = FALSE)
+      
+    }
+    ValoresOutput$corrVariables <- plotClasifVar
+    
+    print(plotClasifVar)
+  })
+  
+  output$ClasifMatrCorr<-renderPlot({
+    validate(
+      need(agrepl("Cluster", input$NumClust),
+           "Must select a Cluster column")
+    )
+    
+    if(length(input$rto)==1) {
+      MatrClasPlot <-
+        ggplot(
+          Clasificacion()$DatosConCongl,
+          aes_string(
+            input$rto,
+            color = input$NumClust,
+            fill = input$NumClust
+          )
+        ) +
+        geom_density()
+      
+      # print(ggscatmat(Clasificacion()$DatosConCongl,
+      #                 columns = input$rto))
+    } else {
+      
+      MatrClasPlot <- ggpairs(
+        Clasificacion()$DatosConCongl,
+        mapping = aes_string(color = input$NumClust),
+        columns = input$rto,
+        progress = FALSE
+      )
+      # MatrClasPlot <- plot(1,2)
+      
+    }
+    
+    ValoresOutput$corrVariablesClust <- MatrClasPlot
+    
+    print(MatrClasPlot)
+
+  })
+  
+  # ### Download Table Cluster
+  # Clasificacion()$DatosConCongl
+  output$downloadClasification <- downloadHandler(  
+    filename = function() {paste('Clasification-', Sys.Date(), '.txt', sep='')},
+    content = function(file) {write.table(Clasificacion()$DatosConCongl,file,
+                                          sep = "\t", quote = FALSE, row.names = FALSE)} 
+  )   
   
   output$ClasificationPlot <- renderPlotly({
     validate(
-      need(input$file, 'Check input file!')#,
-      #need(ncol(dataset())==4, 'No depurated data')
+      need(input$file, 'Check input file!'),
+      need(input$NumClust, 'Select a column')
     )
-    
-    # browser()
+
     # build graph with ggplot syntax
-    p <- ggplot(Clasificacion()$DatosConCongl, aes_string(x = input$xmapa, y = input$ymapa, 
-                                                          colour=input$NumClust)) +
+    p <-
+      ggplot(
+        Clasificacion()$DatosConCongl,
+        aes_string(
+          x = input$xmapa,
+          y = input$ymapa,
+          colour = input$NumClust
+        )
+      ) +
       geom_point()
-    # browser()
     ggplotly(p) %>%
-      layout(autosize=TRUE)
+      plotly::layout(autosize=TRUE)
     
     ValoresOutput$GraficoConglom <- p
     # layout(height = input$plotHeight, autosize=TRUE)
   })
+  #### Cluster Validation -----
+  ValidCluster <- reactive({
+    validate(need(input$NumClust,
+             label = "Select the number of cluster to validate in 'Cluster Plot' tab"),
+             need(agrepl("Cluster_*",input$NumClust),
+                  label = "Select a valid number of cluster to validate"))
+    
+    zoneValidTables <- ValidVarKrig(ClustersFM =  Clasificacion()$DatosConCongl,
+                 datosAValid = input$rto, 
+                 numCluster = input$NumClust,
+                 EstDesc = VarKrigDescrReac(),
+                 crs = ValoresOutput$TablaCoordTrans$coordproj)
+    ValoresOutput$zoneValidationTables <- zoneValidTables
+    return(zoneValidTables)
+    
+  })
   
-  #########################################
-  ##############  REPORTE   ##
-  #########################################
+  output$clustervalidationTables <- renderUI({
+    LL <- vector("list",length(ValidCluster()$Diferencias))       
+    for(i in seq_len(length(ValidCluster()$Diferencias))){
+      LL[[i]] <- 
+        fluidRow(
+          column(width = 12/3,
+                 h3(names(ValidCluster()$Diferencias)[i]),
+                 DT::dataTableOutput(paste0("dt_", i))),
+          column(width = 12/4,
+                 br(),br(),
+                 plotOutput(paste0("plot_", i), height = "190px")),
+          br(),br()
+                 
+          )
+        
+      
+    }      
+    return(LL)  
+    
+  }) 
   
+  observeEvent(input$NumClust, {
+
+    sapply(seq_len(length(ValidCluster()$Diferencias)), function(i) {
+      id <- paste0("dt_", i)
+      output[[id]] <- DT::renderDataTable(
+        DT::datatable(ValidCluster()$Diferencias[[i]],
+                       options = list(paging = FALSE,
+                                      searching = FALSE,
+                                      autoWidth = TRUE, 
+                                      info = FALSE),
+                      rownames = FALSE,
+                      selection = 'none'
+                                      
+                       ))
+      
+      
+      output[[paste0("plot_", i)]] <- renderPlot(makePlotClusterValid(ValidCluster()$Diferencias[[i]]))
+    })
+
+  })
+
+
+    VarKrigDescrReac <- reactive({    
+
+    VarKrigDescr(ClustersFM = Clasificacion()$DatosConCongl,
+                 datosAValid = input$rto,
+                 crs = ValoresOutput$TablaCoordTrans$coordproj
+               )
+  
+  })
+    
+    
+
+  #########################################
+  ##############  REPORTE   #####
+  #########################################
   output$report <- downloadHandler(
     # For PDF output, change this to "report.pdf"
     filename = function() {
@@ -1620,7 +1783,7 @@ suppressPackageStartupMessages({
     },
     
     content = function(file) {
-      # browser()
+      withProgress(message = 'Rendering, please wait!', {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
       # can happen when deployed).
@@ -1631,25 +1794,43 @@ suppressPackageStartupMessages({
       params <- list(input=isolate(reactiveValuesToList(input)),
                      output=isolate(reactiveValuesToList(ValoresOutput)))
       library(knitr)
+     
       # save(paramts, file="C:/Users/Pablo/Data1.RData")
+      
       # Knit the document, passing in the `paramts` list, and eval it in a
       # child of the global environment (this isolates the code in the document
       # from the code in this app).
-      # browser()
       rmarkdown::render(input=tempReport, output_format=switch(
         input$format,
         PDF = pdf_document(), HTML = html_document(), Word = word_document()),
         output_file = file,
         params = params,
         envir = new.env(parent = globalenv()))
-      # browser()
-    }
+   
+      }) 
+      }
+    
   )
   
-  ValoresOutput <- reactiveValues(Tabla=NULL, TablaCoordTrans=NULL,DataDep=NULL,NombresCol=NULL,
-                                  SelectedMdls=NULL,  MiKrige=NULL,
-                                  Variograma=NULL, Mygr=NULL, kriging=NULL, GeoTiff=NULL, variogg = NULL,
-                                  Clasificacion=NULL, GraficoConglom=NULL)
+  ValoresOutput <-
+    reactiveValues(
+      Tabla = NULL,
+      TablaCoordTrans = NULL,
+      DataDep = NULL,
+      NombresCol = NULL,
+      SelectedMdls = NULL,
+      MiKrige = NULL,
+      Variograma = NULL,
+      Mygr = NULL,
+      kriging = NULL,
+      GeoTiff = NULL,
+      variogg = NULL,
+      Clasificacion = NULL,
+      GraficoConglom = NULL,
+      corrVariables = NULL,
+      corrVariablesClust = NULL,
+      zoneValidationTables = NULL
+    )
   
   observeEvent(input$rto, {
     
@@ -1697,3 +1878,4 @@ suppressPackageStartupMessages({
   
   
 })
+
