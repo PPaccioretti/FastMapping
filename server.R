@@ -238,16 +238,18 @@ waiter_hide()
   
   ##### TRANSFORMACION DE COORDENADAS
   TransfCoord<- reactive({
-    MyFile <- data()
+    # MyFile <- data()
     MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
-    MyFile <- data()[complete.cases(MyFile[,1:2]),]
+    MyFile <- MyFile[complete.cases(MyFile[,1:2]),]
     
+    
+    # browser()
     
     Hemisfer <- switch(input$hemisferio,
-  
       "1" = " +north",
       "2" = " +south"
     )
+    
     cordsist <- paste0("+proj=utm +zone=",input$zona,Hemisfer ," +ellps=WGS84 +datum=WGS84")
     
     if(quantile(MyFile[,1],0.5)<0 &  quantile(MyFile[,2],0.5)<0) {
@@ -605,7 +607,7 @@ waiter_hide()
   output$msgTxt <- renderText({
     try({
      MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
-    MyFile <- data()[complete.cases(MyFile[,1:2]), ]
+    MyFile <- MyFile[complete.cases(MyFile[,1:2]), ]
    if(quantile(MyFile[, 1],0.5) < 0 &  quantile(MyFile[, 2],0.5) < 0) {"Projection system will be transform from latlong to UTM automatically"}})
   })
   
@@ -678,136 +680,207 @@ waiter_hide()
   })
   #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  ##################### 
   output$PublicationPlot <- renderPlot({
-    validate(
-      need(input$file, 'Check input file!')#,
-      #need(ncol(dataset())==4, 'No depurated data')
-    )
-    # build graph with ggplot syntax
-    suppressPackageStartupMessages({
-      library("RColorBrewer")
-      library(cowplot)
-    })
-    
-    PaletaColorFun <- function(Variable, namepal = 'Set1') {
-      if (is.factor(Variable)) {
-        PaletaColorVariable <- brewer.pal(n = nlevels(Variable), name = namepal)
-        names(PaletaColorVariable) <- levels(Variable) 
-        PaletaColorVariable
-      }
-    }
-    if (input$color == "Condition") {  
-
-      Crudos <- dataset()
-      
-      # Crudos[, input$color] <-factor(Crudos[, input$color], levels = rev(levels(Crudos[, input$color])))# <- rev(levels(dataset()[, input$color]))
-      
-      Eliminados <- subset(Crudos, Crudos[, input$color] != "NormalPoint",drop = FALSE)
-      Remanentes <- subset(Crudos, Crudos[, input$color] == "NormalPoint",drop = FALSE)
-      
-      PaletaColor <- PaletaColorFun(Crudos[, input$color])
-      
-      plotCrudos <- ggplot(Crudos, aes_string(x = input$x, y = input$y, 
-                                              color = input$color)) + 
-        geom_point() + 
-        scale_color_manual(values = PaletaColor)
-      
-      
-      plotEliminados <- ggplot(Eliminados, aes_string(x = input$x, y = input$y, 
-                                                      color = input$color)) + geom_point() + 
-        scale_color_manual(values = PaletaColor)
-      
-      plotRemanentes <- ggplot(Remanentes, aes_string(x = input$x, y = input$y, 
-                                                      color = input$color)) + geom_point() + 
-        scale_color_manual(values = PaletaColor)
-      
-      # a1 <- ggplotly(plotCrudos) 
-      # a2 <- ggplotly(plotEliminados) 
-      # a3 <- ggplotly(plotRemanentes) 
-      
-      
-      PlotGrid <- plot_grid( plotCrudos + theme(legend.position = "none"),
-                             plotEliminados + theme(legend.position = "none"),
-                             plotRemanentes + theme(legend.position = "none"),
-                             align = 'vh',
-                             labels = c("A", "B", "C"),
-                             hjust = -1,
-                             nrow = 1)
-      
-      
-      legend <- get_legend(plotCrudos + theme(legend.position = "bottom"))
-
-      # add the legend to the row we made earlier. Give it one-third of the width
-      # of one plot (via rel_heights).
-      p <- plot_grid(PlotGrid, legend, ncol = 1, rel_heights = c(1, .2))
-      p
-      
-    }
-    if (input$color == input$rto && "Condition" %in% colnames(dataset())) {
-      #####   #####   #####   #####   #####   ##### 
-      ##### Yield Plot
-      #####   #####   #####   #####   #####   ##### 
-      Paleta <- 'Greys'
-      cant <- 3
-      
-      Crudos <- dataset()
-      
-      quants <- quantile(Crudos[ ,input$rto], seq(0,1, by = 1/cant))
-      CategYieldCrudos <- cut(Crudos[ ,input$rto], breaks = quants, include.lowest = TRUE)
-      
-      Eliminados <- subset(Crudos, Crudos[, "Condition"] != "NormalPoint",drop = FALSE)
-      CategYieldEliminados <- subset(CategYieldCrudos, Crudos[, "Condition"] != "NormalPoint",drop = FALSE)
-      
-      PaletaColorCrudoElim <- PaletaColorFun(CategYieldEliminados, namepal = Paleta)
-      
-      Remanentes <- subset(Crudos, Crudos[, "Condition"] == "NormalPoint",drop = FALSE)
-      quants <- quantile(Remanentes[ ,input$rto], seq(0,1, by = 1/cant))
-      CategYieldRemanente <- cut(Remanentes[ ,input$rto], breaks = quants, include.lowest = TRUE)
-      
-      PaletaYieldRemanentes <- PaletaColorFun(CategYieldRemanente, namepal = Paleta)
-      
-      
-      
-      plotCrudosYield <- ggplot(Crudos, aes_string(x = input$x, y = input$y, 
-                                                   color = CategYieldCrudos)) + geom_point() + 
-        scale_color_manual(values = PaletaColorCrudoElim)
-      
-      
-      plotEliminadosYield <- ggplot(Eliminados, aes_string(x = input$x, y = input$y, 
-                                                           color = CategYieldEliminados)) + geom_point() + 
-        scale_color_manual(values = PaletaColorCrudoElim)
-      
-      plotRemanentesYield <- ggplot(Remanentes, aes_string(x = input$x, y = input$y, 
-                                                           color = CategYieldRemanente)) + geom_point() + 
-        scale_color_manual(values = PaletaYieldRemanentes)
-      
-      # a1 <- ggplotly(plotCrudosYield) 
-      # a2 <- ggplotly(plotEliminadosYield) 
-      # a3 <- ggplotly(plotRemanentesYield) 
-      
-      
-      PlotGrid <- plot_grid( plotCrudosYield,# + theme(legend.position = "none"),
-                             plotEliminadosYield,# + theme(legend.position = "none"),
-                             plotRemanentesYield,# + theme(legend.position = "none"),
-                             align = 'vh',
-                             labels = c("A", "B", "C"),
-                             hjust = -1,
-                             nrow = 3) ##  CUANTAS FILAS?
-      
-      
-      legendCrudos <- get_legend(plotCrudosYield )#+ theme(legend.position = "bottom"))
-      legendRemanentes <- get_legend(plotRemanentesYield )#+ theme(legend.position = "bottom"))
-      # add the legend to the row we made earlier. Give it one-third of the width
-      # of one plot (via rel_heights).
-      p <- plot_grid(PlotGrid, legendCrudos, legendRemanentes,rel_heights = c(1, .2, .2), ncol = 2, nrow = 1)
-     
-      p
-      
-      
-      
-      
-    }
+    validate(need(input$file, 'Check input file!')#,
+             #need(ncol(dataset())==4, 'No depurated data')
+             )
+             # browser()
+             # build graph with ggplot syntax
+             suppressPackageStartupMessages({
+               library("RColorBrewer")
+               library(cowplot)
+               library(ggpubr)
+             })
+             # browser()
+             PaletaColorFun <- function(Variable, namepal = 'Set1') {
+               if (is.factor(Variable)) {
+                 PaletaColorVariable <-
+                   brewer.pal(n = nlevels(Variable), name = namepal)
+                 names(PaletaColorVariable) <- levels(Variable)
+                 PaletaColorVariable
+               }
+             }
+             
+             themePlotsCondition <- function() {
+               list(
+                 theme(
+                   axis.line = element_blank(),
+                   axis.text.x = element_blank(),
+                   axis.text.y = element_blank(),
+                   axis.ticks = element_blank(),
+                   axis.title.x = element_blank(),
+                   axis.title.y = element_blank(),
+                   panel.background = element_blank(),
+                   panel.border = element_blank(),
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank(),
+                   plot.background = element_blank(),
+                   legend.key = element_rect(fill = NA, color = NA)
+                 ),
+                 guides(color = guide_legend(override.aes = list(size=3)))
+               )
+               
+             }
+             
+             if (input$color == "Condition") {
+               Crudos <- dataset()
+               
+                  
+               Eliminados <-
+                 subset(Crudos, Crudos[, input$color] != "NormalPoint", drop = FALSE)
+               Remanentes <-
+                 subset(Crudos, Crudos[, input$color] == "NormalPoint", drop = FALSE)
+               
+               PaletaColor <- PaletaColorFun(Crudos[, input$color])
+               
+               plotCrudos <-
+                 ggplot(Crudos,
+                        aes_string(
+                          x = input$x,
+                          y = input$y,
+                          color = input$color
+                        )) +
+                 geom_point() +
+                 scale_color_manual(values = PaletaColor) +
+                 labs(color = input$color) +
+                 themePlotsCondition()
+               
+               
+               plotEliminados <-
+                 ggplot(Eliminados,
+                        aes_string(
+                          x = input$x,
+                          y = input$y,
+                          color = input$color
+                        )) + geom_point() +
+                 scale_color_manual(values = PaletaColor) +
+                 labs(color = input$color) +
+                 themePlotsCondition()
+               
+               plotRemanentes <-
+                 ggplot(Remanentes,
+                        aes_string(
+                          x = input$x,
+                          y = input$y,
+                          color = input$color
+                        )) + geom_point() +
+                 scale_color_manual(values = PaletaColor) +
+                 labs(color = input$color) +
+                 themePlotsCondition()
+               
+               PlotGrid <- ggpubr::ggarrange(
+                 plotCrudos,
+                 plotEliminados,
+                 plotRemanentes,
+                 labels = c("A", "B", "C"),
+                 hjust = -1,
+                 nrow = 1,
+                 common.legend = TRUE,
+                 legend = 'bottom'
+               )
+               
+               print(PlotGrid)
+               
+             }
+             if (input$color == input$rto &&
+                 "Condition" %in% colnames(dataset())) {
+               #####   #####   #####   #####   #####   #####
+               ##### Yield Plot
+               #####   #####   #####   #####   #####   #####
+               # Paleta <- 'Greys'
+               Paleta <- 'Greens'# 'Spectral'
+               cant <- 4
+               
+               Crudos <- dataset()
+               
+               quants <- quantile(Crudos[, input$rto], seq(0, 1, by = 1 / cant))
+               CategYieldCrudos <-
+                 cut(Crudos[, input$rto], breaks = quants, include.lowest = TRUE)
+               
+               Eliminados <-
+                 subset(Crudos, Crudos[, "Condition"] != "NormalPoint", drop = FALSE)
+               CategYieldEliminados <-
+                 subset(CategYieldCrudos, Crudos[, "Condition"] != "NormalPoint", drop = FALSE)
+               
+               PaletaColorCrudoElim <-
+                 PaletaColorFun(CategYieldEliminados, namepal = Paleta)
+               
+               Remanentes <-
+                 subset(Crudos, Crudos[, "Condition"] == "NormalPoint", drop = FALSE)
+               quants <-
+                 quantile(Remanentes[, input$rto], seq(0, 1, by = 1 / cant))
+               CategYieldRemanente <-
+                 cut(Remanentes[, input$rto],
+                     breaks = quants,
+                     include.lowest = TRUE)
+               
+               PaletaYieldRemanentes <-
+                 PaletaColorFun(CategYieldRemanente, namepal = Paleta)
+               
+               
+               
+               plotCrudosYield <-
+                 ggplot(Crudos,
+                        aes_string(
+                          x = input$x,
+                          y = input$y,
+                          color = CategYieldCrudos
+                        )) + geom_point() +
+                 scale_color_manual(values = PaletaColorCrudoElim) +
+                 labs(color = input$color) +
+                 themePlotsCondition()
+               
+               
+               plotEliminadosYield <-
+                 ggplot(Eliminados,
+                        aes_string(
+                          x = input$x,
+                          y = input$y,
+                          color = CategYieldEliminados
+                        )) + geom_point() +
+                 scale_color_manual(values = PaletaColorCrudoElim) +
+                 labs(color = input$color) +
+                 themePlotsCondition()
+               
+               plotRemanentesYield <-
+                 ggplot(Remanentes,
+                        aes_string(
+                          x = input$x,
+                          y = input$y,
+                          color = CategYieldRemanente
+                        )) + geom_point() +
+                 scale_color_manual(values = PaletaYieldRemanentes) +
+                 labs(color = input$color) +
+                 themePlotsCondition()
+               
+               # a1 <- ggplotly(plotCrudosYield)
+               # a2 <- ggplotly(plotEliminadosYield)
+               # a3 <- ggplotly(plotRemanentesYield)
+               
+               PlotCondition <- ggpubr::ggarrange(
+                 ggpubr::ggarrange(
+                   plotCrudosYield,
+                   plotEliminadosYield,
+                   ncol = 1,
+                   nrow = 2,
+                   common.legend = TRUE,
+                   legend = 'right',
+                   labels = c("Raw data", "Removed data")
+                 ),
+                 plotRemanentesYield,
+                 heights = c(2, 1),
+                 # widths	= c(2, 1), 
+                 labels = c("", "Cleaned data"),
+                 # hjust = -1,
+                 nrow = 2,
+                 ncol = 1,
+                 legend = 'right'
+               )
+               
+               print(PlotCondition)
+               
+             }
   })
-  
+    
   
   
   #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  ##################### 
@@ -912,6 +985,7 @@ waiter_hide()
     coordinates(MyFile) <- c(1,2)
     Mod<-autofitVariogram(Formula, MyFile, model = MejorModelo(), 
                           cutoff = 10000, cressie = input$cressie)
+ 
     ValoresOutput$Variograma<- Mod
     return(Mod)
   })  
@@ -998,18 +1072,19 @@ waiter_hide()
     if(input$SelectPlot == 1 & length(MyFile()$Datos) != 0){
       mo <- cbind(Variogram()$var_model)
       nug <- mo[1,2]
-      
-      if ((nug)==0 ) {param <-2}
-      if ((nug)>0) {param <-3}
+      # browser()
+      if (nug==0 ) {param <-2}
+      if (nug>0) {param <-3}
       
       np <- nrow(Variogram()$exp_var)
       
       mod <- cbind(Variogram()$var_model[,1:4],Variogram()$sserr)
       names(mod)=c("Model", "Parcial Sill","Range","Kappa","SCE")
       Nugget <- mod[1,2]
-      Modelo <- mod[2,-4]
+      Modelo <- mod[2, ]
+      if(Modelo$Kappa==0.5) {Modelo <- mod[2, -4]}
       Modelo <- cbind(Modelo,Nugget)
-      Modelo <- Modelo[,c(1,2,3,4,5)]
+      # Modelo <- Modelo[,c(1,2,3,4,5)]
       row.names(Modelo)=NULL
       
       # ValidationTable=MiKrige()
@@ -1170,10 +1245,12 @@ waiter_hide()
     
     mod <- cbind(Variogram()$var_model[,1:4],Variogram()$sserr)
     names(mod)=c("Model", "Parcial Sill","Range","Kappa","SCE")
+    
     Nugget <- mod[1,2]
-    Modelo <- mod[2,-4]
+    Modelo <- mod[2, ]
+    if(Modelo$Kappa==0.5) {Modelo <- mod[2, -4]}
     Modelo <- cbind(Modelo,Nugget)
-    Modelo <- Modelo[,c(1,2,3,4,5)]
+    # Modelo <- Modelo[,c(1,2,3,4,5)]
     row.names(Modelo)=NULL
     
     ValidationTable=MiKrige()
@@ -1278,10 +1355,13 @@ waiter_hide()
                              
                 ),
                 mainPanel(width = 9,
-                          # fluidRow(
+                          fluidRow(
                           plotlyOutput('DepuratedPlot', height = "600px") %>% 
-                            withSpinner()
-                          # ,plotOutput('PublicationPlot')
+                            withSpinner()),
+                          fluidRow(plotOutput('PublicationPlot', 
+                                              width = "100%", 
+                                              height = "400px"))
+                          
                             
                           # ), 
                           # )
@@ -1677,10 +1757,11 @@ waiter_hide()
                                           sep = "\t", quote = FALSE, row.names = FALSE)} 
   )   
   
+  
   output$ClasificationPlot <- renderPlotly({
     validate(
       need(input$file, 'Check input file!'),
-      need(input$NumClust, 'Select a column')
+      need(input$NumClust, '')
     )
 
     # build graph with ggplot syntax
@@ -1777,7 +1858,7 @@ waiter_hide()
   output$report <- downloadHandler(
     # For PDF output, change this to "report.pdf"
     filename = function() {
-      paste('my-report', sep = '.', switch(
+      paste('FastMapping-Report',Sys.Date(), sep = '.', switch(
         input$format, PDF = 'pdf', HTML = 'html', Word = 'docx'
       ))
     },

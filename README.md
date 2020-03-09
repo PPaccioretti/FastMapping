@@ -24,6 +24,7 @@ list_of_packages <- c(
   "ggplot2",
   "plotly",
   "GGally",
+  "ggpubr",
   "RColorBrewer",
   "cowplot",
   "knitr",

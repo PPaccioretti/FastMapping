@@ -470,10 +470,14 @@ makePlotClusterValid <- function(datos, colCluster = 1, colMean = 2, colLetters 
   MyClusterName <- MyColumns[colCluster]
   MyMeanName <-  MyColumns[colMean]
   MyLettersName <-  MyColumns[colLetters]
+  
+  MyMeanValues <- datos[,MyMeanName]
+
   ggpl <- ggplot(datos,
          aes_string(x = MyClusterName, y = MyMeanName)) +
-    geom_point(shape = 15, size = 2) +
-    geom_text(aes_string(label = MyLettersName), nudge_y = 0.05, nudge_x = 0.05)
+    geom_col(width = 0.25) +
+    geom_text(aes_string(label = MyLettersName, y = I(MyMeanValues*1.05)))
+  
   print(ggpl)
 }
  

@@ -510,6 +510,7 @@ shinyUI(
                              inputId = "block",
                              label =
                                "Block",
+                             min = 0,
                              value = 0,
                              width = "80%"
                            ),
