@@ -114,7 +114,7 @@ if(length(VariablesTarget)==1){
 
 `r if(!is.null(params$output$DataDep)){"Summary of data after depuration"}`
 
-```{r, eval=!is.null(params$output$DataDep)}
+```{r, eval=!is.null(params$output$DataDep) && !all(is.na(params$output$DataDep))}
 
 #Si existe la tabla depurada
 TablaOriginalDep <- params$output$DataDep
@@ -138,7 +138,7 @@ try(
 
 
 
-```{r, eval= !is.null(params$output$DataDep) && !is.null(params$output$Tabla)}
+```{r, eval= !is.null(params$output$DataDep) && !is.null(params$output$Tabla)  && !all(is.na(params$output$DataDep))}
 BothData <- rbind(
   data.frame("myData" = "Raw data", "myValues" = TablaOriginal[[VariablesTarget]]),
   data.frame("myData" = "Depurated data", "myValues" = TablaOriginalDep[[VariablesTarget]]))
