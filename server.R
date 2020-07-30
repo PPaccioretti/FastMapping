@@ -130,26 +130,31 @@ suppressPackageStartupMessages({
     # source("Functions.R")
     progress$set(value = 15)
 
-        list_of_packages <- c(
+    list_of_packages <- c(
       "shiny",
       "shinythemes",
       "shinyBS",
       "shinyjs",
       "shinycssloaders",
+      "waiter",
       "DT",
       "data.table",
       "dplyr",
       "ggplot2",
       "plotly",
       "GGally",
+      "ggpubr",
       "RColorBrewer",
       "cowplot",
-      "knitr",
       "rmarkdown",
+      "knitr",
+      "kableExtra",
       "V8",
       "geoR",
       "automap",
       "fields",
+      "stars",
+      "sf",
       "raster",
       "sp",
       "rgeos",
@@ -157,8 +162,10 @@ suppressPackageStartupMessages({
       "e1071",
       "spdep",
       "ade4",
-      "adespatial"
+      "adespatial",
+      "SpatialPack"
     )
+    
     
     
     
@@ -174,41 +181,10 @@ suppressPackageStartupMessages({
 waiter_hide()
   })
 
-  
-  
-  
+
   session$onSessionEnded(stopApp)
   
-  # MyChoiceSepdata <- c(Semicolon =';',Tabulator='\t', Space=' ',Comma=',')
-  
-  # output$SepData <- renderUI({
-  #   validate(
-  #     need(input$file,""))
-  #   if(!is.null(input$file)) {
-  #     File <- input$file
-  #     i <- 1
-  #     # if(is.null(input$sep)) {input$sep<-MyChoiceSepdata[1]}
-  #     MiTabla <- tryCatch({
-  #       list("Tabla" = fread(file = File$datapath),
-  #            "Decimal" = ".")
-  #     },error = function(e) {
-  #       list("Tabla" = fread(file = File$datapath, dec = ","),
-  #            "Decimal" = ",")
-  #     })
-  # 
-  #     MiTabla_df <- data.frame(MiTabla$Tabla)
-  # 
-  # 
-  #     MisCol <- ncol(MiTabla$Tabla)
-  #     while (MisCol == 1 && !is.null(MisCol)) {
-  #       i <- i + 1
-  #       MisCol <- ncol(read.table(file = File$datapath, sep = MyChoiceSepdata[i], header = input$header, dec = MiTabla$Decimal))
-  #       next}
-  #   }
-  #   radioButtons('sep', 'Separator character', choices = MyChoiceSepdata, selected = MyChoiceSepdata[i])
-  # 
-  # })
-  
+
   output$ModelosA <- renderUI({
     if(input$bar){return( )
     } else{
@@ -236,6 +212,17 @@ waiter_hide()
     MiTabla
   })
   
+  
+  CoordSist_crs <- reactive({
+    validate(need(input$hemisferio, input$file, ''))
+    Hemisfer <- switch(input$hemisferio,
+                       "1" = 6,#" +north",
+                       "2" = 7 #" +south"
+    )
+    cordsist <- as.numeric(paste0(32,Hemisfer,input$zona))
+    return(cordsist)
+  })
+  
   ##### TRANSFORMACION DE COORDENADAS
   TransfCoord<- reactive({
     # MyFile <- data()
@@ -245,23 +232,36 @@ waiter_hide()
     
     # browser()
     
-    Hemisfer <- switch(input$hemisferio,
-      "1" = " +north",
-      "2" = " +south"
-    )
+    # Hemisfer <- switch(input$hemisferio,
+    #   "1" = " +north",
+    #   "2" = " +south"
+    # )
     
-    cordsist <- paste0("+proj=utm +zone=",input$zona,Hemisfer ," +ellps=WGS84 +datum=WGS84")
+    # cordsist <- paste0("+proj=utm +zone=",input$zona,Hemisfer ," +ellps=WGS84 +datum=WGS84")
+    
+    # Hemisfer <- switch(input$hemisferio,
+    #   "1" = 6,#" +north",
+    #   "2" = 7 #" +south"
+    # )
+    # cordsist <- as.numeric(paste0(32,Hemisfer,input$zona))
     
     if(quantile(MyFile[,1],0.5)<0 &  quantile(MyFile[,2],0.5)<0) {
-      coordinates (MyFile) <- c(1,2)
-      proj4string(MyFile) <- CRS("+proj=longlat + datum=dat")
-      Mydata_t <- spTransform(MyFile, CRS(cordsist))
-      Mydata_t <- as.data.frame(Mydata_t)[,c(input$xmapa, input$ymapa, input$rto)]
+      # coordinates(MyFile) <- c(1,2)
+      # proj4string(MyFile) <- CRS("+proj=longlat + datum=dat")
+      # Mydata_t <- spTransform(MyFile, CRS(cordsist))
+      # Mydata_t <- as.data.frame(Mydata_t)[,c(input$xmapa, input$ymapa, input$rto)]
+
+      MyFile_sf <- st_as_sf(MyFile, coords = c(input$xmapa, input$ymapa), crs = 4326)
+      Mydata_t <- st_transform(MyFile_sf, CoordSist_crs())
+      
+      Mydata_t <- data.frame(st_coordinates(Mydata_t), st_drop_geometry(Mydata_t))
+      names(Mydata_t) <- c(input$xmapa, input$ymapa, input$rto)
+
       MyFile<-Mydata_t
     }
     
     ValoresOutput$TablaCoordTrans <-
-      list(TablaCoords = MyFile, coordproj = cordsist)
+      list(TablaCoords = MyFile, coordproj = CoordSist_crs())
     return(MyFile)
   })
 
@@ -340,7 +340,7 @@ waiter_hide()
     on.exit(progress$close())
     progress$set(message = 'Depuration in progress',
                  detail = 'This may take a while...')
-    MyFile <- TransfCoord()                      ####  #####################  #####################  #####################  ############
+    MyFile <- TransfCoord()                      
     DatosCrudos <- MyFile[,c(input$xmapa, input$ymapa, input$rto)]
     MyFile <- MyFile[complete.cases(MyFile),c(input$xmapa, input$ymapa, input$rto)]
     
@@ -380,11 +380,14 @@ waiter_hide()
     Logi0 <- TRUE %in% c(input$AutomaticDep == 'Automatico',  input$mDepuration %in% c("Outliers", "Inliers"))
     if (as.logical(Logi0))  {
       if (input$SacoBordes) {
-        borde <- mapa[chull(mapa[,1:2]),1:2]
+        # borde <- mapa[chull(mapa[,1:2]),1:2]
+        borde <- getBorders()
         pol <- Polygons(list(Polygon(borde)),as.character(dim(borde)[1]))
         sr <- SpatialPolygons(list(pol))
         bufferValue <- -abs(as.numeric(as.character(input$Buffer)))
         buff <- buffer(sr, width = bufferValue, dissolve = T)
+        
+        
         
         Border <- SpatialPoints(mapa[,1:2]) %over% buff
         datos <- mapa[complete.cases(Border),]
@@ -992,19 +995,25 @@ waiter_hide()
   
   #########  
   
+  getBorders <- reactive({
+    validate(need(data(), ''))
+    # browser()
+    if(is.null(input$bordes)){
+      MyZ <- TransfCoord()[,c(input$xmapa, input$ymapa)]
+      punbor<- chull(MyZ)
+      Mybordes <- as.matrix(as.data.frame(MyZ[c(punbor,punbor[1]),1:2]))
+    }else{
+      Mybordes <- Bordes()
+    }
+    return(Mybordes)
+  })
+  
+  
   Mygr <- reactive ({
     
     if(length(MyFile()$Datos) != 0) {
-      
-      if(length(Bordes()) == 0){
-        MyFile <- MyFile()$Datos
-        MyZ <- MyFile[,c(1:2)]
-        punbor<- chull(MyZ)
-        Mybordes <- as.matrix(as.data.frame(MyZ[c(punbor,punbor[1]),1:2]))
-        # Mybordes <- as.table(Mybordes)
-      }else{
-        Mybordes <- Bordes()
-      }
+      # browser()
+      Mybordes <- getBorders()
       
       gr <- pred_grid(Mybordes, by=as.numeric(input$dimGrilla))
       gri <- polygrid(gr, bor=Mybordes)
@@ -1025,6 +1034,8 @@ waiter_hide()
       MyFile <- MyFile()$Datos
       if(is.null(MyFile)) {return()}
       coordinates (MyFile) <- c(1,2)
+      proj4string(MyFile) <- CRS(SRS_string = paste0("EPSG:",CoordSist_crs()))
+      
       Mygr <- Mygr()
       Modelo <- MejorModelo()
       kriging <- autoKrige(Formula, MyFile, Mygr, model = Modelo,
@@ -1043,22 +1054,30 @@ waiter_hide()
   
   
   GeoTiff<-reactive({ 
+    # browser()
     
-    if (input$hemisferio=="2"){
-      cordsist <- paste0("+proj=utm +zone=",input$zona," +south" ," +ellps=WGS84 +datum=WGS84")
-      r=raster(kriging())
-      proj4string(r) <- CRS(cordsist)
-      rast=plot(r)
-      
-    } else  {
-      cordsist <- paste0("+proj=utm +zone=",input$zona," +north" ," +ellps=WGS84 +datum=WGS84")
-      r = raster(kriging())
-      proj4string(r) <- CRS(cordsist)
-      rast=plot(r)
-      
-    }
-    ValoresOutput$GeoTiff <- r
-    return(r)
+    raster_Pred <- stars::st_as_stars(kriging())
+    rast=plot(raster_Pred)
+    return(raster_Pred)
+# 
+#     if (input$hemisferio=="2"){
+#       cordsist <- paste0("+proj=utm +zone=",input$zona," +south" ," +ellps=WGS84 +datum=WGS84")
+#       r=raster(kriging())
+#       class(kriging())
+#       raster <- stars::st_as_stars(kriging(), crs = st_crs(CoordSist_crs()))
+#       st_transform(raster,  st_crs(CoordSist_crs()))
+#       proj4string(r) <- CRS(CoordSist_crs)
+#       rast=plot(r)
+#       
+#     } else  {
+#       cordsist <- paste0("+proj=utm +zone=",input$zona," +north" ," +ellps=WGS84 +datum=WGS84")
+#       r = raster(kriging())
+#       proj4string(r) <- CRS(cordsist)
+#       rast=plot(r)
+#       
+#     }
+#     ValoresOutput$GeoTiff <- r
+    # return(r)
   })
   
   
@@ -1159,7 +1178,8 @@ waiter_hide()
            width = 700,
            height = 700,
            alt = "This is alternate text")
-    }})
+    }
+    }, deleteFile=TRUE )
   
   
   output$varKrigingPlot <- renderImage ({
@@ -1182,20 +1202,22 @@ waiter_hide()
       if (is.na(input$min_var)== FALSE & is.na(input$max_var)== TRUE) {
         zmin_var <- input$min_var 
         zmax_var <- max(kriging()$var1.var)}
-      image(kriging(), zlim=c(zmin_var,zmax_var),"var1.var", col =terrain.colors(100))
-      image.plot(zlim=c(zmin_var,zmax_var), legend.only=TRUE, horizontal=F, col=terrain.colors(100), legend.cex = 2)
+      image(kriging(), zlim=c(zmin_var,zmax_var),"var1.var", col = terrain.colors(100))
+      image.plot(zlim = c(zmin_var,zmax_var), legend.only = TRUE, horizontal = F, col = terrain.colors(100), legend.cex = 2)
       dev.off()
       list(src = outfile,
            contentType = 'image/png',
            width = 700,
            height = 700,
            alt = "This is alternate text")
-    }})
+    }}, deleteFile=TRUE)
   
   output$TiffPlot1 <- renderPlot({    
     validate(
       need(input$file, 'Check input file!'))
-    plot(GeoTiff())},width = 600, height = 600, res = 100)
+    plot(GeoTiff(), col = terrain.colors(100))
+    
+    },width = 600, height = 600, res = 100)
   
   
   
@@ -1216,7 +1238,12 @@ waiter_hide()
   #Descarga del GeoTiff
   output$MiDescarga2 <- downloadHandler(  
     filename = function() {paste('Map-', Sys.Date(), '.tif', sep='')},
-    content = function(con) {writeRaster(GeoTiff(),con,"GTiff")} 
+    content = function(con) {
+      # browser()
+      # writeRaster(GeoTiff(),con,"GTiff")
+      Predicted_Tiff <- GeoTiff()
+      stars::write_stars(Predicted_Tiff,con,layer = attributes(Predicted_Tiff)$names)
+      } 
   )    
   
   #Tabla semivariograma experimental
@@ -1468,7 +1495,6 @@ waiter_hide()
   })
   
   output$TablaResultadosConglom <- DT::renderDataTable({
-
     datatable(Clasificacion()$ResultadosConglom, rownames = FALSE, 
               options = list(
                 searching = FALSE,
@@ -1524,6 +1550,8 @@ waiter_hide()
   })
   
   Clasificacion <- reactive({
+    
+    set.seed(2020)
     progress <- Progress$new(session, min=1, max=13)
     on.exit(progress$close())
     progress$set(message = 'KM-sPC classification in progress',
@@ -1534,11 +1562,21 @@ waiter_hide()
 
 
     if(length(input$rto)==1) {
-      Mydata <- as.data.frame(kriging())[,seq_along(c(input$xmapa, input$ymapa,input$rto))]
-      Mydata <- na.omit(Mydata)
+      MydataNA <- as.data.frame(kriging())[,seq_along(c(input$xmapa, input$ymapa,input$rto))]
+      
+      FilasNA <- apply(MydataNA, 1, function(x) {
+        any(is.na(x))
+      })
+      
+      Mydata <- na.omit(MydataNA)
       colnames(Mydata) <- c(input$xmapa, input$ymapa,input$rto)
     } else {
-      MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa,c(input$rto))]
+      MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa,input$rto)]
+      
+      FilasNA <- apply(MydataNA, 1, function(x) {
+        any(is.na(x))
+      })
+      
       Mydata <- na.omit(MydataNA)
       
     }
@@ -1580,13 +1618,7 @@ waiter_hide()
       
       
       progress$set(value = 2)
-      # if (lw[1]!="W") {
-      #   rm("MyResults")
-      #   MyResults=list("Error: aumentar la  m?xima distancia para definir la red de vecindarios"=data.frame())
-      #   return(MyResults)
-      #   stop("Error: aumentar la  m?xima distancia para definir la red de vecindarios",call. = F)}
-      
-      #  Analisis de Componentes Principales (PCA)
+           #  Analisis de Componentes Principales (PCA)
       
       
       # Biplot, autovalores asociados a cada CP (grafico de barras) y calculo de correlaciones de las CP1 y CP2 del PCA.
@@ -1594,7 +1626,7 @@ waiter_hide()
       # pca <- dudi.pca(Mydata, center=input$centrado,scannf = FALSE, nf=ncol(Mydata))
       # ms <- adespatial::multispati(pca, lw, scannf = F, nfnega= ncol(Mydata), nfposi = ncol(Mydata))  ########################################################################
       ### PCA SIN COORDS -----
-      
+      # pca <- dudi.pca(scale(MyY), center=FALSE,scannf = FALSE, nf=ncol(MyY))
       
       pca <- dudi.pca(MyY, center=input$centrado,scannf = FALSE, nf=ncol(MyY))
       ms <- adespatial::multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))  #########################################################################
@@ -1621,6 +1653,7 @@ waiter_hide()
                                           ,as.numeric(input$clusters[2]),by=1)),
                                1,clusterKM, datos = sPC)#sPCCoords) ######### ------
     }
+      
     res_clas <- lapply(clasificaciones,function(Clus) c(Clus$cluster))
     res_clas <- data.frame(do.call("cbind",res_clas))
     Name <- paste("Cluster", "_", seq(input$clusters[1], input$clusters[2]), sep="")
@@ -1681,14 +1714,19 @@ waiter_hide()
       MydataNA_Con_Cluster <- merge(MydataNA_Con,MisClus, by="Con",all.x=TRUE)
       
       MisClus_1 <- MydataNA_Con_Cluster[,-c(1:length(MydataNA_Con))]
-
+      DatosConConglNA <- data.frame(MydataNA,apply(MisClus_1,2,as.factor))
+      DatosConCongl <- na.omit(DatosConConglNA)
+      # browser()
       resultados<-list("Conglomerado" = MisClus_1 ,"ResultadosConglom"=resultados,
-                       "Indices" = ResultadosIndices, "DatosConCongl"=data.frame(Mydata,apply(MisClus_1,2,as.factor)),
-                       "NombresColCluster" = colnames(data.frame(Mydata,MisClus_1)))
+                       "Indices" = ResultadosIndices, "DatosConCongl"= DatosConCongl,
+                       "NombresColCluster" = colnames(DatosConCongl),
+                       "DatosConConglNA"= DatosConConglNA, "PCA_Results" = resultado_ms)
       
       
     }
-   
+    # rm(".Random.seed")
+    # rm(".GlobalEnv$.Random.seed")
+    # set.seed(Sys.time())
     ValoresOutput$Clasificacion<-resultados
     return(resultados)
     
@@ -1701,10 +1739,20 @@ waiter_hide()
       plotClasifVar <- ggplot(Clasificacion()$DatosConCongl, aes_string(input$rto)) +
         geom_density()
     } else {
-      plotClasifVar <- ggpairs(Clasificacion()$DatosConCongl,
+      # browser()
+      if(length(input$rto)<15) {
+              plotClasifVar <- ggpairs(Clasificacion()$DatosConCongl,
                                columns = input$rto,
                                progress = FALSE)
       
+      } else {
+        plotClasifVar <- ggpairs(Clasificacion()$DatosConCongl,
+                                 columns = input$rto,
+                                 lower = "blank",
+                                 progress = TRUE)
+        
+      }
+
     }
     ValoresOutput$corrVariables <- plotClasifVar
     
@@ -1732,15 +1780,24 @@ waiter_hide()
       # print(ggscatmat(Clasificacion()$DatosConCongl,
       #                 columns = input$rto))
     } else {
-      
+      if(length(input$rto)<15) {
       MatrClasPlot <- ggpairs(
         Clasificacion()$DatosConCongl,
         mapping = aes_string(color = input$NumClust),
         columns = input$rto,
         progress = FALSE
       )
-      # MatrClasPlot <- plot(1,2)
       
+      } else {
+        MatrClasPlot <- ggpairs(
+          Clasificacion()$DatosConCongl,
+          mapping = aes_string(color = input$NumClust),
+          lower = "blank",
+          columns = input$rto,
+          progress = FALSE )
+       
+        
+      }
     }
     
     ValoresOutput$corrVariablesClust <- MatrClasPlot
@@ -1788,11 +1845,13 @@ waiter_hide()
              need(agrepl("Cluster_*",input$NumClust),
                   label = "Select a valid number of cluster to validate"))
     
-    zoneValidTables <- ValidVarKrig(ClustersFM =  Clasificacion()$DatosConCongl,
-                 datosAValid = input$rto, 
+
+    zoneValidTables <- ValidVarKrig(ClustersFM =  datos_variables_Valid()$datos,
+                 datosAValid = datos_variables_Valid()$variables, 
                  numCluster = input$NumClust,
                  EstDesc = VarKrigDescrReac(),
-                 crs = ValoresOutput$TablaCoordTrans$coordproj)
+                 crs = st_crs(CoordSist_crs())$proj4string)#CoordSist_crs())#ValoresOutput$TablaCoordTrans$coordproj)
+    
     ValoresOutput$zoneValidationTables <- zoneValidTables
     return(zoneValidTables)
     
@@ -1840,12 +1899,33 @@ waiter_hide()
 
   })
 
+  datos_variables_Valid <- reactive({
+    datosAValid_ConSelection <- input$rto
+    DatosAValid <- Clasificacion()$DatosConCongl
+    # browser()
+    if(input$makeSelectProces) {
+      datosAValid_ConSelection <- unique(c(input$Variable_selection_process, input$rto))
+      # datosAValid_ConSelection[!is.null(datosAValid_ConSelection)]
+      
+      Clasif <- Clasificacion()$DatosConCongl
+      DatosOrig <- data()
+      DatosOrig <-DatosOrig[,unique(c(input$Variable_selection_process, intersect(names(Clasif), names(DatosOrig))))]
+      DatosAValid <- merge(Clasif, DatosOrig, all.x = TRUE)
+    }
+    return(list(
+      "datos" = DatosAValid,
+      "variables" = datosAValid_ConSelection
+      
+    ))
+  })
 
+  
+  
     VarKrigDescrReac <- reactive({    
 
-    VarKrigDescr(ClustersFM = Clasificacion()$DatosConCongl,
-                 datosAValid = input$rto,
-                 crs = ValoresOutput$TablaCoordTrans$coordproj
+    VarKrigDescr(ClustersFM =  datos_variables_Valid()$datos,
+                 datosAValid =  datos_variables_Valid()$variables,
+                 crs = st_crs(CoordSist_crs())$proj4string#ValoresOutput$TablaCoordTrans$coordproj
                )
   
   })
@@ -1875,7 +1955,7 @@ waiter_hide()
       params <- list(input=isolate(reactiveValuesToList(input)),
                      output=isolate(reactiveValuesToList(ValoresOutput)))
       library(knitr)
-     
+      # browser()
       # save(paramts, file="C:/Users/Pablo/Data1.RData")
       
       # Knit the document, passing in the `paramts` list, and eval it in a
@@ -1955,8 +2035,52 @@ waiter_hide()
     
   })
   
+####### Variable Selection process ######
+  observeEvent(input$makeSelectProces, {
+    showNotification("This process is under development, will be available soon.",
+                     type = c("error"))
+  }, ignoreInit = TRUE)
   
+  
+  output$SelectProcessUI<- 
+    renderUI({
+      if(input$makeSelectProces){
+
+        tagList(
+          selectInput(
+            "Variable_selection_process",
+            "Variable selection process",
+            choices = names(data())[!names(data())%in%c(input$xmapa, input$ymapa)],
+            multiple = TRUE 
+          ),
+          numericInput(
+            "alpha_level_Corr",
+            "Significance level",
+            value = 0.15,
+            min = 0,
+            max = 1,
+            step = 0.05
+          ),
+          bsTooltip(
+            "Variable_selection_process",
+            VariableSelectionProcessHelp,
+            placement = "bottom",
+            trigger = "hover",
+            options = NULL
+          ),
+          bsTooltip(
+            "alpha_level_Corr",
+            alpha_corr_Help,
+            placement = "bottom",
+            trigger = "hover",
+            options = NULL
+          )
+        )
+
+      }
+      
+    })
+
   
   
 })
-

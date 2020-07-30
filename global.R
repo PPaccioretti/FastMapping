@@ -82,7 +82,9 @@ varexplicadaClusterHelp <- ""
 
 CressieHelp <- " if selected, use Cressie”s robust variogram estimate; if not use the classical method of moments variogram estimate"
 
+### Validation correlation 
 
-
-
-  
+# Variable_verify_differences_Help <- ""
+makeSelectProcesHelp <- "This keep for clustering only the variables that are most correlated with those selected in 'Variable selection process'" 
+VariableSelectionProcessHelp <- "Removes variables that are not correlated with this variable(s)"
+alpha_corr_Help <- "Significance level to remove variables"

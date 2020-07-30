@@ -23,10 +23,12 @@ editor_options:
 ```{r, setup, echo=FALSE, message=FALSE, warning=FALSE}
 library(knitr)
 library(ggplot2)
+library(kableExtra)
+
 
 options(knitr.table.format = function() {
   if (knitr::is_latex_output()) 
-  "latex" else "pandoc"
+  "latex" else "html"
 })
 
 knitr::opts_chunk$set(echo = FALSE)
@@ -91,7 +93,7 @@ if (identical(rmarkdown::metadata$runtime, "shiny"))
 
 `r if(!is.null(params$output$Tabla)){"# Summary of Data"}`
 
-`r if(!is.null(params$output$Tabla)) {ifelse(!is.null(params$output$DataDep),"Summary of data before depuration","Summary of data")}`
+`r if(!is.null(params$output$Tabla)) {ifelse(!all(is.na(params$output$DataDep)),"Summary of data before depuration","Summary of data")}`
 
 ```{r, eval=!is.null(params$output$Tabla)}
 #Si existe la tabla 
@@ -99,7 +101,8 @@ TablaOriginal <- params$output$Tabla
 Coordenadas <- c(params$input$xmapa,params$input$ymapa)
 VariablesTarget <- params$input$rto
 
-kable(summary(TablaOriginal[VariablesTarget]))
+kable(summary(TablaOriginal[VariablesTarget])) %>%
+   kable_styling(full_width = F)
 
 if(length(VariablesTarget)==1){
   ggplot(TablaOriginal) +
@@ -112,16 +115,17 @@ if(length(VariablesTarget)==1){
 ```
 
 
-`r if(!is.null(params$output$DataDep)){"Summary of data after depuration"}`
+`r if(!is.null(params$output$DataDep)  && !all(is.na(params$output$DataDep))){"Summary of data after depuration"}`
 
-```{r, eval=!is.null(params$output$DataDep)}
+```{r, eval=!is.null(params$output$DataDep) && !all(is.na(params$output$DataDep))}
 
 #Si existe la tabla depurada
 TablaOriginalDep <- params$output$DataDep
 
 TablaOriginalDep <- TablaOriginalDep[TablaOriginalDep$Condition=="NormalPoint",]
 
-kable(summary(TablaOriginalDep[VariablesTarget]))
+kable(summary(TablaOriginalDep[VariablesTarget])) %>%
+   kable_styling(full_width = F)
 try(
   if(length(VariablesTarget)==1) {
     
@@ -138,7 +142,7 @@ try(
 
 
 
-```{r, eval= !is.null(params$output$DataDep) && !is.null(params$output$Tabla)}
+```{r, eval= !is.null(params$output$DataDep) && !is.null(params$output$Tabla) && !all(is.na(params$output$DataDep))}
 BothData <- rbind(
   data.frame("myData" = "Raw data", "myValues" = TablaOriginal[[VariablesTarget]]),
   data.frame("myData" = "Depurated data", "myValues" = TablaOriginalDep[[VariablesTarget]]))
@@ -164,13 +168,18 @@ if (identical(rmarkdown::metadata$runtime, "shiny"))
 if(length(params$output$SelectedMdls)>1) {
   cat(paste(names(myChoice[myChoice %in% params$output$SelectedMdls ]), collapse = ", "),"models were adjusted. \n\n\n")
 } else {
-  cat(names(myChoice[myChoice %in% params$output$SelectedMdls ]),"model were adjusted. \n\n\n")
+  cat(names(myChoice[myChoice %in% params$output$SelectedMdls ]),"model was adjusted. \n\n\n")
 }
 
-kable(params$output$MiKrige[ , sapply(params$output$MiKrige, function(x) !all(is.na(x))) ])
+
+kable(params$output$MiKrige[, 
+                            sapply(params$output$MiKrige, function(x) {! all(is.na(x))}
+                            ), drop = FALSE],
+      row.names = TRUE) %>%
+   kable_styling(full_width = F)
 
 
-plot(params$output$Variograma)
+# plot(params$output$Variograma)
 print(params$output$variogg)
 #   # ValoresOutput <- reactiveValues(Tabla=NULL, TablaCoordTrans=NULL,DataDep=NULL,NombresCol=NULL,
 #   #                                 SelectedMdls=NULL,  MiKrige=NULL,
@@ -188,7 +197,7 @@ if(!is.null(params$output$kriging)) plot(params$output$kriging)
 `r if(!is.null(params$output$Clasificacion)) {"# Clasification result"} `
 
 
-`r if(!is.null(params$output$Clasificacion)& length(VariablesTarget)>1) {"## Correlation matrix"} `
+`r if(!is.null(params$output$Clasificacion) & length(VariablesTarget)>1) {"## Correlation matrix"} `
 
 
 ```{r, eval=!is.null(params$output$Clasificacion) & length(VariablesTarget)>1, message=FALSE}
@@ -198,13 +207,14 @@ if(!is.null(params$output$kriging)) plot(params$output$kriging)
 # kable(params$output$Clasificacion$Indices)
 kable(
   cor(params$output$Clasificacion$DatosConCongl[, VariablesTarget])
-)
+) %>%
+   kable_styling(full_width = F)
 
 ```
 
 `r if(!is.null(params$output$Clasificacion)) {"## Clasification plot"} `
 
-```{r}
+```{r, eval = !is.null(params$output$Clasificacion)}
 
 ggplot(params$output$Clasificacion$DatosConCongl, 
        aes_string(x=Coordenadas[1], y=Coordenadas[2], colour=params$input$NumClust)) + 
@@ -222,7 +232,8 @@ print(params$output$corrVariablesClust)
 ```{r, eval=!is.null(params$output$Clasificacion)}
 ## Zone Validation
 # names(params$output)
-kable(params$output$zoneValidationTables$Descriptivo)
+kable(params$output$zoneValidationTables$Descriptivo) %>%
+   kable_styling(full_width = F)
 
 ```
 `r if(!is.null(params$output$Clasificacion)) {"In parenthesis coefficient of variation"}`
@@ -235,7 +246,8 @@ myValidTables <- params$output$zoneValidationTables$Diferencias
 for (i in seq_len(length(myValidTables))) {
   cat(paste('###', names(myValidTables)[i]))
   cat('\n\n')
-  print(kable(myValidTables[[i]]))
+  print(kable(myValidTables[[i]]) %>%
+   kable_styling(full_width = F))
   cat("\n\n\n")
   
 }

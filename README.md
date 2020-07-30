@@ -27,12 +27,15 @@ list_of_packages <- c(
   "ggpubr",
   "RColorBrewer",
   "cowplot",
-  "knitr",
   "rmarkdown",
+  "knitr",
+  "kableExtra",
   "V8",
   "geoR",
   "automap",
   "fields",
+  "stars",
+  "sf",
   "raster",
   "sp",
   "rgeos",
@@ -40,7 +43,8 @@ list_of_packages <- c(
   "e1071",
   "spdep",
   "ade4",
-  "adespatial"
+  "adespatial",
+  "SpatialPack"
 )
 
 

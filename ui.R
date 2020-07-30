@@ -25,7 +25,7 @@ shinyUI(
     useShinyjs(),
     #Added this js
     extendShinyjs(script = "src/MyFunctJS.js"),
-    use_waiter(include_js = FALSE),
+    use_waiter(),
     mainPanel(
       h2("FastMapping"),
       width = 10,
@@ -203,11 +203,11 @@ shinyUI(
             checkboxGroupInput(
               inputId = "mDepuration",
               label = h4("Methods"),
-              choices = c("Glogal Outliers" =
+              choices = list("Glogal Outliers" =
                             "Outliers",
                           "Spatial Outliers" =
                             "Inliers"),
-              inline = TRUE,
+              # inline = TRUE,
               width = "20%"
             ),
             # checkboxInput(inputId="SacoBordes2", label="Remove borders", value = 0.0, width = "100%")
@@ -644,6 +644,26 @@ shinyUI(
             tabPanel(
               title = "Parameters for KM-sPC classification",
               value = "ClasifParameters",
+              
+              
+              column(
+                width = 12 / 3,
+                h3("Variable selection process"),
+                p("A variable selection process is recommended to improve validation of the delineated zones."),
+                checkboxInput("makeSelectProces", "Make variable selection process", value = FALSE),
+                
+
+                uiOutput("SelectProcessUI"),
+                bsTooltip(
+                  "makeSelectProces",
+                  makeSelectProcesHelp,
+                  placement = "bottom",
+                  trigger = "hover",
+                  options = NULL
+                )
+              ),
+              
+              
               column(
                 width = 12 / 3,
                 h3("Spatial PCA parameters"),
@@ -757,6 +777,10 @@ shinyUI(
                 )
                 
               )
+              
+              
+              
+              
             ),
             tabPanel(
               "Classification results",

@@ -262,8 +262,7 @@ CalcLetras <- function(MisMedias, pvalue, alpha = 0.05) {
       cc<-substr(y,p1,p1)
       return(cc)
     }
-  
-  
+
   Q <- matrix(1, ncol = nrow(MisMedias), nrow = nrow(MisMedias))
   p <- pvalue
   k <- 0
@@ -296,9 +295,10 @@ CalcLetras <- function(MisMedias, pvalue, alpha = 0.05) {
     chequeo<-chequeo+1
     if (chequeo > n) break
     for(i in j:n) {
-      s<-Q[q[i],q[j]]>alpha
-      if(s) {
-        if(lastC(M[i]) != letras[k]) M[i]<-paste(M[i],letras[k],sep="")
+      # browser()
+      stest <- Q[q[i],q[j]]>alpha
+      if(stest) {
+        if(lastC(M[i]) != letras[k]) {M[i]<-paste(M[i],letras[k],sep="")}
       }
       else {
         k<-k+1
@@ -319,6 +319,7 @@ CalcLetras <- function(MisMedias, pvalue, alpha = 0.05) {
     if (cambio1 ==0 )j<-j+1
   }
   #-----------
+
   w<-data.frame(w,stat=M)
   if(k>81) 
     cat("\n",k,"groups are estimated.The number of groups exceeded the maximum of 81 labels. change to group=FALSE.\n")
@@ -333,6 +334,10 @@ makeMeanComparisson <-
            EstDescr = EstDesc ,
            alpha = 0.05,
            retDMS = FALSE) {
+    
+    # browser()
+    
+    
     Medias <-
       Clasif %>%
       group_by(!!rlang::sym(numCluster)) %>%
@@ -360,7 +365,7 @@ makeMeanComparisson <-
       sdtdif[k] <- EstDescr[VariableEstudiada, 2]
       pvalue[k] <- abs(dif[k][[1]]) <= DMS
     }
-    
+    # browser()
     MisLetras <-
       CalcLetras(MisMedias = MisMedias,
                  pvalue = pvalue,
@@ -375,10 +380,11 @@ VarKrigDescr <-
   function(ClustersFM,
            datosAValid,
            crs) {
+
     datos_predsf <- st_as_sf(ClustersFM, coords = 1:2, crs = crs)
     Krig <-
       sapply(datosAValid, function(columna) {
-        # browser()
+
         if (columna == "geometry") {
           return(NULL)
         }
@@ -407,7 +413,7 @@ VarKrigDescr <-
         tamPunt <- sum(!is.na(datos_predsf[[columna]]))
         data.frame(
           "Variable" = as.character(columna),
-          "MedianaK" = median(sqrt(kriging_cv$var1.var)),
+          "MedianaK" = median(sqrt(kriging_cv$var1.var), na.rm=T),
           "MediaVar" = media,
           "CVVar" = Cv,
           "n" = tamPunt
@@ -480,4 +486,73 @@ makePlotClusterValid <- function(datos, colCluster = 1, colMean = 2, colLetters 
   
   print(ggpl)
 }
- 
+
+
+T_TestModif <- function() {
+  
+  ###############################################################################
+  #MethodTitle= Test t modificado
+  #MethodNickName= CorrEsp
+  
+  library(SpatialPack)
+  ############################ END OF OPTIONS BLOCK ############################
+  
+  Corr_tmodif<-function(Coords, Variables) {
+    
+    Mydata <- as.data.frame (na.omit(cbind(Coords, Variables)))
+    coords <- Mydata[,1:2]
+    
+    n <- ncol(Variables)
+    df <- Variables
+    foo <- matrix(0,n,n)
+    foo1 <- matrix(0,n,n)
+    
+    for ( i in 1:n)
+    {
+      for (j in i:n)
+      {
+        
+        test <- modified.ttest(df[,i],df[,j],coords)
+        foo[i,j] <- test$corr
+        foo1[i,j] <- test$p.value
+      }
+    }
+    
+    foo[lower.tri(foo)] <- t(foo)[lower.tri(foo)]
+    foo1[lower.tri(foo1)] <- t(foo1)[lower.tri(foo1)]
+    
+    
+    colnames(foo) <- names(Variables)
+    rownames(foo) <- names(Variables)
+    
+    colnames(foo1) <- names(Variables)
+    rownames(foo1) <- names(Variables)
+    
+    Corr <- data.frame(foo)
+    Pval <-data.frame(foo1)
+    
+    upper.tri(Corr)
+    Corr[upper.tri(Corr)] <- NA
+    
+    upper.tri(Pval)
+    Pval[upper.tri(Pval)] <- NA
+    Pval
+    
+    Corr <- data.frame(Corr)
+    Pval <- data.frame(Pval)
+    nam <- data.frame(colnames(Variables))
+    
+    names(nam) =c("Variable")
+    res_Corr <- cbind(nam,Corr)
+    res_Pval <- cbind(nam,Pval)
+    
+    resultado <- list(res_Corr, res_Pval)
+    
+    names(resultado)=c("Matriz de correlaci?n/Coeficientes", "Matriz de correlaci?n/Probabilidades")
+    resultado
+    
+    #END MAIN CODE
+  }
+}
+  
+
