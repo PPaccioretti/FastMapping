@@ -142,7 +142,11 @@ try(
 
 
 
+<<<<<<< HEAD
 ```{r, eval= !is.null(params$output$DataDep) && !is.null(params$output$Tabla) && !all(is.na(params$output$DataDep))}
+=======
+```{r, eval= !is.null(params$output$DataDep) && !is.null(params$output$Tabla)  && !all(is.na(params$output$DataDep))}
+>>>>>>> b7b823b47a124f1f37666c6eb86d793cb27aadca
 BothData <- rbind(
   data.frame("myData" = "Raw data", "myValues" = TablaOriginal[[VariablesTarget]]),
   data.frame("myData" = "Depurated data", "myValues" = TablaOriginalDep[[VariablesTarget]]))
