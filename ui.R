@@ -313,6 +313,7 @@ shinyUI(
                 #                width = "100%"))),
                 
                 bootstrapPage(
+                  fluidRow(
                   column(width = 4,
                          div(
                            style = "display:inline-block",
@@ -332,7 +333,12 @@ shinyUI(
                                value = 20,
                                width = "100%"
                              )
-                           ))
+                           ))),
+                  fluidRow(
+                    checkboxInput("moranPlot",
+                                  "Remove spatial outlier by Moran plot criteria")
+                  )
+                  
                   ,
                   tags$br()
                   ,

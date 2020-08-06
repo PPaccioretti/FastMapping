@@ -321,7 +321,7 @@ waiter_hide()
   
   Bordes <- reactive({
     File <- input$bordes
-    if(is.null(File)){return()} 
+    if(is.null(File) | !input$edges){return()} 
     # if(is.null(input$sep)){return()}
     
     MiTabla<-fread(File$datapath, data.table=FALSE)
@@ -491,11 +491,15 @@ waiter_hide()
         SpMP <- !(MyYdepIn$dfb.1_ == FALSE & MyYdepIn$dfb.x == FALSE & MyYdepIn$dffit == FALSE
                   & MyYdepIn$cov.r == FALSE & MyYdepIn$cook.d  == FALSE & MyYdepIn$hat == FALSE)
         
-        datos <- subset(MyYdepIn,MyYdepIn$Ii > 0 | MyYdepIn$Pr.z...0. > 0.05 | !SpMP)[, c("X","Y","Z")]
+        datos <- subset(MyYdepIn,MyYdepIn$Ii > 0 | MyYdepIn$Pr.z...0. > 0.05)[, c("X","Y","Z")]
         # datos <- datos[,c(1:3)]
         Inliers <- data.frame("Filas" = MyYdepIn$Filas, 
-                             "SpatialOutlier" = (MyYdepIn$Ii <= 0 | MyYdepIn$Pr.z...0. <= 0.05), 
-                             "SpatialOutlier_MoranPlot" = SpMP)
+                             "SpatialOutlier" = (MyYdepIn$Ii <= 0 & MyYdepIn$Pr.z...0. <= 0.05))
+        if(input$moranPlot) {
+          datos <- subset(MyYdepIn,MyYdepIn$Ii > 0 | MyYdepIn$Pr.z...0. > 0.05 | !SpMP)[, c("X","Y","Z")]
+          Inliers$"SpatialOutlier_MoranPlot" <- SpMP
+          }
+                             
         condicion <- merge(condicion, Inliers, all.x = TRUE)
         condicion <- unique(condicion)
       }
@@ -674,7 +678,10 @@ waiter_hide()
       #need(ncol(dataset())==4, 'No depurated data')
     )
     # build graph with ggplot syntax
-    p <- ggplot(dataset(), aes_string(x = input$x, y = input$y, color = input$color)) +
+    p <- ggplot(dataset(), aes_string(x = input$x, 
+                                      y = input$y, 
+                                      color = input$color, 
+                                      text = input$rto)) +
       geom_point()
     
     ggplotly(p) %>%
@@ -863,10 +870,10 @@ waiter_hide()
                  ggpubr::ggarrange(
                    plotCrudosYield,
                    plotEliminadosYield,
-                   ncol = 1,
-                   nrow = 2,
+                   ncol = 2,
+                   nrow = 1,
                    common.legend = TRUE,
-                   legend = 'right',
+                   legend = 'bottom',
                    labels = c("Raw data", "Removed data")
                  ),
                  plotRemanentesYield,
@@ -874,8 +881,8 @@ waiter_hide()
                  # widths	= c(2, 1), 
                  labels = c("", "Cleaned data"),
                  # hjust = -1,
-                 nrow = 2,
-                 ncol = 1,
+                 nrow = 1,
+                 ncol = 2,
                  legend = 'right'
                )
                
@@ -1845,13 +1852,13 @@ waiter_hide()
              need(agrepl("Cluster_*",input$NumClust),
                   label = "Select a valid number of cluster to validate"))
     
-
+    withProgress(message = 'Validating...', value = 0, {
     zoneValidTables <- ValidVarKrig(ClustersFM =  datos_variables_Valid()$datos,
                  datosAValid = datos_variables_Valid()$variables, 
                  numCluster = input$NumClust,
                  EstDesc = VarKrigDescrReac(),
                  crs = st_crs(CoordSist_crs())$proj4string)#CoordSist_crs())#ValoresOutput$TablaCoordTrans$coordproj)
-    
+    })
     ValoresOutput$zoneValidationTables <- zoneValidTables
     return(zoneValidTables)
     

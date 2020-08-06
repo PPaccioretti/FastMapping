@@ -118,7 +118,7 @@ if(length(VariablesTarget)==1){
 `r if(!is.null(params$output$DataDep)  && !all(is.na(params$output$DataDep))){"Summary of data after depuration"}`
 
 ```{r, eval=!is.null(params$output$DataDep) && !all(is.na(params$output$DataDep))}
-
+# browser()
 #Si existe la tabla depurada
 TablaOriginalDep <- params$output$DataDep
 

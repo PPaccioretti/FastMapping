@@ -382,13 +382,14 @@ VarKrigDescr <-
            crs) {
 
     datos_predsf <- st_as_sf(ClustersFM, coords = 1:2, crs = crs)
+    nprogress <- length(datosAValid)
     Krig <-
       sapply(datosAValid, function(columna) {
 
         if (columna == "geometry") {
           return(NULL)
         }
-        
+        incProgress(1/nprogress, detail = columna)
         formulaKr <- as.formula(paste(columna, "~ 1"))
         
         # Ajuste de semivariograma empírico
