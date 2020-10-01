@@ -24,7 +24,7 @@ shinyUI(
     theme = shinytheme("united"),
     useShinyjs(),
     #Added this js
-    extendShinyjs(script = "src/MyFunctJS.js"),
+    extendShinyjs(script = "src/MyFunctJS.js", functions = "shinyjs.init"),
     use_waiter(),
     mainPanel(
       h2("FastMapping"),
