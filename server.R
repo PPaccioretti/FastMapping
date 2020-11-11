@@ -89,8 +89,7 @@ shinyServer(function(input, output, session) {
 
 
   observeEvent(once = TRUE,ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = histdata, {
-
-
+    
     progress <- Progress$new(session, min = 1, max = 15)
     on.exit(progress$close())
     progress$set(message = 'Attaching packages',
@@ -901,7 +900,7 @@ waiter_hide()
     NombresCol<-colnames(dataset())
     MiZ<- NombresCol[3]
     MiX<- NombresCol[1]
-    MiY<-NombresCol[2]
+    MiY<- NombresCol[2]
 
     if (input$tKriging == 1) {return(as.formula(paste0(MiZ,"~1")))}
     if (input$tKriging == 2) {return(as.formula(paste0(MiZ,"~",MiX,"+",MiY)))}
@@ -1024,9 +1023,10 @@ waiter_hide()
       
       gr <- pred_grid(Mybordes, by=as.numeric(input$dimGrilla))
       gri <- polygrid(gr, bor=Mybordes)
-      names(gri)[1]<-paste("X")
-      names(gri)[2]<-paste("Y")
-      gridded(gri) = ~X+Y
+
+      names(gri)[1]<-paste(input$xmapa)
+      names(gri)[2]<-paste(input$ymapa)
+      gridded(gri) = as.formula(paste("~",input$xmapa, " + ", input$ymapa))
       ValoresOutput$Mygr<- gri
       return(gri)
     }
@@ -1035,26 +1035,25 @@ waiter_hide()
   
   
   kriging <- reactive ({
-    
+
     if(length(MyFile()$Datos) != 0) {
       Formula <- Formula()
       MyFile <- MyFile()$Datos
       if(is.null(MyFile)) {return()}
-      coordinates (MyFile) <- c(1,2)
+      coordinates(MyFile) <- c(1,2)
       proj4string(MyFile) <- CRS(SRS_string = paste0("EPSG:",CoordSist_crs()))
       
       Mygr <- Mygr()
       Modelo <- MejorModelo()
-      kriging <- autoKrige(Formula, MyFile, Mygr, model = Modelo,
-                           # kriging <- autoKrige(Formula, MyFile, Mygr, model = SelectedModels(),
+      krigingfit <- autoKrige(Formula, MyFile, Mygr, model = Modelo,
                            nmax=as.numeric(input$nmax), 
                            nmin=as.numeric(input$nmin),
                            maxdist=as.numeric(input$distmax),
                            block = c(as.numeric(input$block,as.numeric(input$block))),
                            kappa=c(0.05, seq(0.2, 2, 0.1), 5, 10),
                            miscFitOptions = list(cressie = input$cressie))
-      ValoresOutput$kriging <- kriging$krige_output
-      return(kriging$krige_output)
+      ValoresOutput$kriging <- krigingfit$krige_output
+      return(krigingfit$krige_output)
     }
   })
   
@@ -1234,6 +1233,9 @@ waiter_hide()
 
     validate(
       need(input$file, 'Check input file!'))
+    
+    # browser()
+    
     if (input$SelectPlot == 1){plotOutput("VariogramPlot")} else if (input$SelectPlot == 2) {
       tabPanel("Plot",
                downloadButton("MiDescarga2","Download Tif"),

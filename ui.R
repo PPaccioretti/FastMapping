@@ -18,13 +18,23 @@ suppressPackageStartupMessages({
   library(waiter)
 })
 
+jscode <- "
+shinyjs.init = function() {
+    $('#PanelTabSet li a[data-value=\"DatasetTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"DepurationTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"PredictionTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"ResultsTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"ClusterTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"ReportTab\"]').hide();
+}"
+
 shinyUI(
   fluidPage(
     title = "FastMapping",
     theme = shinytheme("united"),
     useShinyjs(),
     #Added this js
-    extendShinyjs(script = "src/MyFunctJS.js", functions = "shinyjs.init"),
+    extendShinyjs(script = "src/MyFunctJS.js", text = jscode, functions = c()),
     use_waiter(),
     mainPanel(
       h2("FastMapping"),

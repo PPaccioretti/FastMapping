@@ -1,4 +1,4 @@
-shinyjs.init = function(){
+shinyjs.init = function() {
   $('#PanelTabSet li a[data-value="DatasetTab"]').hide();
   $('#PanelTabSet li a[data-value="DepurationTab"]').hide();
   $('#PanelTabSet li a[data-value="PredictionTab"]').hide();
