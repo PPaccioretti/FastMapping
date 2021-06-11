@@ -13,7 +13,7 @@
 # limitations under the License.
 
 library(shiny)
-library(shinythemes)
+# library(shinythemes)
 
 # Moran Plot
 moran.plot1 <-function (x, listw, zero.policy = NULL, spChk = NULL, labels = NULL,
@@ -67,7 +67,7 @@ moran.plot1 <-function (x, listw, zero.policy = NULL, spChk = NULL, labels = NUL
 
 
 
-fclustIndex_modif <- function (y, x, index = "all"){
+fclustIndex_modif <- function(y, x, index = "all") {
   clres <- y
   gath.geva <- function(clres, x) {
     xrows <- dim(clres$me)[1]

@@ -16,7 +16,7 @@
 
 suppressPackageStartupMessages({
   library(shiny)
-  library(shinythemes)
+  # library(shinythemes)
   library(data.table)
   library(plotly) 
   
@@ -131,7 +131,7 @@ suppressPackageStartupMessages({
 
     list_of_packages <- c(
       "shiny",
-      "shinythemes",
+      # "shinythemes",
       "shinyBS",
       "shinyjs",
       "shinycssloaders",
@@ -329,6 +329,7 @@ waiter_hide()
     # if(sum(sapply(MiTabla, is.numeric))<= 1) {
     #   MiTabla<-try(read.table(file = File$datapath, sep = input$sep, header = input$header, dec=","))
     # }
+
     MiTabla
     
   })
@@ -725,7 +726,7 @@ waiter_hide()
                    plot.background = element_blank(),
                    legend.key = element_rect(fill = NA, color = NA)
                  ),
-                 guides(color = guide_legend(override.aes = list(size=3)))
+                 guides(color = guide_legend(override.aes = list(size = 3)))
                )
                
              }
@@ -909,65 +910,98 @@ waiter_hide()
   })
   ####### Compara los modelos que se especificaron ####
   
-  MiKrige <- reactive ({
-    withProgress(message = 'Cross validation:',  detail = 'This may take a while...',value = 0, {
-      
-      Formula <- as.formula(Formula())
-      MyFile <- as.data.frame(MyFile()$Datos)
-      MyFile[,3] <- as.numeric(as.character(MyFile[,3]))
-      coordinates (MyFile) <- c(1,2)
-      MyMod=list()
-
-      if(nrow(MyFile) > nrow(remove.duplicates(MyFile))) {
-        difRow <- nrow(MyFile) - nrow(remove.duplicates(MyFile))
-        if(difRow == 1) {
-          mensajeElim <- paste("To perform cross-validation,",difRow, "point pairs with equal spatial coordinate was removed")
-        } else { mensajeElim <-  paste("To perform cross-validation,",difRow, "point pairs with equal spatial coordinates were removed")}
-        
-        
-        showNotification(mensajeElim , 
-                         type = "default", duration = 3)
-      }
-      
-      for (i in SelectedModels()) {
-        # autoKrige.cv command does not take in account the blocks of your data. It performs the cross-validation point-by-point and not by blocks.
-        # 
-        # Cross validation takes in account the accuracy of the estimates of the interpolation (or prediction) for POINTS while block kriging is a smoothing method that divides the whole area into several BLOCKS and calculate the local average of your estimations for each of those area. In other words, for the area 'block' you don't have a 'value' to compare your estimation made by kriging
-
-
-        MyAK=tryCatch({autoKrige.cv(Formula, remove.duplicates(MyFile), model = c(i), 
-                                   nfold = 10, 
-                                   nmax=as.numeric(input$nmax), 
-                                   nmin=as.numeric(input$nmin),
-                                   # block = c(as.numeric(input$block,as.numeric(input$block))),
-                                   maxdist=as.numeric(input$distmax),
-                                   miscFitOptions = list(cressie = input$cressie))},
-                      error=function(e)print(e))
-        MyMod[[i]]=MyAK
-        incProgress(1/length(SelectedModels()), detail = paste("Doing model", names(myChoice)[myChoice==i]))
-        
-      }
-
-
-      #Esta funcion si no puede usar la funcion compare.cv, calcula el RMSE a mano y lo repite 11 vecces
-      ModList=lapply(MyMod,function (x) tryCatch(compare.cv(x),error=function(e) {
-        cat("Calculating CV by hand\n")
-        
-        showNotification(paste("Something went wrong while cross-validation"), 
-                         type = "warning", duration = 5, id = "Aviso")
-        
-        if(any(c("simpleError","error","condition" ) %in% class(e) )) {
-          return(matrix(NA,nrow=11))
-        }
-
-        matrix(sqrt(sum(x$krige.cv_output$residual^2, na.rm=TRUE)/sum(complete.cases(x$krige.cv_output$residual))),nrow=11)
-        }))
-      f=do.call("cbind",ModList)
-      colnames(f)=SelectedModels()
-      ValoresOutput$MiKrige <- f
-      return(f)
-    }
-    ) })
+  MiKrige <- reactive({
+    withProgress(message = 'Cross validation:',
+                 detail = 'This may take a while...',
+                 value = 0,
+                 {
+                   Formula <- as.formula(Formula())
+                   MyFile <- as.data.frame(MyFile()$Datos)
+                   MyFile[, 3] <- as.numeric(as.character(MyFile[, 3]))
+                   coordinates(MyFile) <- c(1, 2)
+                   MyMod = list()
+                   
+                   if (nrow(MyFile) > nrow(remove.duplicates(MyFile))) {
+                     difRow <- nrow(MyFile) - nrow(remove.duplicates(MyFile))
+                     if (difRow == 1) {
+                       mensajeElim <-
+                         paste(
+                           "To perform cross-validation,",
+                           difRow,
+                           "point pair with equal spatial coordinate was removed"
+                         )
+                     } else {
+                       mensajeElim <-
+                         paste(
+                           "To perform cross-validation,",
+                           difRow,
+                           "point pairs with equal spatial coordinates were removed"
+                         )
+                     }
+                     
+                     showNotification(mensajeElim ,
+                                      type = "default", duration = 3)
+                   }
+                   
+                   for (i in SelectedModels()) {
+                     # autoKrige.cv command does not take in account the blocks of your data. It performs the cross-validation point-by-point and not by blocks.
+                     #
+                     # Cross validation takes in account the accuracy of the estimates of the interpolation (or prediction) for POINTS while block kriging is a smoothing method that divides the whole area into several BLOCKS and calculate the local average of your estimations for each of those area. In other words, for the area 'block' you don't have a 'value' to compare your estimation made by kriging
+                     
+                     
+                     MyAK = tryCatch({
+                       autoKrige.cv(
+                         Formula,
+                         remove.duplicates(MyFile),
+                         model = c(i),
+                         nfold = 10,
+                         nmax = as.numeric(input$nmax),
+                         nmin = as.numeric(input$nmin),
+                         # block = c(as.numeric(input$block,as.numeric(input$block))),
+                         maxdist = as.numeric(input$distmax),
+                         miscFitOptions = list(cressie = input$cressie)
+                       )
+                     },
+                     error = function(e)
+                       print(e))
+                     MyMod[[i]] = MyAK
+                     incProgress(1 / length(SelectedModels()),
+                                 detail = paste("Validating",
+                                                names(myChoice)[myChoice == i],
+                                                "model"))
+                     
+                   }
+                   
+                   
+                   #Esta funcion si no puede usar la funcion compare.cv, calcula el RMSE a mano y lo repite 11 vecces
+                   ModList = lapply(MyMod, function(x)
+                     tryCatch(
+                       compare.cv(x),
+                       error = function(e) {
+                         cat("Calculating CV by hand\n")
+                         
+                         showNotification(
+                           paste("Something went wrong while cross-validation"),
+                           type = "warning",
+                           duration = 5,
+                           id = "Aviso"
+                         )
+                         
+                         if (any(c("simpleError", "error", "condition") %in% class(e))) {
+                           return(matrix(NA, nrow = 11))
+                         }
+                         
+                         matrix(sqrt(
+                           sum(x$krige.cv_output$residual ^ 2, na.rm = TRUE) / sum(complete.cases(x$krige.cv_output$residual))
+                         ), nrow = 11)
+                       }
+                     ))
+                   f = do.call("cbind", ModList)
+                   colnames(f) = SelectedModels()
+                   ValoresOutput$MiKrige <- f
+                   return(f)
+                 })
+  })
   
   #####################
   
@@ -976,82 +1010,103 @@ waiter_hide()
   })
   
   ######
-  ## Esta funcion, en vez de SelectedModels, 
+  ## Esta funcion, en vez de SelectedModels,
   ## se hace con el modelo del RMSE mas cercano a 1
   ######
   MejorModelo <- reactive ({
-    ValidationTable=MiKrige()
+    ValidationTable = MiKrige()
     tryCatch({
-      MyBestModels=names(which.min(apply(ValidationTable[8,],2,as.numeric)))
-      return(MyBestModels)},error=function (e) {MyBestModels=colnames(ValidationTable)[1]
-      return(MyBestModels)})
+      MyBestModels = names(which.min(apply(ValidationTable[8, ], 2, as.numeric)))
+      return(MyBestModels)
+    }, error = function (e) {
+      MyBestModels = colnames(ValidationTable)[1]
+      return(MyBestModels)
+    })
   })
   
   Variogram <- reactive({
     Formula <- Formula()
     MyFile <- MyFile()$Datos
-    if(is.null(MyFile)) {return()}
-    coordinates(MyFile) <- c(1,2)
-    Mod<-autofitVariogram(Formula, MyFile, model = MejorModelo(), 
-                          cutoff = 10000, cressie = input$cressie)
- 
-    ValoresOutput$Variograma<- Mod
+    if (is.null(MyFile)) {
+      return()
+    }
+    coordinates(MyFile) <- c(1, 2)
+    Mod <- autofitVariogram(
+      Formula,
+      MyFile,
+      model = MejorModelo(),
+      cutoff = 10000,
+      cressie = input$cressie
+    )
+    
+    ValoresOutput$Variograma <- Mod
     return(Mod)
-  })  
+  })
   
-  #########  
+  #########
   
   getBorders <- reactive({
     validate(need(data(), ''))
     # browser()
-    if(is.null(input$bordes)){
-      MyZ <- TransfCoord()[,c(input$xmapa, input$ymapa)]
-      punbor<- chull(MyZ)
-      Mybordes <- as.matrix(as.data.frame(MyZ[c(punbor,punbor[1]),1:2]))
-    }else{
+    if (is.null(input$bordes)) {
+      MyZ <- TransfCoord()[, c(input$xmapa, input$ymapa)]
+      punbor <- chull(MyZ)
+      Mybordes <-
+        as.matrix(as.data.frame(MyZ[c(punbor, punbor[1]), 1:2]))
+    } else{
       Mybordes <- Bordes()
     }
     return(Mybordes)
   })
   
   
-  Mygr <- reactive ({
-    
-    if(length(MyFile()$Datos) != 0) {
+  Mygr <- reactive({
+    if (length(MyFile()$Datos) != 0) {
       # browser()
       Mybordes <- getBorders()
       
-      gr <- pred_grid(Mybordes, by=as.numeric(input$dimGrilla))
-      gri <- polygrid(gr, bor=Mybordes)
-
-      names(gri)[1]<-paste(input$xmapa)
-      names(gri)[2]<-paste(input$ymapa)
-      gridded(gri) = as.formula(paste("~",input$xmapa, " + ", input$ymapa))
-      ValoresOutput$Mygr<- gri
+      gr <- pred_grid(Mybordes, by = as.numeric(input$dimGrilla))
+      gri <- polygrid(gr, bor = Mybordes)
+      
+      names(gri)[1] <- paste(input$xmapa)
+      names(gri)[2] <- paste(input$ymapa)
+      gridded(gri) = as.formula(paste("~", input$xmapa, " + ", input$ymapa))
+      ValoresOutput$Mygr <- gri
       return(gri)
     }
   })
   
   
   
-  kriging <- reactive ({
-
-    if(length(MyFile()$Datos) != 0) {
+  kriging <- reactive({
+    if (length(MyFile()$Datos) != 0) {
       Formula <- Formula()
       MyFile <- MyFile()$Datos
-      if(is.null(MyFile)) {return()}
-      coordinates(MyFile) <- c(1,2)
-      proj4string(MyFile) <- CRS(SRS_string = paste0("EPSG:",CoordSist_crs()))
-      
+      if (is.null(MyFile)) {
+        return()
+      }
+      coordinates(MyFile) <- c(1, 2)
+      proj4string(MyFile) <-
+        CRS(SRS_string = paste0("EPSG:", CoordSist_crs()))
+      browser()
       Mygr <- Mygr()
+      crs(Mygr) <- crs(MyFile)
+      
       Modelo <- MejorModelo()
-      krigingfit <- autoKrige(Formula, MyFile, Mygr, model = Modelo,
-                           nmax=as.numeric(input$nmax), 
-                           nmin=as.numeric(input$nmin),
-                           maxdist=as.numeric(input$distmax),
-                           block = c(as.numeric(input$block,as.numeric(input$block))),
-                           kappa=c(0.05, seq(0.2, 2, 0.1), 5, 10),
-                           miscFitOptions = list(cressie = input$cressie))
+      krigingfit <- autoKrige(
+        Formula,
+        MyFile,
+        Mygr,
+        model = Modelo,
+        nmax = as.numeric(input$nmax),
+        nmin = as.numeric(input$nmin),
+        maxdist = as.numeric(input$distmax),
+        block = c(as.numeric(
+          input$block, as.numeric(input$block)
+        )),
+        kappa = c(0.05, seq(0.2, 2, 0.1), 5, 10),
+        miscFitOptions = list(cressie = input$cressie)
+      )
       ValoresOutput$kriging <- krigingfit$krige_output
       return(krigingfit$krige_output)
     }
@@ -1059,11 +1114,11 @@ waiter_hide()
   
   
   
-  GeoTiff<-reactive({ 
+  GeoTiff <- reactive({ 
     # browser()
     
     raster_Pred <- stars::st_as_stars(kriging())
-    rast=plot(raster_Pred)
+    # rast <- plot(raster_Pred)
     return(raster_Pred)
 # 
 #     if (input$hemisferio=="2"){

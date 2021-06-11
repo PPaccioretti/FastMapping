@@ -13,7 +13,7 @@
 # limitations under the License.
 suppressPackageStartupMessages({
   require(shiny)
-  require(shinythemes)
+  # require(shinythemes)
   library(plotly)
   library(waiter)
 })
@@ -31,7 +31,7 @@ shinyjs.init = function() {
 shinyUI(
   fluidPage(
     title = "FastMapping",
-    theme = shinytheme("united"),
+    theme = bslib::bs_theme(bootswatch = "united"),
     useShinyjs(),
     #Added this js
     extendShinyjs(script = "src/MyFunctJS.js", text = jscode, functions = c()),

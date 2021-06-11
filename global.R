@@ -1,6 +1,6 @@
 suppressPackageStartupMessages({
   library(shiny)
-  library(shinythemes)
+  # library(shinythemes)
   library(shinyBS)
   library(shinyjs)
   library(shinycssloaders)
