@@ -1088,7 +1088,6 @@ waiter_hide()
       coordinates(MyFile) <- c(1, 2)
       proj4string(MyFile) <-
         CRS(SRS_string = paste0("EPSG:", CoordSist_crs()))
-      browser()
       Mygr <- Mygr()
       crs(Mygr) <- crs(MyFile)
       
