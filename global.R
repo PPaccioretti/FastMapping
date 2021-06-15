@@ -1,30 +1,15 @@
 suppressPackageStartupMessages({
   library(shiny)
-  # library(shinythemes)
   library(shinyBS)
   library(shinyjs)
   library(shinycssloaders)
+  library(waiter)
+  library(magrittr)
+  library(plotly)
 })
-# library(shinycssloaders)
-# library(data.table)
-# library(plotly)
-# library(geoR)
-# library(automap)
-# library(fields)
-# library(spdep)
-# library(raster)
-# library(sp)
-# library(ggplot2)
-# library(rgeos)
-# library(gstat)
-# library(e1071)
-# library(spdep)
-# library(ade4)
-# library(rmarkdown)
-# library(shinyjs)
+
 source("src/Functions.R")
 
-library(shinycssloaders)
 options(spinner.color = "#e95420",
         spinner.type = 6)
 
@@ -32,11 +17,20 @@ options(shiny.sanitize.errors = FALSE)
 options(shiny.maxRequestSize = 20*1024^2)
 
 
-myChoice <- list(Exponential ="Exp",
+# possibleModels <- gstat::vgm()
+# myModelsLong <- 
+#   gsub("[\\(\\)]", "", regmatches(possibleModels[, "long"], gregexpr("\\(.*?\\)", j)))
+# myModelsLong <- firstup(myModelsLong)
+# myModelsCode <- as.vector(possibleModels[, "short"])
+# 
+# myChoice <- as.list(myModelsCode)
+# names(myChoice) <- myModelsLong
+
+myChoice <- list(Exponential = "Exp",
                  Shperical = "Sph",
                  Gaussian = "Gau",
                  Matern = "Mat",
-                 "M. Stein's" ="Ste",
+                 "M. Stein's" = "Ste",
                  Circular = "Cir",
                  Linear = "Lin",
                  Power = "Pow",
@@ -44,7 +38,19 @@ myChoice <- list(Exponential ="Exp",
                  Pentaspherical = "Pen",
                  Hole = "Hol")
 
-#### Help Strings
+### JS Script ----
+jscode <- "
+shinyjs.init = function() {
+    $('#PanelTabSet li a[data-value=\"DatasetTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"DepurationTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"PredictionTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"ResultsTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"ClusterTab\"]').hide();
+  $('#PanelTabSet li a[data-value=\"ReportTab\"]').hide();
+}"
+
+
+#### Help Strings ----
 datasetHelp <- "File must contain two columns for coordinates and at least one target variable"
 tagetVariableHelp <- "If only one variable is selected, FastMapping will run depuration and spatial interpolation tools. More than one should be selected for multivariate analysis"
 
