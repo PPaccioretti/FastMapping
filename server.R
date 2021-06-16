@@ -167,51 +167,37 @@ function(input, output, session) {
   
   
   CoordSist_crs <- reactive({
-    validate(need(input$hemisferio, input$file, ''))
-    Hemisfer <- switch(input$hemisferio,
-                       "1" = 6,#" +north",
-                       "2" = 7 #" +south"
-    )
-    cordsist <- as.numeric(paste0(32,Hemisfer,input$zona))
+    validate(need(input$epsg_tgt, input$file, ''))
+    cordsist <- input$epsg_tgt
+    # Hemisfer <- switch(input$hemisferio,
+    #                    "1" = 6,#" +north",
+    #                    "2" = 7 #" +south"
+    # )
+    # cordsist <- as.numeric(paste0(32,Hemisfer,input$zona))
     return(cordsist)
   })
   
+  
   ##### TRANSFORMACION DE COORDENADAS
-  TransfCoord<- reactive({
-    # MyFile <- data()
-    MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
-    MyFile <- MyFile[complete.cases(MyFile[,1:2]),]
+  TransfCoord <- reactive({
     
+    MyFile <- data()[, c(input$xmapa, input$ymapa, input$rto)]
+    MyFile <- MyFile[complete.cases(MyFile[, 1:2]), ]
     
-    # browser()
-    
-    # Hemisfer <- switch(input$hemisferio,
-    #   "1" = " +north",
-    #   "2" = " +south"
-    # )
-    
-    # cordsist <- paste0("+proj=utm +zone=",input$zona,Hemisfer ," +ellps=WGS84 +datum=WGS84")
-    
-    # Hemisfer <- switch(input$hemisferio,
-    #   "1" = 6,#" +north",
-    #   "2" = 7 #" +south"
-    # )
-    # cordsist <- as.numeric(paste0(32,Hemisfer,input$zona))
-    
-    if(quantile(MyFile[,1],0.5)<0 &  quantile(MyFile[,2],0.5)<0) {
-      # coordinates(MyFile) <- c(1,2)
-      # proj4string(MyFile) <- CRS("+proj=longlat + datum=dat")
-      # Mydata_t <- spTransform(MyFile, CRS(cordsist))
-      # Mydata_t <- as.data.frame(Mydata_t)[,c(input$xmapa, input$ymapa, input$rto)]
-      
-      MyFile_sf <- st_as_sf(MyFile, coords = c(input$xmapa, input$ymapa), crs = 4326)
+    # if (quantile(MyFile[, 1], 0.5) < 0 &
+    #     quantile(MyFile[, 2], 0.5) < 0) {
+      MyFile_sf <-
+        st_as_sf(MyFile,
+                 coords = c(input$xmapa, input$ymapa),
+                 crs = input$epsg_orig)
       Mydata_t <- st_transform(MyFile_sf, CoordSist_crs())
       
-      Mydata_t <- data.frame(st_coordinates(Mydata_t), st_drop_geometry(Mydata_t))
+      Mydata_t <-
+        data.frame(st_coordinates(Mydata_t), st_drop_geometry(Mydata_t))
       names(Mydata_t) <- c(input$xmapa, input$ymapa, input$rto)
       
-      MyFile<-Mydata_t
-    }
+      MyFile <- Mydata_t
+    # }
     
     ValoresOutput$TablaCoordTrans <-
       list(TablaCoords = MyFile, coordproj = CoordSist_crs())
@@ -237,47 +223,141 @@ function(input, output, session) {
   
   
   output$edgesTable <- DT::renderDataTable({
-    
-    if(is.null(Bordes())){return()}
+    if (is.null(Bordes())) {
+      return()
+    }
     # if(ncol(data())==1) {return()}
-    validate(
-      need(ncol(Bordes())!=1, "Please check Separator character"))
+    validate(need(ncol(Bordes()) != 1, "Please check Separator character"))
     ### AQUI DEBERIA VER SI TIENE COMA COMO DECIMAL, A LO MEJOR DESPUES DEL TYRCATCH
     Bordes()
     
-  }, options = list(
-    scrollX = TRUE
-  ))#
+  }, options = list(scrollX = TRUE))#
   
   
   output$tb <- renderUI({
+    validate(need(data(), ''))
     
-    if(is.null(data())){return ()}
-    if(!is.null(data())) {
-      if(is.null(Bordes())) {
-        return(tabsetPanel(tabPanel("Data", DT::dataTableOutput("table"))))
-      }
-      if(!is.null(Bordes())) {
-        return(
-          tabsetPanel(tabPanel("Data", DT::dataTableOutput("table")),
-                      tabPanel("Edges", DT::dataTableOutput("edgesTable")))
-        )
-        
-      }}
+    # if (is.null(Bordes())) {
+    #   return(tabsetPanel(tabPanel(
+    #     "Data", DT::dataTableOutput("table")
+    #   )))
+    # }
+    # if (!is.null(Bordes())) {
+      return(
+        tabsetPanel(
+          tabPanel("Data", DT::dataTableOutput("table")),
+          tabPanel("Edges", 
+                 fluidPage(
+                    DT::dataTableOutput("edgesTable"),
+                    uiOutput("ui_edge_param")
+                 )
+                  )
+        ))
+      
+    # }
     
   })
   
-  output$bordesFile <- renderUI({
-    if(input$edges == FALSE){return()} else{ fileInput('bordes', 'Edges')}
+  
+  output$ui_edge_param <- renderUI({
+    validate(need(data(), ''),
+             need(is.null(Bordes()), ''))
+    fluidPage(
+      fluidRow(
+        column(
+          width = 6,
+          numericInput(
+            "concavity",
+            "Concavity",
+            min = 0,
+            max = 10,
+            value = 2,
+            step = 0.1
+          )),
+          column(
+            width = 6,
+            numericInput(
+              "length_threshold",
+              "Segment length threshold",
+              min = 0,
+              max = NA,
+              value = 0,
+              step = 0.5
+            )
+          )
+        
+      
+    ),
+    fluidRow(
+      plotOutput("borders_plot"),
+      DT::dataTableOutput("getBordersTable")
+    )
+    
+    
+    )
   })
+  
+  output$getBordersTable <- DT::renderDataTable({
+    DT::datatable(
+      getBorders(),
+      options = list(
+        paging = FALSE,
+        searching = FALSE,
+        autoWidth = FALSE,
+        info = FALSE
+      ),
+      rownames = FALSE,
+      selection = 'none'
+      
+    )
+    
+  })
+  
+  
+  output$borders_plot <- renderPlot({
+
+    df <- as.data.frame(getBorders())
+    names_df <- colnames(df)
+    df_point <- TransfCoord()[, c(input$xmapa, input$ymapa)]
+    ggplot(df) +
+      geom_path(aes_string(names_df[1], names_df[2])) +
+      geom_point(data = df_point, 
+                 aes_string(input$xmapa, input$ymapa),
+                 alpha = 0.5, size = 0.5) +
+      coord_equal() +
+      theme(
+        axis.line = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = "none",
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.background = element_blank()
+      )
+  })
+  
+  output$bordesFile <- renderUI({
+    if (input$edges == FALSE) {
+      return()
+    } else{
+      fileInput('bordes', 'Edges')
+    }
+  })
+  
+  
   
   
   Bordes <- reactive({
     File <- input$bordes
-    if(is.null(File) | !input$edges){return()} 
+    if (is.null(File) | !input$edges) {return()} 
     # if(is.null(input$sep)){return()}
     
-    MiTabla<-fread(File$datapath, data.table=FALSE)
+    MiTabla <- fread(File$datapath, data.table = FALSE)
     # MiTabla<-read.table(file = File$datapath, sep = input$sep, header = input$header)
     
     # if(sum(sapply(MiTabla, is.numeric))<= 1) {
@@ -560,48 +640,173 @@ function(input, output, session) {
   })
   
   output$ui_data_param <- renderUI({
-    wellPanel(
-      uiOutput("BaseColx", inline = TRUE),
-      uiOutput("BaseColy", inline = TRUE),
-      uiOutput("BaseColRend", inline = TRUE),
-      uiOutput("TextoAviso", inline = TRUE)
-    )
-  })
-  
-  
-  
-  output$Hemisf <- renderUI({
     validate(need(data(), ""))
-    selectInput(
-      "hemisferio",
-      "Hemisphere",
-      choices = list("North" = 1, "South" = 2),
-      selected = 2,
-      width = "100%"
+    tagList(
+      hr(),
+      h5("Reading file options:"),
+      checkboxInput(
+        'header',
+        'The file contains the names of the variables as its first line.',
+        value = TRUE
+      ),
+      br(),
+      wellPanel(
+        uiOutput("BaseColx", inline = TRUE),
+        uiOutput("BaseColy", inline = TRUE),
+        uiOutput("BaseColRend", inline = TRUE),
+        uiOutput("TextoAviso", inline = TRUE)
+      ),
+      br(),
+      uiOutput("ui_epsg"),
+      uiOutput("ui_utm_param")
     )
-    
+  })
+
+  
+  output$ui_epsg <- renderUI({
+    tagList(
+        numericInput(
+        "epsg_orig",
+        "Original EPSG code",
+        value = 4326 ,
+        width = "100%",
+        min = 2000,
+        max = 32766,
+        step = 1
+      ),
+      numericInput(
+        "epsg_tgt",
+        "Target EPSG code",
+        value = 32720,
+        width = "100%",
+        min = 2000,
+        max = 32766,
+        step = 1
+      )
+    )
+  })
+
+  observeEvent((input$xmapa == 1 | input$ymapa == 1),{
+    validate(need(data(), ''))
+    try({
+    MyFile <- data()[, c(input$xmapa, input$ymapa)]
+    MyFile <- MyFile[complete.cases(MyFile),]
+    if (!(quantile(MyFile[, 1], 0.5) < 0 &
+        quantile(MyFile[, 2], 0.5) < 0)) {
+      updateNumericInput(
+        session,
+        "epsg_orig",
+        value = input$epsg_tgt
+      )
+    }
+  })
   })
   
-  output$Zona <- renderUI({
-    validate(need(data(), ""))
-    numericInput(
-      "zona",
-      "UTM area",
-      20 ,
-      width = "100%",
-      min = 1,
-      max = 60,
-      step = 1
-    )
-    
+  
+
+  # output$Hemisf <- renderUI({
+  #   validate(need(data(), ""))
+  #   selectInput(
+  #     "hemisferio",
+  #     "Hemisphere",
+  #     choices = list("North" = 1, "South" = 2),
+  #     selected = 2,
+  #     width = "100%"
+  #   )
+  #   
+  # })
+  # 
+  # output$Zona <- renderUI({
+  #   validate(need(data(), ""))
+  #   numericInput(
+  #     "zona",
+  #     "UTM area",
+  #     20 ,
+  #     width = "100%",
+  #     min = 1,
+  #     max = 60,
+  #     step = 1
+  #   )
+  #   
+  # })
+  # 
+  
+  observeEvent(input$epsg_tgt, {
+
+    if (input$epsg_tgt > 32600 & input$epsg_tgt < 32800 ) {
+      updateNumericInput(
+        session,
+        "zona",
+        value = input$epsg_tgt %% 100
+      )
+      if (input$epsg_tgt > 32600 & input$epsg_tgt < 32700 ) {
+
+        updateSelectInput(
+          session,
+          "hemisferio",
+          choices = list("North" = 1, "South" = 2),
+          selected = 1
+        )
+      } else {
+
+        updateSelectInput(
+          session,
+          "hemisferio",
+          choices = list("North" = 1, "South" = 2),
+          selected = 2
+        )
+      }
+
+    }
   })
+  
+  observeEvent(input$hemisferio != 1 | input$zona != 0, {
+    validate(need(input$hemisferio, ''), 
+             need(input$zona, ''))
+
+    Hemisfer <- switch(input$hemisferio,
+                       "1" = 6,#" +north",
+                       "2" = 7 #" +south"
+    )
+    cordsist <- as.numeric(paste0(32,Hemisfer,input$zona))
+    
+    
+    updateNumericInput(
+      session,
+      "epsg_tgt",
+      value = cordsist
+    )
+  })
+  
+  
+  
+  
   
   output$ui_utm_param <- renderUI({
     validate(need(data(), ""))
     br()
     wellPanel(
-      uiOutput("Hemisf", inline = TRUE),
-      uiOutput("Zona", inline = TRUE)
+      helpText("This option is deprecated, we suggest to use 'Target EPSG code' option"),
+      selectInput(
+        "hemisferio",
+        "Hemisphere",
+        choices = list("North" = 1, "South" = 2),
+        selected = 2,
+        width = "100%"
+      ),
+      numericInput(
+        "zona",
+        "UTM area",
+        20 ,
+        width = "100%",
+        min = 1,
+        max = 60,
+        step = 1
+      )
+      
+      
+      # uiOutput("Hemisf", inline = TRUE),
+      # uiOutput("Zona", inline = TRUE)
     )
     
   })
@@ -619,7 +824,11 @@ function(input, output, session) {
       MyFile <- MyFile[complete.cases(MyFile[, 1:2]),]
       if (quantile(MyFile[, 1], 0.5) < 0 &
           quantile(MyFile[, 2], 0.5) < 0) {
-        "Projection system will be transformed from latlong to UTM automatically"
+
+        paste("Projection system will be transformed from",
+              paste0('epsg:', input$epsg_orig),
+              "to",
+              paste0('epsg:', input$epsg_tgt))
       }
     })
   })
@@ -631,7 +840,7 @@ function(input, output, session) {
   
   output$DepuratedTable <- renderDataTable({
     validate(
-      need(ncol(dataset())==4, 'No extracted data, finally dataset is the same as upload.'))
+      need(ncol(dataset()) == 4, 'No extracted data, finally dataset is the same as upload.'))
     MyFile()$UtilizadosDep
   })
   
@@ -955,6 +1164,13 @@ function(input, output, session) {
                                       type = "default", duration = 3)
                    }
                    
+                   max_dist <-
+                     ifelse(is.na(as.numeric(input$distmax)), 
+                            Inf, 
+                            as.numeric(input$distmax)
+                            )
+                   
+                   
                    for (i in SelectedModels()) {
                      # autoKrige.cv command does not take in account the blocks of your data. It performs the cross-validation point-by-point and not by blocks.
                      #
@@ -970,7 +1186,7 @@ function(input, output, session) {
                          nmax = as.numeric(input$nmax),
                          nmin = as.numeric(input$nmin),
                          # block = c(as.numeric(input$block,as.numeric(input$block))),
-                         maxdist = as.numeric(input$distmax),
+                         maxdist = max_dist,
                          miscFitOptions = list(cressie = input$cressie)
                        )
                      },
@@ -1061,10 +1277,20 @@ function(input, output, session) {
     validate(need(data(), ''))
 
     if (is.null(input$bordes)) {
+
       MyZ <- TransfCoord()[, c(input$xmapa, input$ymapa)]
-      punbor <- chull(MyZ)
-      Mybordes <-
-        as.matrix(as.data.frame(MyZ[c(punbor, punbor[1]), 1:2]))
+      MyZ_sf <- st_as_sf(MyZ, coords = 1:2)
+      Mybordes <- 
+        concaveman::concaveman(MyZ_sf,
+                               concavity = input$concavity,
+                               length_threshold = input$length_threshold)
+      
+      Mybordes <- st_coordinates(Mybordes)[, 1:2]
+      colnames(Mybordes) <- colnames(MyZ)
+      
+      # punbor <- chull(MyZ)
+      # Mybordes <-
+      #   as.matrix(as.data.frame(MyZ[c(punbor, punbor[1]), 1:2]))
     } else{
       Mybordes <- Bordes()
     }
@@ -1103,6 +1329,11 @@ function(input, output, session) {
       Mygr <- Mygr()
       crs(Mygr) <- crs(MyFile)
       
+      max_dist <-
+        ifelse(is.na(as.numeric(input$distmax)), 
+               Inf, 
+               as.numeric(input$distmax))
+      
       Modelo <- MejorModelo()
       krigingfit <- autoKrige(
         Formula,
@@ -1111,7 +1342,7 @@ function(input, output, session) {
         model = Modelo,
         nmax = as.numeric(input$nmax),
         nmin = as.numeric(input$nmin),
-        maxdist = as.numeric(input$distmax),
+        maxdist = max_dist,
         block = c(as.numeric(
           input$block, as.numeric(input$block)
         )),
@@ -1644,61 +1875,62 @@ function(input, output, session) {
   })
   
   output$ui_multivariate_params <- renderUI({
-    validate(need(length(input$rto) > 1))
-    column(
-      width = 12 / 3,
-      h3("Spatial PCA parameters"),
-      # br(),
-      checkboxInput("centrado", "Centered variables", value = TRUE),
-      sliderInput(
-        "varexplicada",
-        "Explained variance (%)",
-        min = 0,
-        max = 100,
-        value = 70
-      ),
-      
-      h4("Neighborhood network"),
-      checkboxInput("vecindarionulo", "Data with null neighbor", value = FALSE),
-      sliderInput(
-        "distanciavecino",
-        "Distance between neighbors",
-        min = 0,
-        max = 1000,
-        value = c(0, 35)
-      ),
-      uiOutput("changedistanciavecinomax"),
-      
-      bsTooltip(
-        "centrado",
-        centradoClusterHelp,
-        placement = "bottom",
-        trigger = "hover",
-        options = NULL
-      ),
-      bsTooltip(
-        "varexplicada",
-        varexplicadaClusterHelp,
-        placement = "bottom",
-        trigger = "hover",
-        options = NULL
-      ),
-      bsTooltip(
-        "vecindarionulo",
-        vecindarionuloClusterHelp,
-        placement = "bottom",
-        trigger = "hover",
-        options = NULL
-      ),
-      bsTooltip(
-        "distanciavecino",
-        distanciavecinoClusterHelp,
-        placement = "bottom",
-        trigger = "hover",
-        options = NULL
+    validate(need(length(input$rto) > 1, ''))
+    
+      column(
+        width = 12,
+        h3("Spatial PCA parameters"),
+        # br(),
+        checkboxInput("centrado", "Centered variables", value = TRUE),
+        sliderInput(
+          "varexplicada",
+          "Explained variance (%)",
+          min = 0,
+          max = 100,
+          value = 70
+        ),
+        
+        h4("Neighborhood network"),
+        checkboxInput("vecindarionulo", "Data with null neighbor", value = FALSE),
+        sliderInput(
+          "distanciavecino",
+          "Distance between neighbors",
+          min = 0,
+          max = 1000,
+          value = c(0, 35)
+        ),
+        uiOutput("changedistanciavecinomax"),
+        
+        bsTooltip(
+          "centrado",
+          centradoClusterHelp,
+          placement = "bottom",
+          trigger = "hover",
+          options = NULL
+        ),
+        bsTooltip(
+          "varexplicada",
+          varexplicadaClusterHelp,
+          placement = "bottom",
+          trigger = "hover",
+          options = NULL
+        ),
+        bsTooltip(
+          "vecindarionulo",
+          vecindarionuloClusterHelp,
+          placement = "bottom",
+          trigger = "hover",
+          options = NULL
+        ),
+        bsTooltip(
+          "distanciavecino",
+          distanciavecinoClusterHelp,
+          placement = "bottom",
+          trigger = "hover",
+          options = NULL
+        )
+        
       )
-      
-    )
     
   })
   
@@ -2048,7 +2280,9 @@ function(input, output, session) {
           column(width = 12 / 4,
                  br(),
                  br(),
-                 plotOutput(paste0("plot_", i), height = "190px")),
+                 withSpinner(plotOutput(
+                   paste0("plot_", i), height = "190px"
+                 ))),
           br(),
           br()
           

@@ -58,47 +58,64 @@ fluidPage(
             a("this link", href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",  target = "_blank"),
             "."
           ),
-          h3("Tools for univariate analysis:"),
-          tags$ul(
-            tags$li("Depuration",
-                    tags$ul(
-                      tags$li("Global outliers"),
-                      tags$li("Spatial outliers"),
-                      tags$li("Border effects")
-                    )),
-            tags$li("Spatial interpolation",
-                    tags$ul(
-                      tags$li("Variogram fitting"),
-                      tags$li("Kriging prediction")
-                    )),
-            tags$li("Classification",
-                    tags$ul(tags$li(
-                      "Fuzzy k-means cluster"
-                    )))
-            
+          fluidRow(
+            column(
+              width = 6,
+              h3("Tools for univariate analysis:"),
+              tags$ul(
+                tags$li("Depuration",
+                        tags$ul(
+                          tags$li("Global outliers"),
+                          tags$li("Spatial outliers"),
+                          tags$li("Border effects")
+                        )),
+                tags$li("Spatial interpolation",
+                        tags$ul(
+                          tags$li("Variogram fitting"),
+                          tags$li("Kriging prediction")
+                        )),
+                tags$li("Classification",
+                        tags$ul(tags$li(
+                          "Fuzzy k-means cluster"
+                        )))
+                
+              ),
+              h4("Example dataset:"),
+              tags$ul(tags$li(
+                a("Mapping yield data in a barley field",
+                  href = "https://drive.google.com/uc?export=download&id=1ZzWDd9BHeZuebq_xPpNgSv9XsRmXEOTb")
+              ),
+              tags$li(
+                a("Wheat raw data",
+                  href = "https://drive.google.com/uc?export=download&id=1bpCkvEoC7EvmycSFQwrtnzWCJ5WBDrIL")
+              ))
+              
+            ),
+            column(
+              width = 6,
+              h3("Tools for multivariate analysis:"),
+              tags$ul(
+                tags$li("Spatial Principal Components"),
+                tags$li("Fuzzy k-means on spatial principal components (KM-sPC)")
+              ),
+              h4("Example dataset:"),
+              tags$ul(tags$li(
+                a("Zoning a field from yield and soil properties",
+                  href = "https://drive.google.com/uc?export=download&id=1SeJYNmzg-d26E_nydzKtcImshEYZB6UO"),
+                "."
+              )),
+              br(),
+              br(),
+              div(style = "text-align: center;",
+                  actionButton(
+                    "startApl", "Start!", 
+                    icon = icon("play-circle"),
+                    class = "btn-success",
+                    style = 'text-align: center; font-size:180%;'
+                  ))
+            )
           ),
-          h4("Example dataset:"),
-          tags$ul(tags$li(
-            a("Mapping yield data in a barley field",
-              href = "https://drive.google.com/uc?export=download&id=1ZzWDd9BHeZuebq_xPpNgSv9XsRmXEOTb")
-          ),
-          tags$li(
-            a("Wheat raw data",
-              href = "https://drive.google.com/uc?export=download&id=1bpCkvEoC7EvmycSFQwrtnzWCJ5WBDrIL")
-          )),
           
-          h3("Tools for multivariate analysis:"),
-          tags$ul(
-            tags$li("Spatial Principal Components"),
-            tags$li("Fuzzy k-means on spatial principal components (KM-sPC)")
-          ),
-          h4("Example dataset:"),
-          tags$ul(tags$li(
-            a("Zoning a field from yield and soil properties",
-              href = "https://drive.google.com/uc?export=download&id=1SeJYNmzg-d26E_nydzKtcImshEYZB6UO"),
-            "."
-          )),
-          actionButton("startApl", "Start!", icon = icon("play-circle"))
           
         )
       ),
@@ -143,16 +160,8 @@ fluidPage(
                    tags$hr(),
                    checkboxInput('edges', 'Optional: upload edges file', value = FALSE),
                    uiOutput('bordesFile'),
-                   tags$hr(),
-                   h5("Reading file options:"),
-                   checkboxInput(
-                     'header',
-                     'The file contains the names of the variables as its first line.',
-                     value = TRUE
-                   ),
-                   br(),
-                   uiOutput("ui_data_param"),
-                   uiOutput("ui_utm_param")
+                   uiOutput("ui_data_param")
+
                  ),
                  mainPanel(uiOutput("tb"))
                  
@@ -417,7 +426,7 @@ fluidPage(
                          inputId = "distmax",
                          label =
                            "Max. Dist.",
-                         value =  1000,
+                         value =  NA,
                          width = "80%"
                        ),
                        bsTooltip(
@@ -571,7 +580,7 @@ fluidPage(
                 )
               ),
               
-              renderUI(ui_multivariate_params),
+              uiOutput("ui_multivariate_params"),
               
               column(
                 width = 12 / 3,
@@ -672,9 +681,12 @@ fluidPage(
                                      )))
                    )),
           tabPanel("Validation",
-                   fluidPage(uiOutput(
+                   fluidPage(
+                     uiOutput(
                      "clustervalidationTables"
-                   )))
+                   )
+                   )
+                   )
           
         )
         
