@@ -163,7 +163,7 @@ fluidPage(
                    uiOutput("ui_data_param")
 
                  ),
-                 mainPanel(uiOutput("tb"))
+                 mainPanel(uiOutput("tabpanel_data"))
                  
                )),
       tabPanel(

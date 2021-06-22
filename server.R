@@ -98,6 +98,7 @@ function(input, output, session) {
           "sf",
           "raster",
           "sp",
+          "concaveman",
           "rgeos",
           "gstat",
           "e1071",
@@ -205,103 +206,119 @@ function(input, output, session) {
   })
   
   output$table <- DT::renderDataTable({
-    
-    if(is.null(data())){return()}
-    # if(ncol(data())==1) {return()}
-    validate(
-      need(ncol(data())!=1, "Please check Separator character"))
-    ### AQUI DEBERIA VER SI TIENE COMA COMO DECIMAL, A LO MEJOR DESPUES DEL TYRCATCH
-    
-    tryCatch(
-      error= function (e) {data()[,c(input$xmapa, input$ymapa, input$rto)]}, 
-      error= function (e) {data()})
-    
-  }, options = list(pageLength = 5,
-                    scrollX = TRUE,
-                    lengthMenu = list(c(seq(10, nrow(data()), length.out = 5), -1)[-5], c(seq(10, nrow(data()), length.out = 5)[-5], 'All'))))#   seq(10, nrow(data()), length.out = 5)))
-  # initComplete = I("function(settings, json) {alert('Done.');}")))#paging = FALSE))
-  
-  
-  output$edgesTable <- DT::renderDataTable({
-    if (is.null(Bordes())) {
+    if (is.null(data())) {
       return()
     }
     # if(ncol(data())==1) {return()}
-    validate(need(ncol(Bordes()) != 1, "Please check Separator character"))
+    validate(need(ncol(data()) != 1, "Please check Separator character"))
     ### AQUI DEBERIA VER SI TIENE COMA COMO DECIMAL, A LO MEJOR DESPUES DEL TYRCATCH
-    Bordes()
+    
+    tryCatch(
+      error = function(e) {
+        data()[, c(input$xmapa, input$ymapa, input$rto)]
+      },
+      error = function(e) {
+        data()
+      }
+    )
+    
+  }, options = list(
+    pageLength = 5,
+    scrollX = TRUE,
+    lengthMenu = {
+      myRowsToSelect <- 
+        unique(ceiling(seq(10, nrow(data()), length.out = 5)))
+      
+      list(myRowsToSelect,
+           c(myRowsToSelect[-length(myRowsToSelect)], 'All'))
+    }
+  ))
+  
+  
+  output$edgesTable <- DT::renderDataTable({
+    if (is.null(readBorders())) {
+      return()
+    }
+    # if(ncol(data())==1) {return()}
+    validate(need(ncol(readBorders()) != 1, "Please check Separator character"))
+    ### AQUI DEBERIA VER SI TIENE COMA COMO DECIMAL, A LO MEJOR DESPUES DEL TYRCATCH
+    readBorders()
     
   }, options = list(scrollX = TRUE))#
   
   
-  output$tb <- renderUI({
+  output$tabpanel_data <- renderUI({
     validate(need(data(), ''))
-    
-    # if (is.null(Bordes())) {
-    #   return(tabsetPanel(tabPanel(
-    #     "Data", DT::dataTableOutput("table")
-    #   )))
-    # }
-    # if (!is.null(Bordes())) {
+  
       return(
         tabsetPanel(
           tabPanel("Data", DT::dataTableOutput("table")),
           tabPanel("Edges", 
-                 fluidPage(
-                    DT::dataTableOutput("edgesTable"),
-                    uiOutput("ui_edge_param")
-                 )
-                  )
+          conditionalPanel(
+            condition = "length(input.rto) <= 1",    
+                     fluidPage(
+                       DT::dataTableOutput("edgesTable"),
+                       uiOutput("ui_edge_param")
+                     )
+            )
+          )
+          
         ))
-      
-    # }
+
     
   })
   
   
   output$ui_edge_param <- renderUI({
     validate(need(data(), ''),
-             need(is.null(Bordes()), ''))
-    fluidPage(
-      fluidRow(
-        column(
-          width = 6,
-          numericInput(
-            "concavity",
-            "Concavity",
-            min = 0,
-            max = 10,
-            value = 2,
-            step = 0.1
-          )),
-          column(
-            width = 6,
-            numericInput(
-              "length_threshold",
-              "Segment length threshold",
-              min = 0,
-              max = NA,
-              value = 0,
-              step = 0.5
-            )
-          )
-        
+             need(is.null(readBorders()), ''),
+             need(length(input$rto) <= 1, 
+                  'You need one Target variable selected'))
+    fluidPage(fluidRow(
+      column(
+        width = 6,
+        numericInput(
+          "concavity",
+          "Concavity",
+          min = 0,
+          max = 10,
+          value = 2,
+          step = 0.1
+        )
+      ),
+      column(
+        width = 6,
+        numericInput(
+          "length_threshold",
+          "Segment length threshold",
+          min = 0,
+          max = NA,
+          value = 0,
+          step = 0.5
+        )
+      )
+      
       
     ),
     fluidRow(
-      plotOutput("borders_plot"),
-      DT::dataTableOutput("getBordersTable")
-    )
-    
-    
-    )
+      column(width = 8,
+             plotOutput("borders_plot")),
+      column(
+        width = 4,
+        downloadButton("download_borders", 
+                       "Download Borders",
+                       style = 'text-align: bottom; font-size:90%;')
+      ),
+      fluidRow(DT::dataTableOutput("getBordersTable"))
+      
+    ))
   })
   
   output$getBordersTable <- DT::renderDataTable({
     DT::datatable(
       getBorders(),
       options = list(
-        paging = FALSE,
+        paging = TRUE,
         searching = FALSE,
         autoWidth = FALSE,
         info = FALSE
@@ -312,6 +329,21 @@ function(input, output, session) {
     )
     
   })
+
+  #Borders Download
+  output$download_borders <- downloadHandler(
+
+    filename = function() {
+      paste('Borders-',
+            format(Sys.time(), "%Y_%m_%d-%H_%M"),
+            '.csv',
+            sep = '')
+    },
+    content = function(con) {
+      borders_data <- getBorders()
+      write.csv(borders_data, con, row.names = FALSE)
+    }
+  )
   
   
   output$borders_plot <- renderPlot({
@@ -352,7 +384,7 @@ function(input, output, session) {
   
   
   
-  Bordes <- reactive({
+  readBorders <- reactive({
     File <- input$bordes
     if (is.null(File) | !input$edges) {return()} 
     # if(is.null(input$sep)){return()}
@@ -848,10 +880,7 @@ function(input, output, session) {
     validate(
       need(input$file, 'Check input file!'),
       need(ncol(dataset()) == 4, 'No extracted data'))
-    # browser()
-    # table(MyFile()$CondicionDeDepuracion[complete.cases( MyFile()$Datos),"Condition"], useNA = "always")
-    # prop.table(table(data[complete.cases( MyFile()$Datos),"Condition"], useNA = "always"))*100
-    
+
     data <- MyFile()$CondicionDeDepuracion
     
     sd(MyFile()$CondicionDeDepuracion[complete.cases(MyFile()$CondicionDeDepuracion),]$Rinde)
@@ -913,14 +942,14 @@ function(input, output, session) {
     validate(need(input$file, 'Check input file!')#,
              #need(ncol(dataset())==4, 'No depurated data')
     )
-    # browser()
-    # build graph with ggplot syntax
+
+
     suppressPackageStartupMessages({
       library("RColorBrewer")
       library(cowplot)
       library(ggpubr)
     })
-    # browser()
+
     PaletaColorFun <- function(Variable, namepal = 'Set1') {
       if (is.factor(Variable)) {
         PaletaColorVariable <-
@@ -1231,16 +1260,16 @@ function(input, output, session) {
                  })
   })
   
-  #####################
+  #
   
   output$TModel <- renderTable({
     myresultado <- as.data.frame(MiKrige())
   })
   
-  ######
+  #
   ## Esta funcion, en vez de SelectedModels,
   ## se hace con el modelo del RMSE mas cercano a 1
-  ######
+  #
   MejorModelo <- reactive({
     ValidationTable = MiKrige()
     tryCatch({
@@ -1287,12 +1316,9 @@ function(input, output, session) {
       
       Mybordes <- st_coordinates(Mybordes)[, 1:2]
       colnames(Mybordes) <- colnames(MyZ)
-      
-      # punbor <- chull(MyZ)
-      # Mybordes <-
-      #   as.matrix(as.data.frame(MyZ[c(punbor, punbor[1]), 1:2]))
+
     } else{
-      Mybordes <- Bordes()
+      Mybordes <- readBorders()
     }
     return(Mybordes)
   })
@@ -1366,7 +1392,7 @@ function(input, output, session) {
   
   
   
-  #       Plots
+  # Plots
   
   output$VariogramPlot <- renderPlot({
     validate(need(input$file, 'Check input file!'))
@@ -1532,14 +1558,13 @@ function(input, output, session) {
   output$Plots <- renderUI({
     validate(need(input$file, 'Check input file!'))
     
-    # browser()
-    
+
     if (input$SelectPlot == 1) {
       plotOutput("VariogramPlot")
     } else if (input$SelectPlot == 2) {
       tabPanel(
         "Plot",
-        downloadButton("MiDescarga2", "Download Tif"),
+        downloadButton("download_pred_tiff", "Download Tif"),
         imageOutput("KrigingPlot")
       )
     } else  {
@@ -1549,12 +1574,12 @@ function(input, output, session) {
   })
   
   #Descarga del GeoTiff
-  output$MiDescarga2 <- downloadHandler(
+  output$download_pred_tiff <- downloadHandler(
     filename = function() {
       paste('Map-', Sys.Date(), '.tif', sep = '')
     },
     content = function(con) {
-      # browser()
+
       # writeRaster(GeoTiff(),con,"GTiff")
       Predicted_Tiff <- GeoTiff()
       stars::write_stars(Predicted_Tiff, con, layer = attributes(Predicted_Tiff)$names)
@@ -1946,69 +1971,96 @@ function(input, output, session) {
   Clasificacion <- reactive({
     
     set.seed(2020)
-    progress <- Progress$new(session, min=1, max=13)
+    progress <- Progress$new(session, min = 1, max = 13)
     on.exit(progress$close())
     progress$set(message = 'KM-sPC classification in progress',
                  detail = 'This may take a while...')
     progress$set(value = 1)
     # TransfCoord()[, c(input$xmapa, input$ymapa)]
     
+
+    myDataForCluster <- dataForCluster()
+    variables <- myDataForCluster$variablesUsed
+    MydataNA <- myDataForCluster$dataNA
+    FilasNA <- myDataForCluster$filasNA
+    Mydata <- myDataForCluster$mydata
+    #   if (length(input$rto) == 1) {
+    #   MydataNA <-
+    #     as.data.frame(kriging())[, seq_along(c(input$xmapa, input$ymapa, input$rto))]
+    #   
+    #   FilasNA <- apply(MydataNA, 1, function(x) {
+    #     any(is.na(x))
+    #   })
+    #   
+    #   Mydata <- na.omit(MydataNA)
+    #   colnames(Mydata) <- c(input$xmapa, input$ymapa, input$rto)
+    # } else {
+    #   mySelectedData <- dataForCluster()
+    #   MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa, input$rto)]
+    #   
+    #   FilasNA <- apply(MydataNA, 1,
+    #                    function(x) {
+    #                      any(is.na(x))
+    #                    })
+    #   
+    #   Mydata <- na.omit(MydataNA)
+    #   
+    # }
+    # 
     
-    
-    if(length(input$rto)==1) {
-      MydataNA <- as.data.frame(kriging())[,seq_along(c(input$xmapa, input$ymapa,input$rto))]
-      
-      FilasNA <- apply(MydataNA, 1, function(x) {
-        any(is.na(x))
-      })
-      
-      Mydata <- na.omit(MydataNA)
-      colnames(Mydata) <- c(input$xmapa, input$ymapa,input$rto)
-    } else {
-      MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa,input$rto)]
-      
-      FilasNA <- apply(MydataNA, 1, function(x) {
-        any(is.na(x))
-      })
-      
-      Mydata <- na.omit(MydataNA)
-      
-    }
     MyZ <- Mydata[, c(input$xmapa, input$ymapa)]
-    MyY <- Mydata[, c(input$rto), drop=F]
+    MyY <- Mydata[, variables, drop = F]
     
     
-    clusterKM <-function(cen, datos){
-      MC <- cmeans(datos, dist=input$distancia,centers=cen,
-                   iter.max = as.numeric(input$iteraciones), method="cmeans", m=as.numeric(input$ExpDif))
-    }   
+    clusterKM <- function(cen, datos) {
+      MC <- cmeans(
+        datos,
+        dist = input$distancia,
+        centers = cen,
+        iter.max = as.numeric(input$iteraciones),
+        method = "cmeans",
+        m = as.numeric(input$ExpDif)
+      )
+    }
     
-    if(ncol(MyY)==1) {
+    if (ncol(MyY) == 1) {
       progress$set(message = 'Fuzzy classification in progress')
       
       progress$set(value = 3)
-      clasificaciones <- apply(matrix(seq(as.numeric(input$clusters[1])
-                                          ,as.numeric(input$clusters[2]),by=1)),1,clusterKM,datos = MyY)
+      clasificaciones <-
+        apply(matrix(seq(
+          as.numeric(input$clusters[1])
+          ,
+          as.numeric(input$clusters[2]),
+          by = 1
+        )), 1, clusterKM, datos = MyY)
       progress$set(value = 4)
     }
     
-    if(ncol(MyY)>1) {
+    if (ncol(MyY) > 1) {
       
       set.ZeroPolicyOption(input$vecindarionulo)
       
-      cord <- coordinates(MyZ[,1:2])
-      gri <- dnearneigh(cord, as.numeric(input$distanciavecino[1]), as.numeric(input$distanciavecino[2]))
+      cord <- coordinates(MyZ[, 1:2])
+      gri <-
+        dnearneigh(cord,
+                   as.numeric(input$distanciavecino[1]),
+                   as.numeric(input$distanciavecino[2]))
       # lw <- try(nb2listw(gri, style = "W"), silent = TRUE)
       
-      lw <- tryCatch(nb2listw(gri, style = "W"), silent = TRUE,
-                     error = function(e){
-                       if(agrepl("Empty neighbour sets found", e)){
-                         showNotification("Try with more distance between neighbors.\n
-                                    Or select data with null neighbor ", type = "error")
-                         updateTabsetPanel(session, "ClustersTabs", selected = "ClasifParameters")
-                         stop("Empty neighbour sets found",call. = FALSE)
-                       }
-                     })
+      lw <- tryCatch(
+        nb2listw(gri, style = "W"),
+        silent = TRUE,
+        error = function(e) {
+          if (agrepl("Empty neighbour sets found", e)) {
+            showNotification("Try with more distance between neighbors.\n
+                                    Or select data with null neighbor ",
+                             type = "error")
+            updateTabsetPanel(session, "ClustersTabs", selected = "ClasifParameters")
+            stop("Empty neighbour sets found", call. = FALSE)
+          }
+        }
+      )
       
       
       progress$set(value = 2)
@@ -2022,106 +2074,174 @@ function(input, output, session) {
       ### PCA SIN COORDS -----
       # pca <- dudi.pca(scale(MyY), center=FALSE,scannf = FALSE, nf=ncol(MyY))
       
-      pca <- dudi.pca(MyY, center=input$centrado,scannf = FALSE, nf=ncol(MyY))
-      ms <- adespatial::multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))  #########################################################################
+      pca <-
+        dudi.pca(MyY,
+                 center = input$centrado,
+                 scannf = FALSE,
+                 nf = ncol(MyY))
+      ms <-
+        adespatial::multispati(
+          pca,
+          lw,
+          scannf = F,
+          nfnega = ncol(MyY),
+          nfposi = ncol(MyY)
+        )  #########################################################################
       ### Error cuando no encuentra vecinos Error in adespatial::multispati: object of class 'listw' expected
       # ms <- multispati(pca, lw, scannf = F, nfnega= ncol(MyY), nfposi = ncol(MyY))
       
+      
       invisible(capture.output(resms <- summary(ms)))
-      var_ms <- resms[,2, drop = F]
+      var_ms <- resms[, 2, drop = F]
       nfila_ms <- length(ms$eig)
-      propvar_ms <- var_ms/nfila_ms
-      propvaracum_ms <- cumsum(propvar_ms)*100
+      propvar_ms <- var_ms / nfila_ms
+      propvaracum_ms <- cumsum(propvar_ms) * 100
       
-      eje_ms <-c(1:nfila_ms)
-      resultado_ms <- data.frame(eje_ms,resms$eig,resms$"var",propvar_ms,propvaracum_ms)
-      names(resultado_ms) <- c("Eje","Autovalores","Varianza Espacial","Proporcion","Prop. Acum.")
+      eje_ms <- c(1:nfila_ms)
+      resultado_ms <-
+        data.frame(eje_ms, resms$eig, resms$"var", propvar_ms, propvaracum_ms)
+      names(resultado_ms) <-
+        c("Eje",
+          "Autovalores",
+          "Varianza Espacial",
+          "Proporcion",
+          "Prop. Acum.")
       filares_ms <- length(ms$li)
-      resultado_ms <- resultado_ms[1:filares_ms,]
+      resultado_ms <- resultado_ms[1:filares_ms, ]
       
-      num_sPC <- min(which(resultado_ms[,5]>as.numeric(input$varexplicada)))
+      num_sPC <-
+        min(which(resultado_ms[, 5] > as.numeric(input$varexplicada)))
       sPC <- ms$li[1:num_sPC]
       #cor(data.frame(MyY, sPC))
       
-      clasificaciones <- apply(matrix(seq(as.numeric(input$clusters[1])
-                                          ,as.numeric(input$clusters[2]),by=1)),
-                               1,clusterKM, datos = sPC)#sPCCoords) ######### ------
+      clasificaciones <-
+        apply(matrix(seq(
+          as.numeric(input$clusters[1]),
+          as.numeric(input$clusters[2]),
+          by = 1
+        )),
+        1, clusterKM, datos = sPC)#sPCCoords) ######### ------
     }
     
-    res_clas <- lapply(clasificaciones,function(Clus) c(Clus$cluster))
-    res_clas <- data.frame(do.call("cbind",res_clas))
-    Name <- paste("Cluster", "_", seq(input$clusters[1], input$clusters[2]), sep="")
-    names(res_clas)=c(Name)
     
-    res_iter <- lapply(clasificaciones,function(x) c("Iterations"=x$iter))
-    res_iter <- do.call("rbind",res_iter)
+    res_clas <-
+      lapply(clasificaciones, function(Clus)
+        c(Clus$cluster))
+    res_clas <- data.frame(do.call("cbind", res_clas))
+    Name <-
+      paste("Cluster", "_", 
+            seq(input$clusters[1], input$clusters[2]), 
+            sep = "")
+    names(res_clas) = c(Name)
     
-    res_scdd <- lapply(clasificaciones,function(x) c("SSDW"=x$withinerror))  # sum of square distances within the clusters.
-    res_scdd <- do.call("rbind",res_scdd)
-    # 
-    progress$set(value =3)
+    res_iter <-
+      lapply(clasificaciones, function(x)
+        c("Iterations" = x$iter))
+    res_iter <- do.call("rbind", res_iter)
+    
+    res_scdd <-
+      lapply(clasificaciones, function(x)
+        c("SSDW" = x$withinerror))  # sum of square distances within the clusters.
+    res_scdd <- do.call("rbind", res_scdd)
+    #
+    progress$set(value = 3)
     ## Indices
     
     progress$set(value = 4)
     
     
+    
     Ind <- function(obj) {
-      fclustIndex_modif(y=obj,MyY, index=c("xie.beni", #"fukuyama.sugeno",
-                                           "partition.coefficient", "partition.entropy"))
+      fclustIndex_modif(
+        y = obj,
+        MyY,
+        index = c("xie.beni", #"fukuyama.sugeno",
+                  "partition.coefficient", "partition.entropy")
+      )
     }
     
     
+    
     progress$set(value = 9)
-    Indices <- lapply(clasificaciones,Ind)
-    Indices <- do.call("rbind",Indices)
+    Indices <- lapply(clasificaciones, Ind)
+    Indices <- do.call("rbind", Indices)
     
     progress$set(value = 10)
-    norm <- function (div) {
-      div/max(div)}                     #######################################################################################3
-    if(nrow(Indices)>1) {
-      IndN <-apply(Indices,2,norm)                              #######################################################################################3
-      IndN <-apply(IndN,1,function (xx) {sqrt(sum(xx^2))})   
-    } else {IndN <- Indices}  #######################################################################################3
+    norm <- function(div) {
+      div / max(div)
+    }                     #######################################################################################3
+    if (nrow(Indices) > 1) {
+      IndN <-
+        apply(Indices, 2, norm)                              #######################################################################################3
+      IndN <- apply(IndN, 1, function(xx) {
+        sqrt(sum(xx ^ 2))
+      })
+    } else {
+      IndN <-
+        Indices
+    }  #######################################################################################3
     #######################################################################################3
-    Cluster <- seq(as.numeric(input$clusters[1]),as.numeric(input$clusters[2]))
-    ResultadosIndices <- data.frame(Cluster,Indices, IndN)
-    names(ResultadosIndices)=c("Num. Cluster", "Xie Beni", #"Fukuyama Sugeno",
-                               "Partition Coefficient", "Entropy of Partition","Summary Index")
+    Cluster <-
+      seq(as.numeric(input$clusters[1]), as.numeric(input$clusters[2]))
+    ResultadosIndices <- data.frame(Cluster, Indices, IndN)
+    names(ResultadosIndices) = c(
+      "Num. Cluster",
+      "Xie Beni",
+      #"Fukuyama Sugeno",
+      "Partition Coefficient",
+      "Entropy of Partition",
+      "Summary Index"
+    )
+    
     
     
     progress$set(value = 11)
-    resultados <- data.frame(Cluster,res_iter,res_scdd)
+    resultados <- data.frame(Cluster, res_iter, res_scdd)
     
     progress$set(value = 12)
     
     # MisClus <-data.frame("Con" = as.numeric(rownames(res_clas)),res_clas)
     MisClus <- data.frame(res_clas)
     progress$set(value = 13)
-    if(length(input$rto)==1) {
-      resultados<-list("Conglomerado" = MisClus ,"ResultadosConglom"=resultados,
-                       "Indices" = ResultadosIndices, "DatosConCongl"=data.frame(Mydata,apply(MisClus,2,as.factor)),
-                       "NombresColCluster" = colnames(data.frame(Mydata,MisClus)))
+    if (length(variables) == 1) {
+      resultados <-
+        list(
+          "Conglomerado" = MisClus ,
+          "ResultadosConglom" = resultados,
+          "Indices" = ResultadosIndices,
+          "DatosConCongl" = data.frame(Mydata, apply(MisClus, 2, as.factor)),
+          "NombresColCluster" = colnames(data.frame(Mydata, MisClus))
+        )
       
     } else {
-      MisClus <-data.frame("Con" = as.numeric(rownames(res_clas)),res_clas)
-      MydataNA_Con <- cbind("Con" = as.numeric(rownames(MydataNA)),MydataNA)
-      MydataNA_Con_Cluster <- merge(MydataNA_Con,MisClus, by="Con",all.x=TRUE)
+      MisClus <-
+        data.frame("Con" = as.numeric(rownames(res_clas)), res_clas)
+      MydataNA_Con <-
+        cbind("Con" = as.numeric(rownames(MydataNA)), MydataNA)
+      MydataNA_Con_Cluster <-
+        merge(MydataNA_Con, MisClus, by = "Con", all.x = TRUE)
       
-      MisClus_1 <- MydataNA_Con_Cluster[,-c(1:length(MydataNA_Con))]
-      DatosConConglNA <- data.frame(MydataNA,apply(MisClus_1,2,as.factor))
+      MisClus_1 <- MydataNA_Con_Cluster[, -c(1:length(MydataNA_Con))]
+      DatosConConglNA <-
+        data.frame(MydataNA, apply(MisClus_1, 2, as.factor))
       DatosConCongl <- na.omit(DatosConConglNA)
-      # browser()
-      resultados<-list("Conglomerado" = MisClus_1 ,"ResultadosConglom"=resultados,
-                       "Indices" = ResultadosIndices, "DatosConCongl"= DatosConCongl,
-                       "NombresColCluster" = colnames(DatosConCongl),
-                       "DatosConConglNA"= DatosConConglNA, "PCA_Results" = resultado_ms)
+
+      resultados <-
+        list(
+          "VariablesUsedForCluster" = variables,
+          "Conglomerado" = MisClus_1 ,
+          "ResultadosConglom" = resultados,
+          "Indices" = ResultadosIndices,
+          "DatosConCongl" = DatosConCongl,
+          "NombresColCluster" = colnames(DatosConCongl),
+          "DatosConConglNA" = DatosConConglNA,
+          "PCA_Results" = resultado_ms
+        )
       
       
     }
-    # rm(".Random.seed")
-    # rm(".GlobalEnv$.Random.seed")
-    # set.seed(Sys.time())
-    ValoresOutput$Clasificacion<-resultados
+
+    ValoresOutput$Clasificacion <- resultados
     return(resultados)
     
   })
@@ -2129,21 +2249,21 @@ function(input, output, session) {
   
   # output$DatosClusters
   output$corrPlotClasif <- renderPlot({
-    if (length(input$rto) == 1) {
+    if (length(Clasificacion()$VariablesUsedForCluster) == 1) {
       plotClasifVar <-
-        ggplot(Clasificacion()$DatosConCongl, aes_string(input$rto)) +
+        ggplot(Clasificacion()$DatosConCongl, aes_string(Clasificacion()$VariablesUsedForCluster)) +
         geom_density()
     } else {
-      # browser()
-      if (length(input$rto) < 15) {
+
+      if (length(Clasificacion()$VariablesUsedForCluster) < 10) {
         plotClasifVar <- ggpairs(Clasificacion()$DatosConCongl,
-                                 columns = input$rto,
+                                 columns = Clasificacion()$VariablesUsedForCluster,
                                  progress = FALSE)
         
       } else {
         plotClasifVar <- ggpairs(
           Clasificacion()$DatosConCongl,
-          columns = input$rto,
+          columns = Clasificacion()$VariablesUsedForCluster,
           lower = "blank",
           progress = TRUE
         )
@@ -2161,13 +2281,13 @@ function(input, output, session) {
       agrepl("Cluster", input$NumClust),
       "Must select a Cluster column"
     ))
-    
-    if (length(input$rto) == 1) {
+
+    if (length(Clasificacion()$VariablesUsedForCluster) == 1) {
       MatrClasPlot <-
         ggplot(
           Clasificacion()$DatosConCongl,
           aes_string(
-            input$rto,
+            Clasificacion()$VariablesUsedForCluster,
             color = input$NumClust,
             fill = input$NumClust
           )
@@ -2177,7 +2297,7 @@ function(input, output, session) {
       # print(ggscatmat(Clasificacion()$DatosConCongl,
       #                 columns = input$rto))
     } else {
-      if (length(input$rto) < 15) {
+      if (length(Clasificacion()$VariablesUsedForCluster) < 10) {
         MatrClasPlot <- ggpairs(
           Clasificacion()$DatosConCongl,
           mapping = aes_string(color = input$NumClust),
@@ -2190,7 +2310,7 @@ function(input, output, session) {
           Clasificacion()$DatosConCongl,
           mapping = aes_string(color = input$NumClust),
           lower = "blank",
-          columns = input$rto,
+          columns = Clasificacion()$VariablesUsedForCluster,
           progress = FALSE
         )
         
@@ -2321,7 +2441,7 @@ function(input, output, session) {
   datos_variables_Valid <- reactive({
     datosAValid_ConSelection <- input$rto
     DatosAValid <- Clasificacion()$DatosConCongl
-    # browser()
+
     if (input$makeSelectProces) {
       datosAValid_ConSelection <-
         unique(c(input$Variable_selection_process, input$rto))
@@ -2381,9 +2501,6 @@ function(input, output, session) {
           output = isolate(reactiveValuesToList(ValoresOutput))
         )
         library(knitr)
-        # browser()
-        # save(paramts, file="C:/Users/Pablo/Data1.RData")
-        
         # Knit the document, passing in the `paramts` list, and eval it in a
         # child of the global environment (this isolates the code in the document
         # from the code in this app).
@@ -2471,10 +2588,106 @@ function(input, output, session) {
   
   ####### Variable Selection process ######
   observeEvent(input$makeSelectProces, {
-    showNotification("This process is under development, will be available soon.",
-                     type = c("error"))
+    showNotification(
+      "This process is under development, will be available soon.",
+      type = c("error"))
   }, ignoreInit = TRUE)
   
+  observeEvent(input$makeSelectProces, {
+    validate(need(input$alpha_level_Corr, ''))
+    if (input$alpha_level_Corr == 0) {
+    showNotification(
+      "You are too strict with p-value, try with a higher than zero value.",
+      type = c("error"))
+    }
+  }, ignoreInit = TRUE)
+  
+  
+  tTest <- reactive({
+    validate(need(TransfCoord(), ''),
+             need(input$makeSelectProces, ''))
+    
+    withProgress(message = 'Making t-test\n',
+                 detail = 'This may take a while...', value = 0, {
+
+                     incProgress(1/5)
+
+                  
+    myData_coordTransf <- TransfCoord()
+    myColnames <- colnames(myData_coordTransf)
+    myCoords <-
+      myColnames[myColnames %in% c(input$xmapa, input$ymapa)]
+
+    myVariables <-
+      myColnames[myColnames %in% unique(c(input$rto, input$Variable_selection_process))]
+    incProgress(1/120)
+    myTTest <-
+      T_TestModif(myData_coordTransf[, myCoords],
+                  myData_coordTransf[, myVariables])
+                   }
+                 )
+    myTTest
+    
+  })
+  
+  
+  
+  dataForCluster <- reactive({
+
+    if (length(input$rto) == 1) {
+      MydataNA <-
+        as.data.frame(kriging())[, seq_along(c(input$xmapa, input$ymapa, input$rto))]
+      
+      FilasNA <- apply(MydataNA, 1, function(x) {
+        any(is.na(x))
+      })
+      
+      Mydata <- na.omit(MydataNA)
+
+    } else {
+      MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa, input$rto)]
+      
+      if (input$makeSelectProces) {
+        myTTest <- tTest()
+        myVarToTest <-
+          myTTest[myTTest[, 1] %in% input$variable_selection_process |
+                    myTTest[, 2] %in% input$variable_selection_process, ]
+        myVarCorrelated <-
+          stack(myVarToTest[myVarToTest$p.value < input$alpha_level_Corr, 1:2])
+        
+        myVarCorrelated_tokeep <-
+          input$rto[input$rto %in% myVarCorrelated$values]
+
+        MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa, myVarCorrelated_tokeep)]
+
+        if (length(myVarCorrelated_tokeep) == 0) {
+          showNotification(
+            "There are no correlated variables, therefore, the clustering process will be done with the originally selected target variables",
+            type = c("error"))
+          
+          MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa, input$rto)]
+  
+        }
+      }
+      myVariablesUsedForCluster <- 
+        names(MydataNA)[-c(1,2)]
+      FilasNA <- apply(MydataNA, 1,
+                       function(x) {
+                         any(is.na(x))
+                       })
+      
+      Mydata <- na.omit(MydataNA)
+      
+      list(
+        variablesUsed = myVariablesUsedForCluster,
+        dataNA = MydataNA,
+        filasNA = FilasNA,
+        mydata = Mydata
+        )
+      
+    }
+    
+  })
   
   
   output$SelectProcessUI <-
@@ -2482,7 +2695,7 @@ function(input, output, session) {
       if (input$makeSelectProces) {
         tagList(
           selectInput(
-            "Variable_selection_process",
+            "variable_selection_process",
             "Variable selection process",
             choices = names(data())[!names(data()) %in% c(input$xmapa, input$ymapa)],
             multiple = TRUE
