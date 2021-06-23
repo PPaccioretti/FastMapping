@@ -462,7 +462,7 @@ fluidPage(
                               "dimGrilla",
                               "Cellsize",
                               value = 10,
-                              min = 0
+                              min = 0.5
                             )),
                      bsTooltip(
                        "dimGrilla",

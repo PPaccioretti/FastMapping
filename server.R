@@ -17,7 +17,7 @@ function(input, output, session) {
   
   suppressPackageStartupMessages(library(plotly))
   
-  histdata <- rnorm(2)
+  histdata <- rnorm(1)
   
   
   observeEvent(input$startApl, {
@@ -128,14 +128,21 @@ function(input, output, session) {
   session$onSessionEnded(stopApp)
   
   
+  
   output$ModelosA <- renderUI({
-    if(input$bar){return( )
+    if (input$bar) {
+      return()
     } else{
-      checkboxGroupInput("ModelosA",label=NULL, choices = myChoice)}
+      checkboxGroupInput("ModelosA", label = NULL, choices = myChoice)
+    }
   })
   
   SelectedModels <- reactive({
-    Mdl<- if(input$bar){myChoice} else{input$ModelosA}
+    Mdl <- if (input$bar) {
+      myChoice
+    } else{
+      input$ModelosA
+    }
     ValoresOutput$SelectedMdls <- Mdl
     return(Mdl)
   })
@@ -265,10 +272,32 @@ function(input, output, session) {
           
         ))
 
-    
   })
   
-  
+  observeEvent(
+     input$PanelTabSet == "PredictionTab",
+    {
+      validate(need(input$rto, ''))
+
+      if (length(input$rto) == 1 & input$PanelTabSet == "PredictionTab") {
+        myDistanceMax <- max(dist(getBorders()))
+        
+        if (myDistanceMax > 1500) {
+          updateNumericInput(session,
+                             "dimGrilla",
+                             value = ceiling(sqrt(myDistanceMax) / 2))
+          
+          updateNumericInput(session,
+                             "distmax",
+                             value = ceiling(myDistanceMax / 10))
+          
+        }
+        
+        
+      }
+    }
+  )
+  # 
   output$ui_edge_param <- renderUI({
     validate(need(data(), ''),
              need(is.null(readBorders()), ''),
@@ -1304,19 +1333,25 @@ function(input, output, session) {
   
   getBorders <- reactive({
     validate(need(data(), ''))
-
+    
     if (is.null(input$bordes)) {
-
+      concav <- ifelse(is.null(input$concavity), 1000, input$concavity)
+      threshold <-
+        ifelse(is.null(input$length_threshold),
+               0,
+               input$length_threshold)
+      
+      
       MyZ <- TransfCoord()[, c(input$xmapa, input$ymapa)]
       MyZ_sf <- st_as_sf(MyZ, coords = 1:2)
-      Mybordes <- 
+      Mybordes <-
         concaveman::concaveman(MyZ_sf,
-                               concavity = input$concavity,
-                               length_threshold = input$length_threshold)
+                               concavity = concav,
+                               length_threshold = threshold)
       
       Mybordes <- st_coordinates(Mybordes)[, 1:2]
       colnames(Mybordes) <- colnames(MyZ)
-
+      
     } else{
       Mybordes <- readBorders()
     }
@@ -1812,6 +1847,7 @@ function(input, output, session) {
   # })
   # 
   output$TablaIndicesConglo <- DT::renderDataTable({
+    browser()
     datatable(
       Clasificacion()$Indices,
       rownames = FALSE,
@@ -2633,17 +2669,10 @@ function(input, output, session) {
   
   
   dataForCluster <- reactive({
-
     if (length(input$rto) == 1) {
       MydataNA <-
         as.data.frame(kriging())[, seq_along(c(input$xmapa, input$ymapa, input$rto))]
-      
-      FilasNA <- apply(MydataNA, 1, function(x) {
-        any(is.na(x))
-      })
-      
-      Mydata <- na.omit(MydataNA)
-
+      names(MydataNA)[3] <- input$rto
     } else {
       MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa, input$rto)]
       
@@ -2651,41 +2680,44 @@ function(input, output, session) {
         myTTest <- tTest()
         myVarToTest <-
           myTTest[myTTest[, 1] %in% input$variable_selection_process |
-                    myTTest[, 2] %in% input$variable_selection_process, ]
+                    myTTest[, 2] %in% input$variable_selection_process,]
         myVarCorrelated <-
           stack(myVarToTest[myVarToTest$p.value < input$alpha_level_Corr, 1:2])
         
         myVarCorrelated_tokeep <-
           input$rto[input$rto %in% myVarCorrelated$values]
-
-        MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa, myVarCorrelated_tokeep)]
-
+        
+        MydataNA <-
+          TransfCoord()[, c(input$xmapa, input$ymapa, myVarCorrelated_tokeep)]
+        
         if (length(myVarCorrelated_tokeep) == 0) {
           showNotification(
             "There are no correlated variables, therefore, the clustering process will be done with the originally selected target variables",
-            type = c("error"))
+            type = c("error")
+          )
           
-          MydataNA <- TransfCoord()[, c(input$xmapa, input$ymapa, input$rto)]
-  
+          MydataNA <-
+            TransfCoord()[, c(input$xmapa, input$ymapa, input$rto)]
+          
         }
       }
-      myVariablesUsedForCluster <- 
-        names(MydataNA)[-c(1,2)]
-      FilasNA <- apply(MydataNA, 1,
-                       function(x) {
-                         any(is.na(x))
-                       })
-      
-      Mydata <- na.omit(MydataNA)
-      
-      list(
-        variablesUsed = myVariablesUsedForCluster,
-        dataNA = MydataNA,
-        filasNA = FilasNA,
-        mydata = Mydata
-        )
       
     }
+    myVariablesUsedForCluster <-
+      names(MydataNA)[-c(1, 2)]
+    FilasNA <- apply(MydataNA, 1,
+                     function(x) {
+                       any(is.na(x))
+                     })
+    
+    Mydata <- na.omit(MydataNA)
+    
+    list(
+      variablesUsed = myVariablesUsedForCluster,
+      dataNA = MydataNA,
+      filasNA = FilasNA,
+      mydata = Mydata
+    )
     
   })
   
