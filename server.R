@@ -1847,7 +1847,7 @@ function(input, output, session) {
   # })
   # 
   output$TablaIndicesConglo <- DT::renderDataTable({
-    browser()
+
     datatable(
       Clasificacion()$Indices,
       rownames = FALSE,
