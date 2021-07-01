@@ -1177,8 +1177,6 @@ waiter_hide()
     validate(
       need(input$file, 'Check input file!'))
     
-    browser()
-    
     if(input$SelectPlot == 2 & length(MyFile()$Datos) != 0){
       outfile <- tempfile(fileext='.png')
       png(outfile, width=900, height=900)
