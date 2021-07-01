@@ -1035,23 +1035,39 @@ waiter_hide()
   
   
   kriging <- reactive ({
-
-    if(length(MyFile()$Datos) != 0) {
+    
+    if (length(MyFile()$Datos) != 0) {
       Formula <- Formula()
       MyFile <- MyFile()$Datos
-      if(is.null(MyFile)) {return()}
-      coordinates(MyFile) <- c(1,2)
-      proj4string(MyFile) <- CRS(SRS_string = paste0("EPSG:",CoordSist_crs()))
-      
+      if (is.null(MyFile)) {
+        return()
+      }
+      coordinates(MyFile) <- c(1, 2)
+      proj4string(MyFile) <-
+        CRS(SRS_string = paste0("EPSG:", CoordSist_crs()))
       Mygr <- Mygr()
+      crs(Mygr) <- crs(MyFile)
+      
+      max_dist <-
+        ifelse(is.na(as.numeric(input$distmax)), 
+               Inf, 
+               as.numeric(input$distmax))
+      
       Modelo <- MejorModelo()
-      krigingfit <- autoKrige(Formula, MyFile, Mygr, model = Modelo,
-                           nmax=as.numeric(input$nmax), 
-                           nmin=as.numeric(input$nmin),
-                           maxdist=as.numeric(input$distmax),
-                           block = c(as.numeric(input$block,as.numeric(input$block))),
-                           kappa=c(0.05, seq(0.2, 2, 0.1), 5, 10),
-                           miscFitOptions = list(cressie = input$cressie))
+      krigingfit <- autoKrige(
+        Formula,
+        MyFile,
+        Mygr,
+        model = Modelo,
+        nmax = as.numeric(input$nmax),
+        nmin = as.numeric(input$nmin),
+        maxdist = max_dist,
+        block = c(as.numeric(
+          input$block, as.numeric(input$block)
+        )),
+        kappa = c(0.05, seq(0.2, 2, 0.1), 5, 10),
+        miscFitOptions = list(cressie = input$cressie)
+      )
       ValoresOutput$kriging <- krigingfit$krige_output
       return(krigingfit$krige_output)
     }
@@ -1160,6 +1176,9 @@ waiter_hide()
   output$KrigingPlot <- renderImage ({
     validate(
       need(input$file, 'Check input file!'))
+    
+    browser()
+    
     if(input$SelectPlot == 2 & length(MyFile()$Datos) != 0){
       outfile <- tempfile(fileext='.png')
       png(outfile, width=900, height=900)
