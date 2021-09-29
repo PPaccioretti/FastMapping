@@ -262,7 +262,7 @@ function(input, output, session) {
           tabPanel("Data", DT::dataTableOutput("table")),
           tabPanel("Edges", 
           conditionalPanel(
-            condition = "length(input.rto) <= 1",    
+            condition = "input.rto.length <= 1",    
                      fluidPage(
                        DT::dataTableOutput("edgesTable"),
                        uiOutput("ui_edge_param")
@@ -380,8 +380,21 @@ function(input, output, session) {
     df <- as.data.frame(getBorders())
     names_df <- colnames(df)
     df_point <- TransfCoord()[, c(input$xmapa, input$ymapa)]
+    if (nrow(df_point) > 1000) {
+      df_point <- df_point[sample(nrow(df_point), size = 1000), ]
+
+      
+      showNotification(
+        paste("Plot is made with 1000 random samples"),
+        type = "message",
+        duration = 5,
+        id = "Aviso_sample"
+      )
+      
+    }
+    
     ggplot(df) +
-      geom_path(aes_string(names_df[1], names_df[2])) +
+      geom_path(aes_string(names_df[1], names_df[2]), color = 'red') +
       geom_point(data = df_point, 
                  aes_string(input$xmapa, input$ymapa),
                  alpha = 0.5, size = 0.5) +
@@ -561,7 +574,10 @@ function(input, output, session) {
         Influ <- data.frame("IdFila" = rownames(Influ),Influ)
         
         
-        MyYdepIn <- data.frame(datos_LM,Influ) #Inlier por Moran Local e Influyentes por Moran Plot
+        MyYdepIn <- data.frame(datos_LM, Influ) #Inlier por Moran Local e Influyentes por Moran Plot
+        names(MyYdepIn) <- gsub("Pr.z...E.Ii..", "Pr.z...0.", names(MyYdepIn))
+        
+        
         
         # MyYdepIn <- merge(datos_LM, Influ,by.x = "Filas", by.y = "IdFila", all = TRUE, sort = FALSE)#[,c(-1)]
         
@@ -590,7 +606,7 @@ function(input, output, session) {
         # datos <- datos[,c(1:3)]
         Inliers <- data.frame("Filas" = MyYdepIn$Filas, 
                               "SpatialOutlier" = (MyYdepIn$Ii <= 0 & MyYdepIn$Pr.z...0. <= 0.05))
-        if(input$moranPlot) {
+        if (input$moranPlot) {
           datos <- subset(MyYdepIn,MyYdepIn$Ii > 0 | MyYdepIn$Pr.z...0. > 0.05 | !SpMP)[, c("X","Y","Z")]
           Inliers$"SpatialOutlier_MoranPlot" <- SpMP
         }
@@ -603,7 +619,7 @@ function(input, output, session) {
     progress$set(value = 13)
     condicion <- unique(condicion)
     
-    MisVerd <- which(condicion[,-1, drop=FALSE] == TRUE, arr.ind = TRUE)
+    MisVerd <- which(condicion[,-1, drop = FALSE] == TRUE, arr.ind = TRUE)
     # nrow(MisVerd)
     MisVerd <- MisVerd[!duplicated(MisVerd[,"row"]), ]
     
@@ -1176,10 +1192,10 @@ function(input, output, session) {
   #       Funciones
   Formula <- reactive({
     
-    NombresCol<-colnames(dataset())
-    MiZ<- NombresCol[3]
-    MiX<- NombresCol[1]
-    MiY<- NombresCol[2]
+    NombresCol <- colnames(dataset())
+    MiZ <- NombresCol[3]
+    MiX <- NombresCol[1]
+    MiY <- NombresCol[2]
     
     if (input$tKriging == 1) {return(as.formula(paste0(MiZ,"~1")))}
     if (input$tKriging == 2) {return(as.formula(paste0(MiZ,"~",MiX,"+",MiY)))}
@@ -1505,7 +1521,7 @@ function(input, output, session) {
     if (input$SelectPlot == 2 & length(MyFile()$Datos) != 0) {
       outfile <- tempfile(fileext = '.png')
       png(outfile, width = 900, height = 900)
-      
+
       zmin <- input$min
       zmax <- input$max
       
@@ -1757,6 +1773,7 @@ function(input, output, session) {
       
       tabPanel(
         "Plot Condition Data",
+        fluidRow(
         sidebarPanel(
           width = 3,
           selectInput('x',
@@ -1788,7 +1805,7 @@ function(input, output, session) {
         )
       )
     )
-    
+    )
   })
   
   #########################################
@@ -2242,6 +2259,7 @@ function(input, output, session) {
     if (length(variables) == 1) {
       resultados <-
         list(
+          "VariablesUsedForCluster" = variables,
           "Conglomerado" = MisClus ,
           "ResultadosConglom" = resultados,
           "Indices" = ResultadosIndices,

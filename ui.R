@@ -713,8 +713,8 @@ fluidPage(
     )
   )
   ,
-  waiter_show_on_load(
-    html = tagList(spin_pulsar(),
+  waiter::waiter_show_on_load(
+    html = tagList(waiter::spin_pulsar(),
                    br(),
                    br(),
                    "Loading..."),
