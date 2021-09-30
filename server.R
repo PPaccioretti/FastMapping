@@ -262,7 +262,7 @@ function(input, output, session) {
           tabPanel("Data", DT::dataTableOutput("table")),
           tabPanel("Edges", 
           conditionalPanel(
-            condition = "input.rto.length <= 1",    
+            condition = "input.rto != undefined && input.rto.length < 2",    
                      fluidPage(
                        DT::dataTableOutput("edgesTable"),
                        uiOutput("ui_edge_param")
