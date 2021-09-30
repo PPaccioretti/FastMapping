@@ -13,10 +13,10 @@
 # limitations under the License.
 
 library(shiny)
-library(shinythemes)
+# library(shinythemes)
 
 # Moran Plot
-moran.plot1 <-function (x, listw, zero.policy = NULL, spChk = NULL, labels = NULL,
+moran.plot1 <- function(x, listw, zero.policy = NULL, spChk = NULL, labels = NULL,
                         xlab = NULL, ylab = NULL, quiet = NULL, ...){
   # browser()
   if (!inherits(listw, "listw"))
@@ -67,7 +67,7 @@ moran.plot1 <-function (x, listw, zero.policy = NULL, spChk = NULL, labels = NUL
 
 
 
-fclustIndex_modif <- function (y, x, index = "all"){
+fclustIndex_modif <- function(y, x, index = "all") {
   clres <- y
   gath.geva <- function(clres, x) {
     xrows <- dim(clres$me)[1]
@@ -489,71 +489,50 @@ makePlotClusterValid <- function(datos, colCluster = 1, colMean = 2, colLetters 
 }
 
 
-T_TestModif <- function() {
-  
-  ###############################################################################
+T_TestModif <- function(Coords, Variables) {
   #MethodTitle= Test t modificado
   #MethodNickName= CorrEsp
-  
+  # browser()
   library(SpatialPack)
-  ############################ END OF OPTIONS BLOCK ############################
   
-  Corr_tmodif<-function(Coords, Variables) {
-    
-    Mydata <- as.data.frame (na.omit(cbind(Coords, Variables)))
-    coords <- Mydata[,1:2]
+  # Corr_tmodif <- function(Coords, Variables) {
+    Mydata <- as.data.frame(na.omit(cbind(Coords, Variables)))
+    coords <- Mydata[, 1:2]
     
     n <- ncol(Variables)
     df <- Variables
-    foo <- matrix(0,n,n)
-    foo1 <- matrix(0,n,n)
-    
-    for ( i in 1:n)
+    foo <- matrix(0, n, n)
+    foo1 <- matrix(0, n, n)
+    myResults <- data.frame()
+    for (i in 1:n)
     {
       for (j in i:n)
       {
+        if (i == j) {
+          next
+          
+        }
+          try(incProgress(1/(choose(n, 2) + n)))
+       test <- modified.ttest(df[, i], df[, j], coords)
         
-        test <- modified.ttest(df[,i],df[,j],coords)
-        foo[i,j] <- test$corr
-        foo1[i,j] <- test$p.value
+        myResults <-
+          rbind(myResults, 
+                data.frame(
+                  "Var1" = names(df)[i],
+                  "Var2" = names(df)[j],
+                  "corr" = test$corr,
+                  p.value = test$p.value
+                )
+          )
       }
     }
     
-    foo[lower.tri(foo)] <- t(foo)[lower.tri(foo)]
-    foo1[lower.tri(foo1)] <- t(foo1)[lower.tri(foo1)]
-    
-    
-    colnames(foo) <- names(Variables)
-    rownames(foo) <- names(Variables)
-    
-    colnames(foo1) <- names(Variables)
-    rownames(foo1) <- names(Variables)
-    
-    Corr <- data.frame(foo)
-    Pval <-data.frame(foo1)
-    
-    upper.tri(Corr)
-    Corr[upper.tri(Corr)] <- NA
-    
-    upper.tri(Pval)
-    Pval[upper.tri(Pval)] <- NA
-    Pval
-    
-    Corr <- data.frame(Corr)
-    Pval <- data.frame(Pval)
-    nam <- data.frame(colnames(Variables))
-    
-    names(nam) =c("Variable")
-    res_Corr <- cbind(nam,Corr)
-    res_Pval <- cbind(nam,Pval)
-    
-    resultado <- list(res_Corr, res_Pval)
-    
-    names(resultado)=c("Matriz de correlaci?n/Coeficientes", "Matriz de correlaci?n/Probabilidades")
-    resultado
-    
-    #END MAIN CODE
-  }
+    myResults
 }
-  
 
+
+
+firstup <- function(x) {
+  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+  x
+}

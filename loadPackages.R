@@ -1,5 +1,5 @@
 list_of_packages <- c("shiny",
-                      "shinythemes", 
+                      # "shinythemes", 
                       "shinyBS",
                       "shinyjs",
                       "DT",
