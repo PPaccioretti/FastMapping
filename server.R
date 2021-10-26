@@ -1703,13 +1703,56 @@ function(input, output, session) {
   
   output$Predicted.txt <- downloadHandler(
     filename = function() {
-      paste('Predicted-', Sys.Date(), '.txt', sep = '')
+      if (length(input$rto) == 1) {
+        varName <- input$rto
+      } else {
+        varName <- NULL
+      }
+      paste('Predicted-',varName, "-", Sys.Date(), '.txt', sep = '')
     },
     content = function(con) {
-      write.table(kriging(), con, row.names = FALSE)
+      if (length(input$rto) == 1) {
+        varName <- input$rto
+      } else {
+        varName <- NULL
+      }
+      df <- kriging()
+      names(df) <- gsub("var1", varName, names(df))
+      
+      write.table(df, con, row.names = FALSE)
     },
     contentType =  "text/csv"
   )
+  
+  
+  output$Predicted.sp <- downloadHandler(
+    filename = function() {
+      if (length(input$rto) == 1) {
+        varName <- input$rto
+      } else {
+        varName <- NULL
+      }
+      paste('Predicted-',varName, "-", Sys.Date(), '.gpkg', sep = '')
+    },
+    content = function(con) {
+      if (length(input$rto) == 1) {
+        varName <- input$rto
+      } else {
+        varName <- NULL
+      }
+
+      df <- kriging()
+      
+      names(df) <- gsub("var1", varName, names(df))
+      
+      sf::st_write(sf::st_as_sf(df), con)
+    },
+    contentType = NULL
+  )
+  
+  
+  
+  
   
   
   output$downloadDepurated <- downloadHandler(
@@ -1755,7 +1798,8 @@ function(input, output, session) {
       tabPanel("Fitted Variogram Model", tableOutput("semivAju")),
       tabPanel(
         "Predicted",
-        downloadButton("Predicted.txt", "Save File"),
+        downloadButton("Predicted.txt", "Save Text File"),
+        downloadButton("Predicted.sp", "Save Spatial File"),
         DT::dataTableOutput("tablita"),
         h4("Predicted values summary"),
         verbatimTextOutput("predictedSummary")
