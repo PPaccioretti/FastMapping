@@ -126,7 +126,7 @@ function(input, output, session) {
   
   
   session$onSessionEnded(stopApp)
-  
+  session$allowReconnect(TRUE)
   
   
   output$ModelosA <- renderUI({
@@ -221,7 +221,7 @@ function(input, output, session) {
     ### AQUI DEBERIA VER SI TIENE COMA COMO DECIMAL, A LO MEJOR DESPUES DEL TYRCATCH
     
     tryCatch(
-      error = function(e) {
+      {
         data()[, c(input$xmapa, input$ymapa, input$rto)]
       },
       error = function(e) {
@@ -254,26 +254,7 @@ function(input, output, session) {
   }, options = list(scrollX = TRUE))#
   
   
-  output$tabpanel_data <- renderUI({
-    validate(need(data(), ''))
-  
-      return(
-        tabsetPanel(
-          tabPanel("Data", DT::dataTableOutput("table")),
-          tabPanel("Edges", 
-          conditionalPanel(
-            condition = "input.rto != undefined && input.rto.length < 2",    
-                     fluidPage(
-                       DT::dataTableOutput("edgesTable"),
-                       uiOutput("ui_edge_param")
-                     )
-            )
-          )
-          
-        ))
 
-  })
-  
   observeEvent(
      input$PanelTabSet == "PredictionTab",
     {
@@ -452,8 +433,6 @@ function(input, output, session) {
     DatosCrudos <- MyFile[,c(input$xmapa, input$ymapa, input$rto)]
     MyFile <- MyFile[complete.cases(MyFile),c(input$xmapa, input$ymapa, input$rto)]
     
-    # MyFile <- data()
-    # MyFile <- data()[,c(input$xmapa, input$ymapa, input$rto)]
     
     if (is.null(MyFile)) {return()}
     colnames(MyFile)[1] <- paste("X")
@@ -972,14 +951,32 @@ function(input, output, session) {
       #need(ncol(dataset())==4, 'No depurated data')
     )
     # build graph with ggplot syntax
-    p <- ggplot(dataset(), aes_string(x = input$x, 
-                                      y = input$y, 
-                                      color = input$color, 
-                                      text = input$rto)) +
-      geom_point()
+    # p <- ggplot(dataset(), aes_string(x = input$x, 
+    #                                   y = input$y, 
+    #                                   color = input$color, 
+    #                                   text = input$rto)) +
+    #   geom_point()
+    # browser()
+    # ggplotly(p) %>%
+    #   plotly::layout(autosize = TRUE)
     
-    ggplotly(p) %>%
+    myX <- dataset()[,input$x]
+    myY <- dataset()[,input$y]
+    myCol <- dataset()[,input$color]
+    myText <- dataset()[,input$rto] 
+    
+    plotly::plot_ly(
+      x = myX,
+      y = myY,
+      color = myCol,
+      text = myText,
+      type = 'scatter',
+      mode = 'markers',
+      hoverinfo = 'text'
+    ) %>%
       plotly::layout(autosize = TRUE)
+    
+    
     # layout(height = input$plotHeight, autosize=TRUE)
   })
   #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  #####################  ##################### 

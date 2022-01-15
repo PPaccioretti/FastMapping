@@ -257,12 +257,12 @@ CalcLetras <- function(MisMedias, pvalue, alpha = 0.05) {
   #Adapted from agricolae package
   lastC <-
     function(x) {
-      y<-sub(" +$", "",x)
-      p1<-nchar(y)
-      cc<-substr(y,p1,p1)
+      y <- sub(" +$", "", x)
+      p1 <- nchar(y)
+      cc <- substr(y, p1, p1)
       return(cc)
     }
-
+  
   Q <- matrix(1, ncol = nrow(MisMedias), nrow = nrow(MisMedias))
   p <- pvalue
   k <- 0
@@ -278,51 +278,89 @@ CalcLetras <- function(MisMedias, pvalue, alpha = 0.05) {
   
   n <- nrow(MisMedias)
   z <- MisMedias
-  letras<-c(letters[1:26],LETTERS[1:26],1:9,c(".","+","-","*","/","#","$",
-                                              "%","&","^","[","]",":","@",";","_","?","!","=","#",rep(" ",2000)))
-  w <- z[order(z[[ 2]], decreasing = FALSE), ]
-  M<-rep("",n)
-  k<-1
-  k1<-0
-  j<-1
-  i<-1
-  cambio<-n
-  cambio1<-0
-  chequeo=0
-  M[1]<-letras[k]
+  letras <-
+    c(
+      letters[1:26],
+      LETTERS[1:26],
+      1:9,
+      c(
+        ".",
+        "+",
+        "-",
+        "*",
+        "/",
+        "#",
+        "$",
+        "%",
+        "&",
+        "^",
+        "[",
+        "]",
+        ":",
+        "@",
+        ";",
+        "_",
+        "?",
+        "!",
+        "=",
+        "#",
+        rep(" ", 2000)
+      )
+    )
+  w <- z[order(z[[2]], decreasing = FALSE),]
+  M <- rep("", n)
+  k <- 1
+  k1 <- 0
+  j <- 1
+  i <- 1
+  cambio <- n
+  cambio1 <- 0
+  chequeo = 0
+  M[1] <- letras[k]
   q <- as.numeric(rownames(w)) #Check
-  while(j<n) {
-    chequeo<-chequeo+1
-    if (chequeo > n) break
-    for(i in j:n) {
+  while (j < n) {
+    chequeo <- chequeo + 1
+    if (chequeo > n)
+      break
+    for (i in j:n) {
       # browser()
-      stest <- Q[q[i],q[j]]>alpha
-      if(stest) {
-        if(lastC(M[i]) != letras[k]) {M[i]<-paste(M[i],letras[k],sep="")}
+      stest <- Q[q[i], q[j]] > alpha
+      if (stest) {
+        if (lastC(M[i]) != letras[k]) {
+          M[i] <- paste(M[i], letras[k], sep = "")
+        }
       }
       else {
-        k<-k+1
-        cambio<-i
-        cambio1<-0
-        ja<-j
-        for(jj in cambio:n) M[jj]<-paste(M[jj],"",sep="") # El espacio
-        M[cambio]<-paste(M[cambio],letras[k],sep="")
-        for( v in ja:cambio) {
-          if(Q[q[v],q[cambio]]<=alpha) {j<-j+1
-          cambio1<-1
+        k <- k + 1
+        cambio <- i
+        cambio1 <- 0
+        ja <- j
+        for (jj in cambio:n)
+          M[jj] <- paste(M[jj], "", sep = "") # El espacio
+        M[cambio] <- paste(M[cambio], letras[k], sep = "")
+        for (v in ja:cambio) {
+          if (Q[q[v], q[cambio]] <= alpha) {
+            j <- j + 1
+            cambio1 <- 1
           }
-          else break
+          else
+            break
         }
         break
       }
     }
-    if (cambio1 ==0 )j<-j+1
+    if (cambio1 == 0)
+      j <- j + 1
   }
   #-----------
-
-  w<-data.frame(w,stat=M)
-  if(k>81) 
-    cat("\n",k,"groups are estimated.The number of groups exceeded the maximum of 81 labels. change to group=FALSE.\n")
+  
+  w <- data.frame(w, stat = M)
+  if (k > 81)
+    cat(
+      "\n",
+      k,
+      "groups are estimated.The number of groups exceeded the maximum of 81 labels. change to group=FALSE.\n"
+    )
   invisible(w)
 }
 
@@ -334,7 +372,6 @@ makeMeanComparisson <-
            EstDescr = EstDesc ,
            alpha = 0.05,
            retDMS = FALSE) {
-    
     # browser()
     
     
@@ -372,7 +409,7 @@ makeMeanComparisson <-
                  alpha = alpha)
     if (retDMS) {
       return(list("TablaMedias" = MisLetras, "DMS" = DMS))
-      }
+    }
     MisLetras
   }
 
@@ -380,16 +417,14 @@ VarKrigDescr <-
   function(ClustersFM,
            datosAValid,
            crs) {
-
     datos_predsf <- st_as_sf(ClustersFM, coords = 1:2, crs = crs)
     nprogress <- length(datosAValid)
     Krig <-
       sapply(datosAValid, function(columna) {
-
         if (columna == "geometry") {
           return(NULL)
         }
-        incProgress(1/nprogress, detail = columna)
+        incProgress(1 / nprogress, detail = columna)
         formulaKr <- as.formula(paste(columna, "~ 1"))
         
         # Ajuste de semivariograma empírico
@@ -414,7 +449,7 @@ VarKrigDescr <-
         tamPunt <- sum(!is.na(datos_predsf[[columna]]))
         data.frame(
           "Variable" = as.character(columna),
-          "MedianaK" = median(sqrt(kriging_cv$var1.var), na.rm=T),
+          "MedianaK" = median(sqrt(kriging_cv$var1.var), na.rm = T),
           "MediaVar" = media,
           "CVVar" = Cv,
           "n" = tamPunt
@@ -450,8 +485,8 @@ ValidVarKrig <-
                  "n" = EstDesc$n)
     
     EstDescTable <- dcast(data = MedCV,
-                     n ~ Variable ,
-                     value.var = "MedCV")
+                          n ~ Variable ,
+                          value.var = "MedCV")
     
     ##### ComparacionMedias ----
     
@@ -471,22 +506,26 @@ ValidVarKrig <-
   }
 
 
-makePlotClusterValid <- function(datos, colCluster = 1, colMean = 2, colLetters = 3) {
-  # browser()
-  MyColumns <- names(datos)
-  MyClusterName <- MyColumns[colCluster]
-  MyMeanName <-  MyColumns[colMean]
-  MyLettersName <-  MyColumns[colLetters]
-  
-  MyMeanValues <- datos[,MyMeanName]
-
-  ggpl <- ggplot(datos,
-         aes_string(x = MyClusterName, y = MyMeanName)) +
-    geom_col(width = 0.25) +
-    geom_text(aes_string(label = MyLettersName, y = I(MyMeanValues*1.05)))
-  
-  print(ggpl)
-}
+makePlotClusterValid <-
+  function(datos,
+           colCluster = 1,
+           colMean = 2,
+           colLetters = 3) {
+    # browser()
+    MyColumns <- names(datos)
+    MyClusterName <- MyColumns[colCluster]
+    MyMeanName <-  MyColumns[colMean]
+    MyLettersName <-  MyColumns[colLetters]
+    
+    MyMeanValues <- datos[, MyMeanName]
+    
+    ggpl <- ggplot(datos,
+                   aes_string(x = MyClusterName, y = MyMeanName)) +
+      geom_col(width = 0.25) +
+      geom_text(aes_string(label = MyLettersName, y = I(MyMeanValues * 1.05)))
+    
+    print(ggpl)
+  }
 
 
 T_TestModif <- function(Coords, Variables) {
@@ -496,38 +535,39 @@ T_TestModif <- function(Coords, Variables) {
   library(SpatialPack)
   
   # Corr_tmodif <- function(Coords, Variables) {
-    Mydata <- as.data.frame(na.omit(cbind(Coords, Variables)))
-    coords <- Mydata[, 1:2]
-    
-    n <- ncol(Variables)
-    df <- Variables
-    foo <- matrix(0, n, n)
-    foo1 <- matrix(0, n, n)
-    myResults <- data.frame()
-    for (i in 1:n)
+  Mydata <- as.data.frame(na.omit(cbind(Coords, Variables)))
+  coords <- Mydata[, 1:2]
+  
+  n <- ncol(Variables)
+  df <- Variables
+  foo <- matrix(0, n, n)
+  foo1 <- matrix(0, n, n)
+  myResults <- data.frame()
+  for (i in 1:n)
+  {
+    for (j in i:n)
     {
-      for (j in i:n)
-      {
-        if (i == j) {
-          next
-          
-        }
-          try(incProgress(1/(choose(n, 2) + n)))
-       test <- modified.ttest(df[, i], df[, j], coords)
+      if (i == j) {
+        next
         
-        myResults <-
-          rbind(myResults, 
-                data.frame(
-                  "Var1" = names(df)[i],
-                  "Var2" = names(df)[j],
-                  "corr" = test$corr,
-                  p.value = test$p.value
-                )
-          )
       }
+      try(incProgress(1 / (choose(n, 2) + n)))
+      test <- modified.ttest(df[, i], df[, j], coords)
+      
+      myResults <-
+        rbind(
+          myResults,
+          data.frame(
+            "Var1" = names(df)[i],
+            "Var2" = names(df)[j],
+            "corr" = test$corr,
+            p.value = test$p.value
+          )
+        )
     }
-    
-    myResults
+  }
+  
+  myResults
 }
 
 

@@ -11,10 +11,11 @@ suppressPackageStartupMessages({
 source("src/Functions.R")
 
 options(spinner.color = "#e95420",
-        spinner.type = 6)
+        spinner.type = 6,
+        shiny.sanitize.errors = FALSE,
+        shiny.maxRequestSize = 20*1024^2)
 
-options(shiny.sanitize.errors = FALSE)
-options(shiny.maxRequestSize = 20*1024^2)
+
 
 
 # possibleModels <- gstat::vgm()
