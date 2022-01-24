@@ -1,0 +1,37 @@
+Package: FastMapping
+Title: Web-based application developed to easily map within field variability
+Version: 0.0.0.9000
+Authors@R: person('Pablo', 'Paccioretti', email = 'pablopaccioretti@agro.unc.edu.ar', role = c('cre', 'aut'))
+Description: Software to create field maps and identify management zones in precision agriculture.
+License: Apache License (>= 2)
+Imports: 
+    attempt,
+    concaveman,
+    config (>= 0.3.1),
+    data.table,
+    DT,
+    glue,
+    golem (>= 0.3.1),
+    htmltools,
+    leaflet,
+    magrittr,
+    pkgload,
+    processx,
+    readxl,
+    rlang,
+    sf,
+    shiny (>= 1.7.1),
+    shinycssloaders,
+    shinyjs
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.2
+Suggests: 
+    rmarkdown,
+    knitr,
+    spelling,
+    testthat (>= 3.0.0),
+    openxlsx
+Config/testthat/edition: 3
+Language: en-US
+VignetteBuilder: knitr

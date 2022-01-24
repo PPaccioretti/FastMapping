@@ -1,0 +1,75 @@
+#' helpers
+#'
+#' @description A fct function
+#'
+#' @return The return value, if any, from executing the function.
+#'
+#' @noRd
+print_sf_as_df <-
+  function(sf_data,
+           toPoint = TRUE,
+           addCoords = FALSE,
+           session) {
+    if (toPoint) {
+      sf_data <- sf_to_point(sf_data, session)
+    }
+    
+    if (addCoords) {
+      df_data <- data.frame(sf::st_drop_geometry(sf_data),
+                            sf::st_coordinates(sf_data))
+    } else {
+      df_data <- data.frame(sf::st_drop_geometry(sf_data))
+    }
+    
+    geometry <- sf::st_geometry(sf_data)
+    
+    list(data = df_data,
+         geometry = geometry)
+  }
+
+
+sf_to_point <- function(sf_data, session) {
+  if (all(sf::st_geometry_type(sf_data) == "POINT")) {
+    return(sf_data)
+  }
+  
+  if (any(sf::st_geometry_type(sf_data) != "POINT")) {
+    if (!missing(session)) {
+      ns <- session$ns
+    } else {
+      ns <- function(x) {
+        x
+      }
+    }
+    shiny::showNotification(
+      paste("Centroid of Polygons are shown as coordinates"),
+      type = 'warning',
+      id = ns("warning_centroid")
+    )
+    sf_data <- suppressWarnings(sf::st_centroid(sf_data))
+    return(sf_data)
+  }
+  
+}
+
+select_sf_points <- function(sf_data) {
+  sf_data[sf::st_geometry_type(sf_data) == "POINT",]
+}
+
+select_sf_polygon <- function(sf_data) {
+  sf_data[sf::st_geometry_type(sf_data) == "POLYGON",]
+}
+
+has_sf_points <- function(sf_data) {
+ any(sf::st_geometry_type(sf_data) == "POINT")
+}
+
+has_sf_polygon <- function(sf_data) {
+  any(sf::st_geometry_type(sf_data) == "POLYGON")
+}
+
+
+find_vars <- function(data, filter) {
+  names(data)[vapply(data, filter, logical(1))]
+}
+
