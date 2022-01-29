@@ -10,11 +10,13 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     bslib::page_navbar(
+    # navbarPage(
       title = "FastMapping",
       id = "navbar",
-      theme = bslib::bs_theme(version = 5, bootswatch = "united"),
+      theme = bslib::bs_theme(bootswatch = "united"),
       bslib::nav(
-        title = "Home",
+        title = "",
+        icon = icon("home"),
         value = "navhome",
         mainPanel(h1("asdde"),
                   actionButton("start", "Start!"),
@@ -25,14 +27,13 @@ app_ui <- function(request) {
       bslib::nav(
         title = "Data preparation",
         value = "navdataprep",
-        bslib::navs_pill_card(
+        bslib::navs_pill(
           bslib::nav(
             title = "Dataset",
             value = "tpnldataset",
             sidebarLayout(
               sidebarPanel(
-                title = "Dataset",
-                
+                h1("eee"),
                 mod_upload_file_ui("dataset", label = h4("Dataset file:")),
                 mod_select_variables_ui("dataset_cols"),
                 mod_spatial_transformation_ui("dataset_spatial_transf")
@@ -41,27 +42,55 @@ app_ui <- function(request) {
                 mod_show_data_table_ui("dataset_print"),
                 mod_visualize_spatial_data_ui("mymap")
               )
-            )
-          ),
+            ))
+            ,
+          #
           bslib::nav(
-            title = "Boundary",
-            value = "tpnlboundary",
-            sidebarLayout(
-              sidebarPanel(mod_make_boundary_ui("make_boundary")),
-              mainPanel(
+          title = "Boundary",
+          value = "tpnlboundary",
+          sidebarLayout(
+          sidebarPanel(mod_make_boundary_ui("make_boundary")),
+          mainPanel(
                 h1("asd"),
-                mod_visualize_spatial_data_ui("boundaryMap"),
-                plotOutput("myPlot"))
+                mod_visualize_spatial_data_ui("boundaryMap")
+                )
             )
           )
         )
-      ),
-      bslib::nav(
-        title = "Depuration Parameters",
-        value = "navdepparam",
-        mainPanel(leaflet::leafletOutput("map1"))
-      )
-    )
+        )
+      )#,
+      # bslib::nav(
+      #   title = "Depuration Parameters",
+      #   value = "navdepparam",
+      #   mainPanel(mod_depuration_parameters_ui("depuration_param"))
+      # ),
+      # bslib::nav(
+      #   title = "Kriging Parameters",
+      #   value = "navkrigparam",
+      #   mainPanel(mod_kriging_parameters_ui("kriging_param"))
+      # ),
+      # 
+      # bslib::nav(
+      #   title = "Depuration Results",
+      #   value = "navdepresults",
+      #   mainPanel(mod_depuration_process_ui("depuration_process"))
+      # ),
+      # bslib::nav(
+      #   title = "Kriging Results",
+      #   value = "navkrigparam",
+      #   mainPanel(
+      #     mod_kriging_process_ui("kriging_process")
+      #             )
+      # ),
+      # bslib::nav(
+      #   title = "otro Results",
+      #   value = "otro",
+      #   mainPanel(h1("que vemo?"),
+      #                mod_kriging_results_ui("kriging_results")
+      #             )
+      # )
+      # 
+    # )
   )
 }
 

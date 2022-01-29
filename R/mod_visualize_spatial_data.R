@@ -13,29 +13,33 @@ mod_visualize_spatial_data_ui <-
            lblToPlot = "Variable to plot",
            multiple = FALSE) {
     ns <- NS(id)
-    tagList(shinyjs::hidden(
-      selectInput(
-        ns("varToPlot"),
-        label = lblToPlot,
-        choices = NULL,
-        multiple = multiple
-      )
-    ),
-    h1("ek lifilele"),
-    leaflet::leafletOutput(ns("mylfltmap")))
+    tagList(h1("ek lifilele"),
+            shinyjs::hidden(
+              selectInput(
+                ns("varToPlot"),
+                label = lblToPlot,
+                choices = NULL,
+                multiple = multiple
+              )
+            ),
+            leaflet::leafletOutput(ns("mylfltmap"))
+    )
   }
 
 #' visualize_spatial_data Server Functions
 #'
 #' @noRd
-mod_visualize_spatial_data_server <- function(id, dataset, vars, poly = reactive(NULL)) {
-  # req(dataset(), cancelOutput = TRUE)
-  # req(vars(), cancelOutput = TRUE)
-  stopifnot(is.reactive(dataset))
+mod_visualize_spatial_data_server <-
+  function(id,
+           dataset,
+           vars,
+           poly = reactive(NULL),
+           maxMarkerToShow = reactive(7000)
+           ) {
+    stopifnot(is.reactive(dataset))
   
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
     observeEvent(dataset(), {
       ## INITIAL STATE
       shinyjs::reset("varToPlot")
@@ -44,61 +48,60 @@ mod_visualize_spatial_data_server <- function(id, dataset, vars, poly = reactive
         choices = NULL,
         selected = NULL,
         session = session
-        
+
       )
     })
-    
+
     data <- reactive({
-      req(dataset())
-      sf::st_transform(dataset(), 4326)
+      req(inherits(dataset(), "sf"))
+      df_sf <- sf::st_transform(dataset(), 4326)
+
+      if (nrow(df_sf) > maxMarkerToShow() & not_null(maxMarkerToShow())) {
+            showNotification(
+              paste0(
+                'Data has ',
+                nrow(df_sf),
+                ' observations, but ',
+                maxMarkerToShow(),
+                ' will be plot'
+              ),
+              id = ns('maxRows'),
+              type = "message",
+              session = session
+            )
+            df_sf <- df_sf[sample(nrow(df_sf), maxMarkerToShow()), ]
+          }
+          df_sf
     })
-    
-    observeEvent(is.data.frame(dataset()) | vars() == 2, {
-      req(data())
-      req(vars())
+
+    myLeaflet <- reactive({
+      req(inherits(dataset(), "sf"))
       
-      shinyjs::show("varToPlot")
-      
-      shiny::updateSelectInput(
-        'varToPlot',
-        choices = colnames(sf::st_drop_geometry(data())),
-        selected = vars()[1],
-        session = session
-        
-      )
-    })
-    
-    
-    output$mylfltmap <- leaflet::renderLeaflet({
-      req(data())
-      req(vars())
-      df_sf <- data()
- 
       tryCatch({
-        leaflet::leaflet(df_sf) %>%
-          leaflet::addTiles(group = "OSM") %>%
-          leaflet::addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
-          leaflet::addProviderTiles("Esri.WorldTopoMap", group = "Topographic Map") %>%
-          leaflet::addProviderTiles("Esri.WorldStreetMap") %>%
-          leaflet::addMiniMap(tiles = "Esri.WorldStreetMap",
-                              toggleDisplay = TRUE,
-                              position = "bottomleft") %>%
-          leaflet::addEasyButton(
-            leaflet::easyButton(
-              id = "buttonid",
-              icon = "fa-crosshairs",
-              title = "Locate dataset",
-              onClick =  leaflet::JS(
-                paste0(
-                  "function(btn, map) {",
-                  "Shiny.onInputChange('",
-                  ns('goDataset'),
-                  "', 'clicked', {priority: 'event'});
+      leaflet::leaflet() %>%
+        leaflet::addTiles(group = "OSM") %>%
+        leaflet::addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+        leaflet::addProviderTiles("Esri.WorldTopoMap", group = "Topographic Map") %>%
+        leaflet::addProviderTiles("Esri.WorldStreetMap") %>%
+        leaflet::addMiniMap(tiles = "Esri.WorldStreetMap",
+                            toggleDisplay = TRUE,
+                            position = "bottomleft") %>%
+        leaflet::addEasyButton(
+          leaflet::easyButton(
+            id = "buttonid",
+            icon = "fa-crosshairs",
+            title = "Locate dataset",
+            onClick =  leaflet::JS(
+              paste0(
+                "function(btn, map) {",
+                "Shiny.onInputChange('",
+                ns('goDataset'),
+                "', 'clicked', {priority: 'event'});
                                 }"
-                )
               )
             )
           )
+        )
       }, warning = function(w) {
         showNotification(
           'Please check coordinates!',
@@ -115,33 +118,57 @@ mod_visualize_spatial_data_server <- function(id, dataset, vars, poly = reactive
           session = session
         )
         return()
-      }, silent = TRUE)
+      })
 
-      
     })
-    
-    
-    observeEvent(input$goDataset, {
-      bbox <- req(as.vector(sf::st_bbox(data())))
 
-      leaflet::leafletProxy("mylfltmap", session) %>%
-        leaflet::setView(mean(bbox[1], bbox[3]),
-                       mean(bbox[2], bbox[4]),
-                       zoom = 15)
-    })
-    
-    observeEvent(input$varToPlot, {
+    observeEvent(is.data.frame(data()) | vars() == 2, {
       req(data())
       req(vars())
-      req(input$varToPlot, cancelOutput = TRUE)
 
-      df_sf <- data()
-      MyMap <- leaflet::leafletProxy("mylfltmap", session, data = df_sf)
+      shinyjs::show("varToPlot")
 
+      shiny::updateSelectInput(
+        'varToPlot',
+        choices = colnames(sf::st_drop_geometry(data())),
+        selected = vars()[1],
+        session = session
+
+      )
+    })
+
+
+    output$mylfltmap <- leaflet::renderLeaflet({
+       myLeaflet()
+    })
+
+    observeEvent(input$goDataset, {
+      bbox <- req(as.vector(sf::st_bbox(data())))
       
+      myMap <- leaflet::leafletProxy("mylfltmap", session)
+      if (nrow(data()) < 3000) {
+        myMap %>% 
+          leaflet::flyToBounds(bbox[1], bbox[2],bbox[3],bbox[4])
+      } else {
+        myMap %>% 
+        leaflet::fitBounds(bbox[1], bbox[2],bbox[3],bbox[4])
+      }
+     
+      
+       
+    })
+    # 
+    observeEvent(input$varToPlot, {
+      req(data())
+      req(input$varToPlot, cancelOutput = TRUE)
+      df_sf <- data()
+
+      MyMap <- leaflet::leafletProxy("mylfltmap", session)
+
+
       for (i in input$varToPlot) {
         myTgtVct <- df_sf[[i]]
-        
+
         if (is.numeric(myTgtVct)) {
           myTgtVctrnd <- formatC(myTgtVct, format = "f")
           myPal <-
@@ -152,11 +179,11 @@ mod_visualize_spatial_data_server <- function(id, dataset, vars, poly = reactive
           myTgtVctrnd <- myTgtVct
           myPal <- sample(c("RdYlBu", "Blues"), 1)
           pal <- leaflet::colorFactor(myPal, myTgtVct)
-          
+
           myCol <- pal(myTgtVct)
-          
+
         }
-        
+
         MyMap <-
           MyMap %>%
           leaflet::clearControls() %>%
@@ -184,7 +211,7 @@ mod_visualize_spatial_data_server <- function(id, dataset, vars, poly = reactive
             overlayGroups = input$varToPlot,
             options = leaflet::layersControlOptions(collapsed = FALSE),
             position = "topleft"
-          ) 
+          )
       }, warning = function(w) {
         showNotification(
           'Please check coordinates!',
@@ -201,28 +228,37 @@ mod_visualize_spatial_data_server <- function(id, dataset, vars, poly = reactive
           session = session
         )
         return()
-      }, silent = TRUE)
-      
+      })
+
     })
-    
+
     observeEvent(poly(), {
       req(poly())
-      req(has_sf_polygon(poly()))
-      
+      req(inherits(poly(), "sf"))
       poly <- sf::st_transform(poly(), 4326)
-     
+      bbox <- as.vector(sf::st_bbox(poly))
+
       leaflet::leafletProxy("mylfltmap", session) %>%
+        leaflet::clearGroup("Boundary") %>%
         leaflet::addPolygons(
           data = poly,
+          group = "Boundary",
           color = "#444444",
           weight = 1,
           smoothFactor = 0.5,
           opacity = 1.0,
           fillOpacity = 0
-        )
-    })
-    
-    reactive(leaflet::leafletProxy("mylfltmap", session, data = data()))
+        ) %>%
+        leaflet::addLayersControl(
+          baseGroups = c("OSM", "Satellite", "Topographic Map"),
+          overlayGroups = "Boundary",
+          options = leaflet::layersControlOptions(collapsed = FALSE),
+          position = "topleft"
+        ) %>%
+        leaflet::flyToBounds(bbox[1], bbox[2],bbox[3],bbox[4])
+
+    }, ignoreInit = TRUE)
+
   })
 }
 

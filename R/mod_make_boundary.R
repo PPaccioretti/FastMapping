@@ -101,7 +101,7 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
     
     reactive({
       req(myHull())
-      try(myHull())
+      myHull()
     })
   })
 }

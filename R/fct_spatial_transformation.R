@@ -35,6 +35,7 @@ spatial_transformation <-
     
     # After add crs or be sf do:
     if (isTRUE(sf::st_crs(dataset) != sf::st_crs(tgt_epsg))) {
+      req(inherits(dataset, "sf"))
       sf::st_transform(dataset, tgt_epsg)
     } else {
       dataset

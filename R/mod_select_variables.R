@@ -50,7 +50,7 @@ mod_select_variables_server <-
            filter = is.numeric,
            onlyCoords = FALSE) {
     stopifnot(is.logical(onlyCoords))
-    req(dataset, cancelOutput = TRUE)
+    # req(dataset, cancelOutput = TRUE)
     stopifnot(is.reactive(dataset))
     
     moduleServer(id, function(input, output, session) {
@@ -59,8 +59,8 @@ mod_select_variables_server <-
       
       var_names <- reactive({
         req(dataset())
-        try(find_vars(dataset(), filter),
-            silent = TRUE)
+        req(find_vars(dataset(), filter))
+        find_vars(dataset(), filter)
       })
       
       
@@ -97,6 +97,16 @@ mod_select_variables_server <-
         
         if (!onlyCoords) {
           shinyjs::show('targetVariable')
+          possibleTargetVariables <-
+            var_names()[!(var_names() %in% c(input$xDataset, input$yDataset))]
+          
+          shiny::updateSelectInput(
+            'targetVariable',
+            choices = possibleTargetVariables,
+            selected = NULL,
+            session = session
+          )
+          
         }
         if (!inherits(dataset(), "sf")) {
           shinyjs::show('xDataset')
@@ -125,6 +135,11 @@ mod_select_variables_server <-
                      input$yDataset != 0 |
                      inherits(dataset(), "sf"),
                    {
+                     !inherits(dataset(), "sf")
+                     # is/are null x and/or y
+                     # and is not sf
+                     #or x and y are the same and
+                     # is NOT sf
                      if (((is.null(input$xDataset) ||
                            is.null(input$yDataset)) &
                           !inherits(dataset(), "sf")) ||
@@ -164,7 +179,7 @@ mod_select_variables_server <-
                      } else {
                        if (!onlyCoords) {
                          possibleTargetVariables <-
-                           var_names()[!var_names() %in% c(input$xDataset, input$yDataset)]
+                           var_names()[!(var_names() %in% c(input$xDataset, input$yDataset))]
                          
                          shiny::updateSelectInput(
                            'targetVariable',
@@ -178,8 +193,13 @@ mod_select_variables_server <-
                    }, ignoreInit = TRUE)
       
       list(
-        coords = reactive(c(input$xDataset, input$yDataset)),
-        tgtvariable = reactive(input$targetVariable)
+        coords = reactive({
+          req(dataset())
+          
+          c(input$xDataset, input$yDataset)}),
+        tgtvariable = reactive({
+          req(dataset())
+          input$targetVariable})
       )
       
     })

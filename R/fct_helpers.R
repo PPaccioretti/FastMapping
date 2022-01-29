@@ -73,3 +73,19 @@ find_vars <- function(data, filter) {
   names(data)[vapply(data, filter, logical(1))]
 }
 
+
+firstup <- function(x) {
+  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+  x
+}
+
+modelsVariogram <- function() {
+  myLabels <- regmatches(
+  gstat::vgm()$long,
+  gregexpr("(?<=\\().*?(?=\\))", gstat::vgm()$long, perl = T))
+  
+  myModels <- as.list(as.character(gstat::vgm()$short))
+  myLabels <- lapply(myLabels, firstup)
+  names(myModels) <- myLabels
+  myModels
+  }

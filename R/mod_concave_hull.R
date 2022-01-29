@@ -9,7 +9,7 @@
 #' @importFrom shiny NS tagList 
 mod_concave_hull_ui <- function(id, 
                                 lblconvty = "Concavity", 
-                                lblthresh = "Segment length threshold"){
+                                lblthresh = "Segment length threshold") {
   ns <- NS(id)
   tagList(
     column(
@@ -45,15 +45,19 @@ mod_concave_hull_server <- function(id, dataset){
     ns <- session$ns
     reactive({
       req(dataset())
+      req(inherits(dataset(), "sf"))
       req(input$concavity)
       req(input$length_threshold)
-    
-    
+      
+    try({
+          
     concaveman::concaveman(
       dataset(),
       concavity = input$concavity,
       length_threshold = input$length_threshold
     )
+    })
+
     })
     
   })

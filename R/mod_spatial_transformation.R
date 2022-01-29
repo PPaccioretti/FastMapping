@@ -203,13 +203,18 @@ mod_spatial_transformation_server <-
         
         coords <- coords()
         dat <- dataset()
-        spatial_transformation(
-          dat,
-          coords = coords,
-          orgn_epsg = input$epsg_orig,
-          tgt_epsg = input$epsg_tgt
-        )
+        tryCatch({
+          spatial_transformation(
+            dat,
+            coords = coords,
+            orgn_epsg = input$epsg_orig,
+            tgt_epsg = input$epsg_tgt
+          )
+        }, error = function(e) {return()})
+       
+        
       })
+      
       
     })
   }

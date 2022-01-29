@@ -15,10 +15,11 @@ mod_show_data_table_ui <- function(id) {
 #' show_data_table Server Functions
 #'
 #' @noRd
-mod_show_data_table_server <- function(id, dataset) {
+mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
   stopifnot(is.reactive(dataset))
   
   moduleServer(id, function(input, output, session) {
+    ns <- session$ns
     data_print <- reactive({
       req(dataset())
       myData <- dataset()
@@ -29,21 +30,36 @@ mod_show_data_table_server <- function(id, dataset) {
     })
     
     output$table <- renderDataTable({
-      data_print()
+      
+      if (not_null(maxShow())) {
+         showNotification(
+        paste0(
+          'Data has ',
+          nrow(data_print()),
+          ' observations, but first ', maxShow(), ' rows',
+          ' will be shown'
+        ),
+        id = ns('maxRows'),
+        type = "message",
+        session = session
+      )
+      head(data_print(), maxShow())
+      } else {data_print()}
+     
     },
     options = list(
       pageLength = 5,
-      scrollX = TRUE,
-      lengthMenu = {
-        req(dataset())
-        myRowsToSelect <-
-          unique(round(ceiling(seq(
-            10, nrow(dataset()), length.out = 5
-          )), -1))
-        
-        list(myRowsToSelect,
-             c(myRowsToSelect[-length(myRowsToSelect)], 'All'))
-      }
+      scrollX = TRUE#,
+      # lengthMenu = {
+      #   req(dataset())
+      #   myRowsToSelect <-
+      #     unique(round(ceiling(seq(
+      #       10, nrow(dataset()), length.out = 5
+      #     )), -1))
+      #   
+      #   list(myRowsToSelect,
+      #        c(myRowsToSelect[-length(myRowsToSelect)], 'All'))
+      # }
     ))
   })
   
