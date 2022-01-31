@@ -25,7 +25,10 @@ mod_depuration_process_server <-
            myBoundary) {
     moduleServer(id, function(input, output, session) {
       ns <- session$ns
-      
+      # observeEvent(button(), {
+        # req(button())
+        # print("depurati")
+        
       depurationResults <- reactive({
         req(dataset())
         req(length(targetVar()) == 1)
@@ -33,27 +36,39 @@ mod_depuration_process_server <-
         req(myBoundary())
         myParam <- dep_param()
         myBoundary <- myBoundary()
-        paar::depurate(
-          x = dataset(),
-          y = targetVar(),
-          toremove = myParam$toremove,
-          buffer = myParam$buffer,
-          ylimitmax = myParam$ylimitmax,
-          ylimitmin = myParam$ylimitmin,
-          sdout = myParam$sdout,
-          ldist = myParam$ldist,
-          udist = myParam$udist,
-          zero.policy = NULL,
-          poly_border = myBoundary
-        )
-        
+        dataset <- dataset()
+        targetVar <- targetVar()
+        print("Depurating...")
+       
+          paar::depurate(
+            x = dataset,
+            y = targetVar,
+            toremove = myParam$toremove,
+            buffer = myParam$buffer,
+            ylimitmax = myParam$ylimitmax,
+            ylimitmin = myParam$ylimitmin,
+            sdout = myParam$sdout,
+            ldist = myParam$ldist,
+            udist = myParam$udist,
+            zero.policy = NULL,
+            poly_border = myBoundary
+          )
+
+      # })
+      
       })
       
+      
       output$summaryResults <- renderDataTable({
+        req(depurationResults())
         summary(depurationResults())
       })
       
-      
+      originalDtasetWithCondition <- reactive({
+        req(depurationResults())
+        cbind(depurationResults()$condition, 
+              dataset())
+      })
       
       list(
         'wasDepurated' = reactive({
@@ -71,9 +86,10 @@ mod_depuration_process_server <-
           if (is.null(dep_param())) {
             dataset()
           } else {
-            depurationResults()
+            depurationResults()$depurated
           }
-        })
+        }),
+        'datasetWithCondition' = originalDtasetWithCondition
       )
       
       

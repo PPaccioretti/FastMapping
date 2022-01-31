@@ -6,13 +6,14 @@
 #'
 #' @noRd 
 #'
-#' @importFrom shiny NS tagList 
+#' @importFrom shiny NS tagList
 mod_kriging_parameters_ui <- function(id,
                                       possibleModels = modelsVariogram()) {
   ns <- NS(id)
-  tagList(fluidRow(
+  tagList(
+    fluidRow(
     column(
-      width = 2,
+      width = 3,
       h4("Select spatial model(s) to fit"),
       checkboxInput(ns('automatic'), 'Automatic', value = T),
       checkboxGroupInput(ns("ModelosA"), label = NULL, choices = possibleModels),
@@ -83,17 +84,17 @@ mod_kriging_parameters_ui <- function(id,
             width = "80%"
           )
         ),
-        column(
-          width = 4,
-          numericInput(ns("dimGrilla"),
-                       "Cellsize",
-                       value = 10,
-                       min = 0.5)
-        )
+        column(width = 4,
+               numericInput(
+                 ns("dimGrilla"),
+                 "Cellsize",
+                 value = 10,
+                 min = 0.5
+               ))
       )
     ),
     column(
-      width = 6,
+      width = 4,
       h4("Output graphical options"),
       
       h5("Key Scale of predicted values"),
@@ -131,7 +132,8 @@ mod_kriging_parameters_ui <- function(id,
                numericInput(ns("max_var"), "Max.", NULL, width = "100%"))
       )
     )
-  ))
+  )
+  )
 }
 
 #' kriging_parameters Server Functions
@@ -198,26 +200,9 @@ mod_kriging_parameters_server <-
       
     })
       
-      observeEvent(input$ModelosA, {
-        print("A")
-        req(tgtVariable())
-        req(length(tgtVariable()) == 1)
-        print(
-          list(
-            selectedModels = input$ModelosA,
-            cressie = input$cressie,
-            input$tKriging,
-            nmix = input$nmin,
-            nmax = input$nmax,
-            block = input$block,
-            cellsize = input$dimGrilla,
-            formula = myForm(),
-            max_dist = max_dist()
-          )
-        )
-      })
       
-      list('kriging_param' = reactive({
+      list(
+        'kriging_param' = reactive({
         req(tgtVariable())
         req(length(tgtVariable()) == 1)
         list(

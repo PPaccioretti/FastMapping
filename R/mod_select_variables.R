@@ -11,7 +11,8 @@ mod_select_variables_ui <- function(id,
                                     lblx = 'X coordinate',
                                     lbly = 'Y coordinate',
                                     lbltgt = 'Target variable',
-                                    onlyCoords = FALSE) {
+                                    onlyCoords = FALSE,
+                                    multipleTgt = TRUE) {
   stopifnot(is.logical(onlyCoords))
   ns <- NS(id)
   tagList(
@@ -33,7 +34,7 @@ mod_select_variables_ui <- function(id,
         ns('targetVariable'),
         lbltgt,
         choices = "",
-        multiple = TRUE,
+        multiple = multipleTgt,
         selected = NULL
       ))
     }

@@ -10,7 +10,7 @@
 mod_kriging_process_ui <- function(id){
   ns <- NS(id)
   tagList(
-    tableOutput(ns("TModel"))
+    # tableOutput(ns("TModel"))
   )
 }
     
@@ -20,8 +20,9 @@ mod_kriging_process_ui <- function(id){
 mod_kriging_process_server <- function(id,
                                        dataset,
                                        kriging_param,
-                                       boundary_poly){
-  moduleServer( id, function(input, output, session){
+                                       boundary_poly) {
+  
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
 
     
@@ -159,9 +160,9 @@ mod_kriging_process_server <- function(id,
     
     
     kriging <- reactive({
-      # req(dataset())
-      # req(kriging_param())
-      # req(Mygr())
+      req(dataset())
+      req(kriging_param())
+      req(Mygr())
       
       print("kriging")
       file <- dataset()
@@ -182,10 +183,11 @@ mod_kriging_process_server <- function(id,
       # ValoresOutput$kriging <- krigingfit$krige_output
     })
     
-    output$TModel <- renderTable({
-      print("renderign Table")
-      myresultado <- as.data.frame(MiKrige())
-    })
+    # output$TModel <- renderTable({
+    #   req(MiKrige())
+    #   print("renderign Table")
+    #   miKrige <- as.data.frame(MiKrige())
+    # })
     
     
     list(

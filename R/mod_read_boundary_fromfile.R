@@ -7,7 +7,8 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_read_boundary_fromfile_ui <- function(id, lblfile = h4("Boundary file:")) {
+mod_read_boundary_fromfile_ui <- function(id, 
+                                          lblfile = h4("Boundary file:")) {
   ns <- NS(id)
   tagList(
     mod_upload_file_ui(ns("boundary"),
@@ -21,7 +22,8 @@ mod_read_boundary_fromfile_ui <- function(id, lblfile = h4("Boundary file:")) {
 #' read_boundary_fromfile Server Functions
 #'
 #' @noRd 
-mod_read_boundary_fromfile_server  <- function(id) {
+mod_read_boundary_fromfile_server  <- function(id,
+                                               onlyCoords = TRUE) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -31,10 +33,16 @@ mod_read_boundary_fromfile_server  <- function(id) {
     myBoundCoords <-
       mod_select_variables_server("boundary_coords",
                                   myBoundary,
-                                  onlyCoords = TRUE)
+                                  onlyCoords = onlyCoords)
     isReady <- reactive({
-      req(myBoundCoords$coords())
-      TRUE
+      if (onlyCoords) {
+        req(myBoundCoords$coords())
+        TRUE 
+      } else {
+        req(myBoundCoords$tgtvariable())
+        TRUE
+      }
+      
     })
     
     myBoundaryT <-

@@ -56,7 +56,7 @@ mod_concave_hull_server <- function(id, dataset){
       concavity = input$concavity,
       length_threshold = input$length_threshold
     )
-    })
+    }, silent = TRUE)
 
     })
     

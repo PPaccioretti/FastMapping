@@ -10,19 +10,22 @@
 mod_kriging_results_ui <- function(id) {
   ns <- NS(id)
   tagList(fluidRow(
-    column(12 / 3,
-           h1("algo"),
-           plotOutput(ns("VariogramPlot"))),
     column(
       12 / 3,
-      h1("algo2"),
-      imageOutput(ns("KrigingPlot")),
+      h4("Variogram Plot"),
+      shinycssloaders::withSpinner(plotOutput(ns("VariogramPlot")))
+    ),
+    column(
+      12 / 3,
+      h4("Predicted values"),
+      shinycssloaders::withSpinner(imageOutput(ns("KrigingPlot"))),
       downloadButton(ns("download_pred_tiff"), "Download Tif")
     ),
-    column(12 / 3,
-           h1("algo3"),
-           imageOutput(ns("varKrigingPlot"))
-           )
+    column(
+      12 / 3,
+      h4("Predicted variance values"),
+      shinycssloaders::withSpinner(imageOutput(ns("varKrigingPlot")))
+    )
   ))
 }
 
@@ -84,8 +87,8 @@ mod_kriging_results_server <- function(id,
         ggplot2::ggplot() + 
           stars::geom_stars(data = kriging(), 
                             ggplot2::aes(fill = var1.pred, x = x, y = y)) +
-          ggplot2::scale_fill_continuous(type = color.terrain,
-                                         position = "bottom")
+          ggplot2::scale_fill_gradientn(colours = terrain.colors(20)) +
+          ggplot2::theme(legend.position = "bottom")
         
     })
     
@@ -111,16 +114,18 @@ mod_kriging_results_server <- function(id,
       # }
         ggplot2::ggplot() + 
           stars::geom_stars(data = kriging(), 
-                            ggplot2::aes(fill = var1.var, x = x, y = y))
+                            ggplot2::aes(fill = var1.var, x = x, y = y)) +
+          ggplot2::scale_fill_gradientn(colours = cm.colors(20)) +
+          ggplot2::theme(legend.position = "bottom")
 
     })
     
-    output$TiffPlot1 <- renderPlot({
-      validate(need(input$file, 'Check input file!'))
-      plot(raster_Pred(), col = terrain.colors(100))
-      
-    }, width = 600, height = 600, res = 100)
-    
+    # output$TiffPlot1 <- renderPlot({
+    #   validate(need(input$file, 'Check input file!'))
+    #   plot(raster_Pred(), col = terrain.colors(100))
+    #   
+    # }, width = 600, height = 600, res = 100)
+    # 
     
     #Descarga del GeoTiff
     output$download_pred_tiff <- downloadHandler(

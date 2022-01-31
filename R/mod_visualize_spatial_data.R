@@ -13,7 +13,7 @@ mod_visualize_spatial_data_ui <-
            lblToPlot = "Variable to plot",
            multiple = FALSE) {
     ns <- NS(id)
-    tagList(h1("ek lifilele"),
+    tagList(
             shinyjs::hidden(
               selectInput(
                 ns("varToPlot"),
@@ -122,7 +122,7 @@ mod_visualize_spatial_data_server <-
 
     })
 
-    observeEvent(is.data.frame(data()) | vars() == 2, {
+    observeEvent(vars(), {
       req(data())
       req(vars())
 

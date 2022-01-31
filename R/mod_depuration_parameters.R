@@ -10,8 +10,9 @@
 mod_depuration_parameters_ui <- function(id){
   ns <- NS(id)
   tagList(
-    fluidRow(
+    
       h3("Data depuration parameters"),
+      
       checkboxGroupInput(
         inputId = ns("automatic_dep"),
         label = h4("Data depuration"),
@@ -20,20 +21,13 @@ mod_depuration_parameters_ui <- function(id){
         inline = TRUE,
         selected = "Automatic"
       ),
-      div(style = "display:inline-block;margin-left: 80%;",
+      div(style = "float: right;",
       actionButton(
         ns("resetState"),
         "Set default Options",
         icon = icon("trash-restore")
       )
-      )
-    ), 
-    
-    
-    # conditionalPanel(
-    #   condition = "input.automatic_dep != 'automatic'",
-    #   ns = ns,
-    # fluidPage(
+      ),
       checkboxGroupInput(
         inputId = ns("mDepuration"),
         label = h4("Methods"),
@@ -43,7 +37,8 @@ mod_depuration_parameters_ui <- function(id){
                          "inlier"),
         # inline = TRUE,
         width = "20%"
-      ),
+      # )
+    ),
       fluidRow(
         column(
           width = 4,
@@ -166,7 +161,6 @@ mod_depuration_parameters_ui <- function(id){
           )
         )
       )
-    # )
   )
 }
     
@@ -311,7 +305,6 @@ mod_depuration_parameters_server <- function(id){
       })
       
       observeEvent(input$resetState, {
-        print("Estoy AQuio")
         toInitialState()
         updateCheckboxGroupInput(
           inputId = "automatic_dep",
@@ -335,7 +328,9 @@ mod_depuration_parameters_server <- function(id){
       })
       
       reactive({
-        req(input$mDepuration)
+        if (is.null(input$mDepuration)) {
+          return()
+        }
         list(
           toremove = toRemove(),
           buffer = input$buffer,

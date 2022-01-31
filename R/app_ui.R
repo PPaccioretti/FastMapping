@@ -10,7 +10,7 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     bslib::page_navbar(
-    # navbarPage(
+      # navbarPage(
       title = "FastMapping",
       id = "navbar",
       theme = bslib::bs_theme(bootswatch = "united"),
@@ -18,22 +18,22 @@ app_ui <- function(request) {
         title = "",
         icon = icon("home"),
         value = "navhome",
-        mainPanel(h1("asdde"),
+        mainPanel(mod_home_text_ui("start_aplication"),
                   actionButton("start", "Start!"),
                   actionButton("show", "show!"),
                   actionButton("hide", "hide!"))
       ),
-     
+      
       bslib::nav(
         title = "Data preparation",
         value = "navdataprep",
         bslib::navs_pill(
+          id = "navdata",
           bslib::nav(
             title = "Dataset",
-            value = "tpnldataset",
+            value = "navdataset",
             sidebarLayout(
               sidebarPanel(
-                h1("eee"),
                 mod_upload_file_ui("dataset", label = h4("Dataset file:")),
                 mod_select_variables_ui("dataset_cols"),
                 mod_spatial_transformation_ui("dataset_spatial_transf")
@@ -42,55 +42,85 @@ app_ui <- function(request) {
                 mod_show_data_table_ui("dataset_print"),
                 mod_visualize_spatial_data_ui("mymap")
               )
-            ))
-            ,
-          #
+            )),
           bslib::nav(
-          title = "Boundary",
-          value = "tpnlboundary",
-          sidebarLayout(
-          sidebarPanel(mod_make_boundary_ui("make_boundary")),
-          mainPanel(
+            title = "Boundary",
+            value = "navboundary",
+            sidebarLayout(
+              sidebarPanel(mod_make_boundary_ui("make_boundary")),
+              mainPanel(
                 h1("asd"),
                 mod_visualize_spatial_data_ui("boundaryMap")
-                )
+              )
             )
           )
         )
+      ),
+
+      bslib::nav(
+        title = "Parameters Specification",
+        value = "navallparam",
+        
+        bslib::navs_pill(
+          id = "navparam",
+          bslib::nav(
+            title = "Depuration Parameters",
+            value = "navdepparam",
+            mainPanel(mod_depuration_parameters_ui("depuration_param")
+                      # ,actionButton('startDepProcess',
+                                   # "Start Depuration!!")
+                      )
+          ),
+          bslib::nav(
+            title = "Kriging Parameters",
+            value = "navkrigparam",
+            mainPanel(mod_kriging_parameters_ui("kriging_param"))
+          ),
+          bslib::nav(
+            title = "Cluster Parameters",
+            value = "navclustparam",
+            mainPanel(mod_cluster_parameters_ui("cluster_param"))
+          ),
+          bslib::nav(
+            title = "Zone Compare Parameters",
+            value = "navzonecompparam",
+            mainPanel(mod_zoneCompare_parameters_ui("zone_param"))
+          )
+          
         )
-      )#,
-      # bslib::nav(
-      #   title = "Depuration Parameters",
-      #   value = "navdepparam",
-      #   mainPanel(mod_depuration_parameters_ui("depuration_param"))
-      # ),
-      # bslib::nav(
-      #   title = "Kriging Parameters",
-      #   value = "navkrigparam",
-      #   mainPanel(mod_kriging_parameters_ui("kriging_param"))
-      # ),
-      # 
-      # bslib::nav(
-      #   title = "Depuration Results",
-      #   value = "navdepresults",
-      #   mainPanel(mod_depuration_process_ui("depuration_process"))
-      # ),
-      # bslib::nav(
-      #   title = "Kriging Results",
-      #   value = "navkrigparam",
-      #   mainPanel(
-      #     mod_kriging_process_ui("kriging_process")
-      #             )
-      # ),
-      # bslib::nav(
-      #   title = "otro Results",
-      #   value = "otro",
-      #   mainPanel(h1("que vemo?"),
-      #                mod_kriging_results_ui("kriging_results")
-      #             )
-      # )
-      # 
-    # )
+      ),
+      bslib::nav(
+        title = "Analysis Results",
+        value = "navanalyresults",
+        bslib::navs_pill( 
+          id = "navresult",
+          bslib::nav(
+            title = "Depuration Results",
+            value = "navdepresults",
+            mainPanel(
+              mod_depuration_process_ui("depuration_process"),
+              mod_depuration_results_ui("depuration_results")
+              )
+          ),
+          bslib::nav(
+            title = "Kriging Results",
+            value = "navkrigresults",
+            mainPanel(
+              mod_kriging_process_ui("kriging_process"),
+              mod_kriging_results_ui("kriging_results")
+            )
+          ),
+          bslib::nav(
+            title = "Cluster Results",
+            value = "navclustresults",
+            mainPanel(h5("Statistical Indices"),
+                      mod_cluster_process_ui("cluster_precess"),
+                      mod_cluster_results_ui("cluster_results")
+            )
+          )
+        )
+      )
+    )
   )
 }
 
