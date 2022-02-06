@@ -10,7 +10,8 @@
 mod_depuration_process_ui <- function(id){
   ns <- NS(id)
   tagList(
-    dataTableOutput(ns("summaryResults"))
+    div(id = ns("notification"))
+    # dataTableOutput(ns("summaryResults"))
   )
 }
     
@@ -22,51 +23,60 @@ mod_depuration_process_server <-
            dataset,
            targetVar,
            dep_param,
-           myBoundary) {
+           myBoundary,
+           button) {
     moduleServer(id, function(input, output, session) {
       ns <- session$ns
-      # observeEvent(button(), {
-        # req(button())
-        # print("depurati")
-        
-      depurationResults <- reactive({
+
+      depurationResults <- eventReactive(button(), {
         req(dataset())
         req(length(targetVar()) == 1)
         req(dep_param())
         req(myBoundary())
+        
+        waitress <- waiter::Waitress$
+          new(ns("notification"),theme = "overlay", infinite = TRUE)$
+          notify()
+        on.exit({
+          waitress$close()
+          })
+        
         myParam <- dep_param()
         myBoundary <- myBoundary()
         dataset <- dataset()
         targetVar <- targetVar()
-        print("Depurating...")
-       
-          paar::depurate(
-            x = dataset,
-            y = targetVar,
-            toremove = myParam$toremove,
-            buffer = myParam$buffer,
-            ylimitmax = myParam$ylimitmax,
-            ylimitmin = myParam$ylimitmin,
-            sdout = myParam$sdout,
-            ldist = myParam$ldist,
-            udist = myParam$udist,
-            zero.policy = NULL,
-            poly_border = myBoundary
-          )
 
-      # })
+       paar::depurate(
+          x = dataset,
+          y = targetVar,
+          toremove = myParam$toremove,
+          buffer = myParam$buffer,
+          ylimitmax = myParam$ylimitmax,
+          ylimitmin = myParam$ylimitmin,
+          sdout = myParam$sdout,
+          ldist = myParam$ldist,
+          udist = myParam$udist,
+          zero.policy = NULL,
+          poly_border = myBoundary
+        )
+
       
       })
       
       
-      output$summaryResults <- renderDataTable({
-        req(depurationResults())
+      # output$summaryResults <- renderDataTable({
+      #   req(depurationResults())
+      #   summary(depurationResults())
+      # })
+      
+      summaryResults <- reactive({
         summary(depurationResults())
       })
       
       originalDtasetWithCondition <- reactive({
         req(depurationResults())
-        cbind(depurationResults()$condition, 
+        req( dataset())
+        cbind('condition' = depurationResults()$condition, 
               dataset())
       })
       
@@ -89,7 +99,8 @@ mod_depuration_process_server <-
             depurationResults()$depurated
           }
         }),
-        'datasetWithCondition' = originalDtasetWithCondition
+        'datasetWithCondition' = originalDtasetWithCondition,
+        'summaryres' = reactive(summaryResults())
       )
       
       

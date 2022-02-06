@@ -12,3 +12,5 @@ $run_dev.*
 ^\.github$
 ^app\.R$
 ^rsconnect$
+^Dockerfile$
+^\.dockerignore$

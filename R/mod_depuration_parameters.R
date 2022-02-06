@@ -160,7 +160,10 @@ mod_depuration_parameters_ui <- function(id){
             )
           )
         )
-      )
+      ), 
+    div(style = "float: right;", 
+        actionButton(ns("strtDep"), label = "Start depuration!", class = "btn-warning")
+    )
   )
 }
     
@@ -327,20 +330,25 @@ mod_depuration_parameters_server <- function(id){
           
       })
       
-      reactive({
-        if (is.null(input$mDepuration)) {
-          return()
-        }
-        list(
-          toremove = toRemove(),
-          buffer = input$buffer,
-          ylimitmax = input$ylimitmax,
-          ylimitmin = input$ylimitmin,
-          sdout = input$sd_out,
-          ldist = input$neighbor_min_dist,
-          udist = input$neighbor_max_dist
-        )
-      })
+      
+      list(
+        btnStart = reactive(input$strtDep),
+        params = reactive({
+          if (is.null(input$mDepuration)) {
+            return()
+          }
+          list(
+            toremove = toRemove(),
+            buffer = input$buffer,
+            ylimitmax = input$ylimitmax,
+            ylimitmin = input$ylimitmin,
+            sdout = input$sd_out,
+            ldist = input$neighbor_min_dist,
+            udist = input$neighbor_max_dist
+          )
+        })
+      )
+      
     
     
   })

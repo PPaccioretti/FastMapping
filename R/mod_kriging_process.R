@@ -20,7 +20,8 @@ mod_kriging_process_ui <- function(id){
 mod_kriging_process_server <- function(id,
                                        dataset,
                                        kriging_param,
-                                       boundary_poly) {
+                                       boundary_poly,
+                                       button) {
   
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
@@ -29,7 +30,7 @@ mod_kriging_process_server <- function(id,
     MiKrige <- reactive({
       req(dataset())
       req(kriging_param())
-      print("MiKrige")
+
       file <- dataset()
       
       if (nrow(file) > 20000) {
@@ -53,7 +54,6 @@ mod_kriging_process_server <- function(id,
     #
     MejorModelo <- reactive({
 
-      print("MejorModelo")
       ValidationTable = MiKrige()
       tryCatch({
         MyBestModels = names(which.min(apply(ValidationTable[8,], 2, as.numeric)))
@@ -71,8 +71,9 @@ mod_kriging_process_server <- function(id,
       # req(MejorModelo())
       # req(variogram())
       # req(kriging_param())
-      print("variablesForVariogramPlot")
+
       myParam <- kriging_param()
+      req(myParam$myTgtVar)
       myKrige <- MiKrige()
       myBestModel <- MejorModelo()
       myVariogram <- variogram()
@@ -101,7 +102,7 @@ mod_kriging_process_server <- function(id,
       )
       suppressWarnings({
         Parametros <- paste(
-          c("Model", paste(stack(Modelo[-ncol(Modelo)])[, 2]), "Error (%)"),
+          c("Model", paste(utils::stack(Modelo[-ncol(Modelo)])[, 2]), "Error (%)"),
           c(as.character(Modelo[1, 1]), paste(round(
             utils::stack(Modelo)[, 1], 1
           ))),
@@ -126,8 +127,7 @@ mod_kriging_process_server <- function(id,
       # req(dataset())
       # req(kriging_param())
       # req(MejorModelo())
-      print("el mejor es:")
-      print(MejorModelo())
+
       file <- dataset()
       file <- sf::as_Spatial(file)
       
@@ -150,7 +150,7 @@ mod_kriging_process_server <- function(id,
       req(dataset())
       req(kriging_param())
       req(boundary_poly())
-      print("Mygr")
+
       file <- dataset()
       myParam <- kriging_param()
       sf::st_bbox(file) %>%
@@ -159,12 +159,12 @@ mod_kriging_process_server <- function(id,
     })
     
     
-    kriging <- reactive({
+    kriging <- eventReactive(button(),{
       req(dataset())
       req(kriging_param())
       req(Mygr())
       
-      print("kriging")
+
       file <- dataset()
       myParam <- kriging_param()
       Mygr <- Mygr()
@@ -185,7 +185,6 @@ mod_kriging_process_server <- function(id,
     
     # output$TModel <- renderTable({
     #   req(MiKrige())
-    #   print("renderign Table")
     #   miKrige <- as.data.frame(MiKrige())
     # })
     

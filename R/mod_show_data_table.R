@@ -43,7 +43,7 @@ mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
         type = "message",
         session = session
       )
-      head(data_print(), maxShow())
+      utils::head(data_print(), maxShow())
       } else {data_print()}
      
     },

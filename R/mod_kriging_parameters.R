@@ -132,6 +132,9 @@ mod_kriging_parameters_ui <- function(id,
                numericInput(ns("max_var"), "Max.", NULL, width = "100%"))
       )
     )
+  ),
+  div(style = "float: right;", 
+      actionButton(ns("strtKrig"), label = "Start interpolation!", class = "btn-warning")
   )
   )
 }
@@ -181,13 +184,13 @@ mod_kriging_parameters_server <-
         MiY <- "y"
         
         if (input$tKriging == 1) {
-          return(as.formula(paste0(MiZ, "~1")))
+          return(stats::as.formula(paste0(MiZ, "~1")))
         }
         if (input$tKriging == 2) {
-          return(as.formula(paste0(MiZ, "~", MiX, "+", MiY)))
+          return(stats::as.formula(paste0(MiZ, "~", MiX, "+", MiY)))
         }
       if (input$tKriging == 3) {
-        return(as.formula(
+        return(stats::as.formula(
           paste0(
             MiZ, "~", MiX, "+", MiY,
             "+I(", MiX, "^2)",
@@ -202,6 +205,7 @@ mod_kriging_parameters_server <-
       
       
       list(
+        'btnStart' = reactive(input$strtKrig),
         'kriging_param' = reactive({
         req(tgtVariable())
         req(length(tgtVariable()) == 1)

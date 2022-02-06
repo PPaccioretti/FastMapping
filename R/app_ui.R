@@ -19,9 +19,9 @@ app_ui <- function(request) {
         icon = icon("home"),
         value = "navhome",
         mainPanel(mod_home_text_ui("start_aplication"),
-                  actionButton("start", "Start!"),
-                  actionButton("show", "show!"),
-                  actionButton("hide", "hide!"))
+                  actionButton("start", "Start!", class = "btn-warning"),
+                  actionButton("show", "show!", class = "btn btn-danger"),
+                  actionButton("hide", "hide!", class = "btn btn-secondar"))
       ),
       
       bslib::nav(
@@ -49,7 +49,6 @@ app_ui <- function(request) {
             sidebarLayout(
               sidebarPanel(mod_make_boundary_ui("make_boundary")),
               mainPanel(
-                h1("asd"),
                 mod_visualize_spatial_data_ui("boundaryMap")
               )
             )
@@ -67,8 +66,6 @@ app_ui <- function(request) {
             title = "Depuration Parameters",
             value = "navdepparam",
             mainPanel(mod_depuration_parameters_ui("depuration_param")
-                      # ,actionButton('startDepProcess',
-                                   # "Start Depuration!!")
                       )
           ),
           bslib::nav(
@@ -80,11 +77,6 @@ app_ui <- function(request) {
             title = "Cluster Parameters",
             value = "navclustparam",
             mainPanel(mod_cluster_parameters_ui("cluster_param"))
-          ),
-          bslib::nav(
-            title = "Zone Compare Parameters",
-            value = "navzonecompparam",
-            mainPanel(mod_zoneCompare_parameters_ui("zone_param"))
           )
           
         )
@@ -117,6 +109,30 @@ app_ui <- function(request) {
                       mod_cluster_process_ui("cluster_precess"),
                       mod_cluster_results_ui("cluster_results")
             )
+          ),
+          bslib::nav_menu(
+            title = "Zone validation",
+            value = "navzoneval",
+            bslib::nav(
+              title = "Zone Compare Parameters",
+              value = "navzonecompparam",
+              mainPanel(mod_zoneCompare_parameters_ui("zone_param"),
+                        div(style = "float: right;", 
+                            actionButton("zoneResults", 
+                                         label = "Go to results tab", 
+                                         class = "btn-secondary")
+                        ))
+            ),
+            
+            bslib::nav(
+              title = "Zone Compare Results",
+              value = "navzonecompresults",
+              mainPanel(
+                h5("Statistical Indices"),
+                mod_zoneCompare_process_ui("zone_precess"),
+                mod_zoneCompare_results_ui("zone_results")
+              )
+            )
           )
         )
       )
@@ -143,7 +159,9 @@ golem_add_external_resources <- function() {
       app_builder = NULL
     ),
     # use_waiter(),
-    shinyjs::useShinyjs()
+    shinyjs::useShinyjs(),
+    waiter::useWaitress(),
+    tags$link(rel = "stylesheet", type = "text/css", href = "www/mycssstyles.css")
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
     

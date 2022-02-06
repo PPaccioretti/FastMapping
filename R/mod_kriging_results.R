@@ -18,13 +18,13 @@ mod_kriging_results_ui <- function(id) {
     column(
       12 / 3,
       h4("Predicted values"),
-      shinycssloaders::withSpinner(imageOutput(ns("KrigingPlot"))),
+      shinycssloaders::withSpinner(plotOutput(ns("KrigingPlot"))),
       downloadButton(ns("download_pred_tiff"), "Download Tif")
     ),
     column(
       12 / 3,
       h4("Predicted variance values"),
-      shinycssloaders::withSpinner(imageOutput(ns("varKrigingPlot")))
+      shinycssloaders::withSpinner(plotOutput(ns("varKrigingPlot")))
     )
   ))
 }
@@ -87,7 +87,7 @@ mod_kriging_results_server <- function(id,
         ggplot2::ggplot() + 
           stars::geom_stars(data = kriging(), 
                             ggplot2::aes(fill = var1.pred, x = x, y = y)) +
-          ggplot2::scale_fill_gradientn(colours = terrain.colors(20)) +
+          ggplot2::scale_fill_gradientn(colours = grDevices::terrain.colors(20)) +
           ggplot2::theme(legend.position = "bottom")
         
     })
@@ -115,7 +115,7 @@ mod_kriging_results_server <- function(id,
         ggplot2::ggplot() + 
           stars::geom_stars(data = kriging(), 
                             ggplot2::aes(fill = var1.var, x = x, y = y)) +
-          ggplot2::scale_fill_gradientn(colours = cm.colors(20)) +
+          ggplot2::scale_fill_gradientn(colours = grDevices::cm.colors(20)) +
           ggplot2::theme(legend.position = "bottom")
 
     })

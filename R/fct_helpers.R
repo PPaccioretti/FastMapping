@@ -88,4 +88,16 @@ modelsVariogram <- function() {
   myLabels <- lapply(myLabels, firstup)
   names(myModels) <- myLabels
   myModels
-  }
+}
+
+
+
+makePlotClusterValid <- function(data) {
+  myNames <- colnames(data)
+  ggplot2::ggplot(data,
+                  ggplot2::aes(x = .data[[myNames[1]]], y = .data[[myNames[2]]])) +
+    ggplot2::geom_col(width = 0.25) +
+    ggplot2::geom_text(ggplot2::aes(label = .data[[myNames[4]]],  vjust = -0.5))
+  
+  
+}

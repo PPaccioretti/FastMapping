@@ -49,14 +49,14 @@ mod_concave_hull_server <- function(id, dataset){
       req(input$concavity)
       req(input$length_threshold)
       
-    try({
+    # try({
           
     concaveman::concaveman(
       dataset(),
       concavity = input$concavity,
       length_threshold = input$length_threshold
     )
-    }, silent = TRUE)
+    # }, silent = TRUE)
 
     })
     

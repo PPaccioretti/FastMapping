@@ -95,7 +95,7 @@ mod_cluster_results_server <- function(id,
           check.names = FALSE
         )
       
-      dataIndicesConglomLong <- reshape(
+      dataIndicesConglomLong <- stats::reshape(
         dataIndicConglWide,
         idvar = "Cluster",
         times = names(dataIndicConglWide)[-1],
@@ -173,14 +173,14 @@ mod_cluster_results_server <- function(id,
     )
     
     
-    output$TablaResultadosConglom <- DT::renderDataTable({
-      datatable(
-        Clasificacion()$ResultadosConglom,
-        rownames = FALSE,
-        options = list(searching = FALSE,
-                       paging = FALSE)
-      )
-    })
+    # output$TablaResultadosConglom <- DT::renderDataTable({
+    #   DT::datatable(
+    #     Clasificacion()$ResultadosConglom,
+    #     rownames = FALSE,
+    #     options = list(searching = FALSE,
+    #                    paging = FALSE)
+    #   )
+    # })
     
     output$TablaIndicesConglo <- DT::renderDataTable({
       req(indices())

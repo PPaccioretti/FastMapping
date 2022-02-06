@@ -30,11 +30,19 @@ mod_cluster_process_server <- function(id,
     #   clusterResults()$summaryResults 
     # })
     
-    clusterResults <- reactive({
+    clusterResults <- eventReactive(button(), {
       req(dataset())
       req(cluster_param())
-      print("KMSPC")
+
       myParam <- cluster_param()
+      
+      req(myParam$variables,
+          myParam$number_cluster,
+          myParam$explainedVariance,
+          myParam$fuzzyness,
+          myParam$distance, 
+          cancelOutput = TRUE
+          )
 
       paar::kmspc(
         dataset(),
@@ -53,11 +61,16 @@ mod_cluster_process_server <- function(id,
     
     dataPlusCluster <- reactive({
       req(clusterResults())
+      req(dataset())
+
       clusterResults <- clusterResults()
+      clusterResults <- clusterResults$cluster
+
       cbind(dataset(), clusterResults)
     })
     
     variables <- reactive({
+      req(clusterResults())
       req(cluster_param())
       
       myParam <- cluster_param()

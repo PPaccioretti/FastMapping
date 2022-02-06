@@ -146,6 +146,7 @@ mod_select_variables_server <-
                           !inherits(dataset(), "sf")) ||
                          (isTRUE(input$yDataset == input$xDataset) &
                           !inherits(dataset(), "sf"))) {
+                       shinyjs::enable("targetVariable")
                        if (!onlyCoords) {
                          shinyjs::disable("targetVariable")
                        }

@@ -52,7 +52,7 @@ testMultipleModelsKrige <- function(formula,
                session = session,
                {
                  
-                 myformula <- as.formula(formula)
+                 myformula <- stats::as.formula(formula)
                  myDataNoDup <- removeSpatialDuplicated(file, 
                                                         session = session)
                  modelsSelected <- selectedModels

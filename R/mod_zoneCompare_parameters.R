@@ -11,6 +11,7 @@ mod_zoneCompare_parameters_ui <- function(id,
                                           lblUpload = "Upload file with new variable",
                                           lblfile = h4("New file:"),
                                           lbltgt = 'Variable to compare',
+                                          lglClust = 'Cluster identifier',
                                           multipleTgt = TRUE) {
   ns <- NS(id)
   tagList(
@@ -42,7 +43,7 @@ mod_zoneCompare_parameters_ui <- function(id,
       ),
       shiny::selectInput(
         ns('clusterToTest'),
-        lbltgt,
+        lglClust,
         choices = "",
         multiple = multipleTgt,
         selected = NULL
@@ -57,31 +58,37 @@ mod_zoneCompare_parameters_ui <- function(id,
 #' @noRd 
 mod_zoneCompare_parameters_server <- function(id, 
                                               dataset,
-                                              filter = is.numeric){
+                                              filterTgt = is.numeric,
+                                              # Use !is.list to remove geometry column if is sf:
+                                              filterCluster = function(x) {!is.list(x)}){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
-    # observeEvent(dataset(), {
-    #   req(dataset())
-    #   shinyjs::show("targetVariable")
-    # })
-    
-    
-    observeEvent(input$hasfile, {
+
+    observeEvent(input$hasfile == 2 | nrow(dataset()) > 2, {
       req(dataset())
+      shinyjs::show('targetVariable')
       if (input$hasfile) {
         shinyjs::show("read_boundary_content")
+        shinyjs::hide('targetVariable')
         # 
       } else {
         shinyjs::hide("read_boundary_content")
-        shinyjs::show('targetVariable')
+        
       }
-      
+      print("desde Input")
+      print(dataset())
     })
+    
+    observeEvent(input$targetVariable, {
+      req(input$targetVariable)
+      shinyjs::show("param_content")
+    })
+    
+    
     observeEvent(dataset(), {
       req(dataset())
-      possibleTargetVariables <- find_vars(dataset(), filter)
-      
+      possibleTargetVariables <- find_vars(dataset(), filterCluster)
+      print("Cluster totest")
       shiny::updateSelectInput(
         'clusterToTest',
         choices = possibleTargetVariables,
@@ -89,37 +96,47 @@ mod_zoneCompare_parameters_server <- function(id,
         session = session
       )
     })
+    
     observeEvent(myData(), {
+      print("mydata")
       req(myData())
       if (input$hasfile) { 
         shinyjs::show('targetVariable')
         
-        
         }
-    }, ignoreInit = TRUE)
+    }, ignoreInit = FALSE)
     
     
     datasetWithVars <- reactive({
-      dataset()
+      req(dataset())
+      myDataVars <- dataset()
       if (input$hasfile) {
-        req(input$targetVariable)
-        myData()
+        myDataVars <- myData()
       }
+      
+      print("ESTO ANDA>")
+      print(myDataVars)
+      myDataVars
+      
     })
     
     myData <- mod_read_boundary_fromfile_server("readnewfile")
     
     var_names <- reactive({
       req(datasetWithVars())
-      req(find_vars(datasetWithVars(), filter))
+      req(find_vars(datasetWithVars(), filterTgt))
+      print("DATASET VARS")
+      print(datasetWithVars())
+      
       dataset <- datasetWithVars()
       if (inherits(dataset, "sf")) {
         dataset <- sf::st_drop_geometry(dataset)
       }
-      find_vars(dataset, filter)
+      find_vars(dataset, filterTgt)
     })
     
-    observeEvent(datasetWithVars(), {
+    observeEvent(var_names(), {
+      req(var_names())
       possibleTargetVariables <- var_names()
       
       shiny::updateSelectInput(
@@ -131,22 +148,37 @@ mod_zoneCompare_parameters_server <- function(id,
       shinyjs::enable("targetVariable")
     })
     
-    
-    list(
-      newData = reactive(input$hasfile),
-      data = dataset,
-      variable = reactive({
-        input$targetVariable
+    variableToUse <- reactive({
+      req(dataset())
+        myVars <- input$targetVariable
         if (input$hasfile) {
-          req(input$targetVariable)
-          myData()[, input$targetVariable]
+          myVars <- myData()[, input$targetVariable]
         }
-      }),
-      zonesCol = reactive({
-        input$clusterToTest
-      }),
-      alpha = input$alpha
-    )
+        print("VARS TO USE \n\n")
+        print(myVars)
+        myVars
+      })
+    
+    
+    observeEvent(var_names() == 2 | input$targetVariable == 2, {
+      print("VARS TO USE \n\n")
+      print(variableToUse())
+      
+      print("TARGET TO USE \n\n")
+      print(input$targetVariable)
+    })
+   
+      list(
+        'zoneCompare_param' = reactive({
+          list(
+            data = dataset(),
+            variable = variableToUse(),
+            zonesCol = input$clusterToTest,
+            alpha = input$alpha
+          )
+        }),
+        'has_newData' = reactive({input$hasfile})
+      )
     
   })
 }

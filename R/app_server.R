@@ -17,9 +17,12 @@ app_server <- function(input, output, session) {
   
   observeEvent(myStartBtn(), {
     shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
-    # showTab(inputId = "navbar", target = "navdataprep")
     updateTabsetPanel(session, "navbar", selected = "navdataprep")
   }, ignoreInit = TRUE)
+  
+  observeEvent(input$zoneResults, {
+       updateNavlistPanel(session, "navresult", selected = "navzonecompresults")
+  }, ignoreInit = FALSE)
   
   observeEvent(myVariables$tgtvariable(), {
     tgtVarlgth <- length(myVariables$tgtvariable())
@@ -62,6 +65,29 @@ app_server <- function(input, output, session) {
     
   })
   
+  observeEvent(input$navbar, {
+    req(myVariables$tgtvariable())
+    tgtVarlgth <- length(myVariables$tgtvariable())
+
+    if (input$navbar == "navallparam") {
+      if (tgtVarlgth > 1) {
+        updateTabsetPanel(session, "navparam", selected = "navclustparam")
+      }
+      if (tgtVarlgth == 1) {
+        updateTabsetPanel(session, "navparam", selected = "navdepparam")
+      }
+    }
+
+    if (input$navbar == "navanalyresults") {
+      if (tgtVarlgth > 1) {
+        updateTabsetPanel(session, "navresult", selected = "navclustresults")
+      }
+      if (tgtVarlgth == 1) {
+        updateTabsetPanel(session, "navresult", selected = "navdepresults")
+      }
+    }
+
+  }, ignoreInit = TRUE)
 
 
 
@@ -101,14 +127,16 @@ app_server <- function(input, output, session) {
       "depuration_process",
       datasetTransf,
       myVariables$tgtvariable,
-      myDepParams,
-      field_boundary
+      myDepParams$params,
+      field_boundary,
+      myDepParams$btnStart
     )
   
   mod_depuration_results_server("depuration_results",
                                 myDepResults$wasDepurated,
                                 myDepResults$datasetWithCondition,
-                                myDepResults$depurated)
+                                myDepResults$depurated,
+                                myDepResults$summaryres)
 
   
   krigParams <-
@@ -123,7 +151,8 @@ app_server <- function(input, output, session) {
       "kriging_process",
       myDepResults$finalDataset,
       krigParams$kriging_param,
-      field_boundary
+      field_boundary,
+      krigParams$btnStart
     )
 
   mod_kriging_results_server(
@@ -139,8 +168,8 @@ app_server <- function(input, output, session) {
   cluster_process <-
     mod_cluster_process_server("cluster_precess",
                                datasetTransf,
-                               cluster_param,
-                               reactive(input$startClustProcess))
+                               cluster_param$params,
+                               cluster_param$btnStart)
   
   mod_cluster_results_server(
     "cluster_results",
@@ -149,9 +178,22 @@ app_server <- function(input, output, session) {
     data_and_cluster =  cluster_process$data_and_cluster
   )
   
-  mod_zoneCompare_parameters_server("zone_param",
-                                    myDepResults$finalDataset,
-                                    )
+  # It needs results from cluster process. This could be change to use other
+  # results from FastMapping. Maybe with Observer over datasets? 
+  zone_param <- 
+    mod_zoneCompare_parameters_server("zone_param",
+                                      cluster_process$data_and_cluster
+                                      # myDepResults$finalDataset
+    )
+  
+  zone_process <-
+    mod_zoneCompare_process_server("zone_precess",
+                                   zone_param$zoneCompare_param)
+  
+  mod_zoneCompare_results_server(
+    "zone_results",
+    zone_process
+  )
   
   
 }

@@ -102,6 +102,9 @@ mod_cluster_parameters_ui <- function(id){
           )
         )
     )
+  ),
+  div(style = "float: right;", 
+      actionButton(ns("strtClust"), label = "Start Process!", class = "btn-warning")
   )
   )
 }
@@ -141,19 +144,25 @@ mod_cluster_parameters_server <- function(id,
                         max = max(c(1000, input$maxdistNeigh)))
     }, ignoreInit = TRUE)
     
-    reactive({
-      list(
-        variables = tgtVariable(),
-        number_cluster = seq(input$clusters[1],input$clusters[2], 1),
-        explainedVariance = input$varexplicada,
-        ldist = input$distanceNeighbors[1],
-        udist = input$distanceNeighbors[2],
-        center = input$center,
-        fuzzyness = input$fuzzyness,
-        distance = input$distance,
-        zeroPolicy = input$vecindarionulo
-      )
-    })
+    
+    list(
+      btnStart = reactive(input$strtClust),
+      params = reactive({
+        list(
+          variables = tgtVariable(),
+          number_cluster = seq(input$clusters[1],input$clusters[2], 1),
+          explainedVariance = input$varexplicada,
+          ldist = input$distanceNeighbors[1],
+          udist = input$distanceNeighbors[2],
+          center = input$center,
+          fuzzyness = input$fuzzyness,
+          distance = input$distance,
+          zeroPolicy = input$vecindarionulo
+        )
+      })
+    )
+    
+    
   })
 }    
 ## To be copied in the UI

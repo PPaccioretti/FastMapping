@@ -14,6 +14,7 @@ mod_depuration_results_ui <- function(id) {
         p("No depuration process was made.")),
     div(
       id = ns("yesDepurated"),
+      DT::dataTableOutput(ns("summaryResults")),
       selectInput(
         ns('colorplot'),
         "Color by",
@@ -24,7 +25,7 @@ mod_depuration_results_ui <- function(id) {
       
       plotly::plotlyOutput(ns("DepuratedPlot")),
       shinyjs::hidden(downloadButton(
-        ns("downloadDepurated"), "Download Clasification"
+        ns("downloadDepurated"), "Download depurated data"
       ))
     )
   )
@@ -36,16 +37,16 @@ mod_depuration_results_ui <- function(id) {
 mod_depuration_results_server <- function(id,
                                           wasDepurated,
                                           dataset_withCond,
-                                          depurated) {
+                                          depurated,
+                                          summaryres) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
     observeEvent(wasDepurated(),{
       if (wasDepurated()) {
-        shinyjs::show("downloadDepurated")
-        shinyjs::show("downloadDepurated")
+        # shinyjs::show("downloadDepurated")
         shinyjs::hide("noDepurated")
-        shinyjs::show("yesDepurated")
+        # shinyjs::show("yesDepurated")
       } else {
         shinyjs::hide("downloadDepurated")
         shinyjs::show("noDepurated")
@@ -55,10 +56,12 @@ mod_depuration_results_server <- function(id,
     
     observeEvent(dataset_withCond(), {
       req(dataset_withCond())
+      shinyjs::show("yesDepurated")
+      shinyjs::show("downloadDepurated")
       choices <- colnames(sf::st_drop_geometry(dataset_withCond()))
       hasCond <- agrepl("condition", choices)
       if (any(hasCond)) {
-        selected <- head(choices[hasCond],1)
+        selected <- utils::head(choices[hasCond],1)
       } else {
         selected <- choices[1]
       }
@@ -69,12 +72,16 @@ mod_depuration_results_server <- function(id,
       
     })
     
+    output$summaryResults <- DT::renderDataTable({
+      summaryres()
+    })
+    
     output$DepuratedPlot <- plotly::renderPlotly({
       # build graph with ggplot syntax
       p <- ggplot2::ggplot(dataset_withCond(), 
-                           ggplot2::aes_string(
-                                        color = input$colorplot, 
-                                        text = input$colorplot)) +
+                           ggplot2::aes(
+                             color = .data[[input$colorplot]], 
+                             text = .data[[input$colorplot]])) +
         ggplot2::geom_sf()
       
       plotly::ggplotly(p) %>%
