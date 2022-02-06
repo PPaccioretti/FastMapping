@@ -99,18 +99,18 @@ mod_kriging_results_server <- function(id,
       
       krigin_plot <- kriging_plot()
       
-      zmin_var <- krigin_plot$min_var
-      zmax_var <- krigin_plot$max_var
-      # 
-      # outfile <- tempfile(fileext = '.png')
-      # png(outfile, width = 900, height = 900)
-      # 
-      print(zmin_var)
-      # if (is.na(zmin_var)) {
-        zmin_var <- min(kriging()$var1.var, na.rm = T)
-      # }
-      # if (is.na(zmax_var)) {
-        zmax_var <- max(kriging()$var1.var, na.rm = T)
+      # zmin_var <- krigin_plot$min_var
+      # zmax_var <- krigin_plot$max_var
+      # # 
+      # # outfile <- tempfile(fileext = '.png')
+      # # png(outfile, width = 900, height = 900)
+      # # 
+      # print(zmin_var)
+      # # if (is.na(zmin_var)) {
+      #   zmin_var <- min(kriging()$var1.var, na.rm = T)
+      # # }
+      # # if (is.na(zmax_var)) {
+      #   zmax_var <- max(kriging()$var1.var, na.rm = T)
       # }
         ggplot2::ggplot() + 
           stars::geom_stars(data = kriging(), 

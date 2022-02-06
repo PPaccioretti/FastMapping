@@ -25,22 +25,18 @@ mod_zoneCompare_process_server <- function(id,
     reactive({
       req(zoneCompare_param())
       
-      print("ZONE COMPARE PROCESS\n\n")
       zoneCompare_param <- zoneCompare_param()
       req(zoneCompare_param$zonesCol)
       req(zoneCompare_param$variable)
-      
-      print(zoneCompare_param)
-      zc <- 
+
+
       paar::compare_zone(
         data = zoneCompare_param$data,
         variable = zoneCompare_param$variable,
         zonesCol = zoneCompare_param$zonesCol,
         alpha = zoneCompare_param$alpha
       )
-      
-      print(zc)
-      zc
+
     })
     
     

@@ -75,8 +75,6 @@ mod_zoneCompare_parameters_server <- function(id,
         shinyjs::hide("read_boundary_content")
         
       }
-      print("desde Input")
-      print(dataset())
     })
     
     observeEvent(input$targetVariable, {
@@ -88,7 +86,6 @@ mod_zoneCompare_parameters_server <- function(id,
     observeEvent(dataset(), {
       req(dataset())
       possibleTargetVariables <- find_vars(dataset(), filterCluster)
-      print("Cluster totest")
       shiny::updateSelectInput(
         'clusterToTest',
         choices = possibleTargetVariables,
@@ -98,7 +95,6 @@ mod_zoneCompare_parameters_server <- function(id,
     })
     
     observeEvent(myData(), {
-      print("mydata")
       req(myData())
       if (input$hasfile) { 
         shinyjs::show('targetVariable')
@@ -113,9 +109,6 @@ mod_zoneCompare_parameters_server <- function(id,
       if (input$hasfile) {
         myDataVars <- myData()
       }
-      
-      print("ESTO ANDA>")
-      print(myDataVars)
       myDataVars
       
     })
@@ -125,8 +118,6 @@ mod_zoneCompare_parameters_server <- function(id,
     var_names <- reactive({
       req(datasetWithVars())
       req(find_vars(datasetWithVars(), filterTgt))
-      print("DATASET VARS")
-      print(datasetWithVars())
       
       dataset <- datasetWithVars()
       if (inherits(dataset, "sf")) {
@@ -154,19 +145,10 @@ mod_zoneCompare_parameters_server <- function(id,
         if (input$hasfile) {
           myVars <- myData()[, input$targetVariable]
         }
-        print("VARS TO USE \n\n")
-        print(myVars)
+
         myVars
       })
     
-    
-    observeEvent(var_names() == 2 | input$targetVariable == 2, {
-      print("VARS TO USE \n\n")
-      print(variableToUse())
-      
-      print("TARGET TO USE \n\n")
-      print(input$targetVariable)
-    })
    
       list(
         'zoneCompare_param' = reactive({
