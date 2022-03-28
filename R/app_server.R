@@ -7,7 +7,7 @@
 app_server <- function(input, output, session) {
   # Your application server logic
   session$onSessionEnded(stopApp)
-  options(shiny.maxRequestSize = 100 * 1024 ^ 2)
+  options(shiny.maxRequestSize = 1024 * 1024 ^ 2)
 
   shinyjs::hide(selector = '#navbar li a[data-value="navdataprep"]')
   shinyjs::hide(selector = '#navbar li a[data-value="navallparam"]')
