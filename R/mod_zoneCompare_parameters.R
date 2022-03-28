@@ -45,11 +45,14 @@ mod_zoneCompare_parameters_ui <- function(id,
         ns('clusterToTest'),
         lglClust,
         choices = "",
-        multiple = multipleTgt,
+        multiple = FALSE,
         selected = NULL
       )
     )
-    )
+    ),
+    div(style = "float: right;", 
+        actionButton(ns("strtZoning"), label = "Start Zoning validation!", class = "btn-warning")
+  )
   )
 }
 
@@ -104,7 +107,7 @@ mod_zoneCompare_parameters_server <- function(id,
     
     
     datasetWithVars <- reactive({
-      req(dataset())
+      # req(dataset())
       myDataVars <- dataset()
       if (input$hasfile) {
         myDataVars <- myData()
@@ -140,10 +143,10 @@ mod_zoneCompare_parameters_server <- function(id,
     })
     
     variableToUse <- reactive({
-      req(dataset())
+      # req(dataset())
         myVars <- input$targetVariable
         if (input$hasfile) {
-          myVars <- myData()[, input$targetVariable]
+          myVars <- datasetWithVars()[, input$targetVariable]
         }
 
         myVars
@@ -151,6 +154,7 @@ mod_zoneCompare_parameters_server <- function(id,
     
    
       list(
+        'btnStart' = reactive(input$strtZoning),
         'zoneCompare_param' = reactive({
           list(
             data = dataset(),

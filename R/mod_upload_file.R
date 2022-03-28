@@ -10,9 +10,9 @@
 #' @param session internal
 #'
 #' @rdname mod_upload_file_module
+#' @noRd
 #'
 #' @keywords internal
-#' @export
 #' @importFrom shiny NS tagList
 mod_upload_file_ui <-
   function(id,
@@ -29,13 +29,18 @@ mod_upload_file_ui <-
 # Module Server
 
 #' @rdname mod_upload_file_module
-#' @export
+#' @noRd
 #' @keywords internal
 
 mod_upload_file_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     myDf <- reactive({
       req(input$database_upload)
+      id <-
+        showNotification(loadingText("Reading data..."),
+                         duration = NULL,
+                         closeButton = FALSE)
+      on.exit(removeNotification(id), add = TRUE)
       myTable <- read_file_guessing(input$database_upload$datapath,
                                     input$database_upload$name)
       myTable

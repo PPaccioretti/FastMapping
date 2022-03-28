@@ -34,12 +34,11 @@ mod_depuration_process_server <-
         req(dep_param())
         req(myBoundary())
         
-        waitress <- waiter::Waitress$
-          new(ns("notification"),theme = "overlay", infinite = TRUE)$
-          notify()
-        on.exit({
-          waitress$close()
-          })
+        id <-
+          showNotification(loadingText("Cleaning data..."),
+                           duration = NULL,
+                           closeButton = FALSE)
+        on.exit(removeNotification(id), add = TRUE)
         
         myParam <- dep_param()
         myBoundary <- myBoundary()

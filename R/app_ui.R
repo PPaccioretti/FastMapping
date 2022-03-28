@@ -18,10 +18,7 @@ app_ui <- function(request) {
         title = "",
         icon = icon("home"),
         value = "navhome",
-        mainPanel(mod_home_text_ui("start_aplication"),
-                  actionButton("start", "Start!", class = "btn-warning"),
-                  actionButton("show", "show!", class = "btn btn-danger"),
-                  actionButton("hide", "hide!", class = "btn btn-secondar"))
+        mainPanel(mod_home_text_ui("start_aplication"))
       ),
       
       bslib::nav(

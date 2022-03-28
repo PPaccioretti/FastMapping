@@ -34,6 +34,14 @@ mod_cluster_process_server <- function(id,
       req(dataset())
       req(cluster_param())
 
+      
+      id <-
+        showNotification(loadingText("Zoning..."),
+                         duration = NULL,
+                         closeButton = FALSE)
+      on.exit(removeNotification(id), add = TRUE)
+      
+      
       myParam <- cluster_param()
       
       req(myParam$variables,

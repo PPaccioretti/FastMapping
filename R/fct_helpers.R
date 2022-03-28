@@ -101,3 +101,22 @@ makePlotClusterValid <- function(data) {
   
   
 }
+
+
+loadingText <- function(text) {
+      div(
+        div(style = "display: inline-block;vertical-align:center; ",
+            p(text)),
+        div(
+          style = "display: inline-block;vertical-align:center; ",
+          div(class = "cssload-loader",
+              div(),
+              div(),
+              div(),
+              div(),
+              div())
+        )
+      )
+  
+}
+

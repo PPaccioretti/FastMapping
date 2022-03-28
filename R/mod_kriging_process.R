@@ -31,6 +31,13 @@ mod_kriging_process_server <- function(id,
       req(dataset())
       req(kriging_param())
 
+      
+      id <-
+        showNotification(loadingText("Searching for the best model..."),
+                         duration = NULL,
+                         closeButton = FALSE)
+      on.exit(removeNotification(id), add = TRUE)
+      
       file <- dataset()
       
       if (nrow(file) > 20000) {
@@ -72,6 +79,12 @@ mod_kriging_process_server <- function(id,
       # req(variogram())
       # req(kriging_param())
 
+      id <-
+        showNotification(loadingText("Fitting the best model..."),
+                         duration = NULL,
+                         closeButton = FALSE)
+      on.exit(removeNotification(id), add = TRUE)
+      
       myParam <- kriging_param()
       req(myParam$myTgtVar)
       myKrige <- MiKrige()
@@ -159,12 +172,18 @@ mod_kriging_process_server <- function(id,
     })
     
     
-    kriging <- eventReactive(button(),{
+    kriging <- eventReactive(button(), {
       req(dataset())
       req(kriging_param())
       req(Mygr())
       
 
+      id <-
+        showNotification(loadingText("Interpolating..."),
+                         duration = NULL,
+                         closeButton = FALSE)
+      on.exit(removeNotification(id), add = TRUE)
+      
       file <- dataset()
       myParam <- kriging_param()
       Mygr <- Mygr()

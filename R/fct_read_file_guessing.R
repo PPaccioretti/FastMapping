@@ -8,9 +8,7 @@
 #' @param session Used for shiny
 #' 
 #' @return an object of different class depending the function used to read the file
-#' @export
 #'
-#' @examples
 read_file_guessing <- function(datapath, name, session = session) {
   
   # datapath <- upload$datapath

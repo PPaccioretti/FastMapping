@@ -20,6 +20,14 @@ mod_home_text_ui <- function(id){
         a("this link", href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",  target = "_blank"),
         "."
       ),
+      div(style = "text-align: center;",
+          actionButton(
+            ns("startApl"), 
+            "Start!", 
+            icon = icon("play-circle"),
+            class = "btn-success",
+            style = 'text-align: center; font-size:110%;'
+          )),
       fluidRow(
         column(
           width = 6,
@@ -65,17 +73,7 @@ mod_home_text_ui <- function(id){
             a("Zoning a field from yield and soil properties",
               href = "https://drive.google.com/uc?export=download&id=1SeJYNmzg-d26E_nydzKtcImshEYZB6UO"),
             "."
-          )),
-          br(),
-          br(),
-          div(style = "text-align: center;",
-              actionButton(
-                ns("startApl"), 
-                "Start!", 
-                icon = icon("play-circle"),
-                class = "btn-success",
-                style = 'text-align: center; font-size:110%;'
-              )
+          )
           )
         )
       )

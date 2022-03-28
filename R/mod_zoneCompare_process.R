@@ -18,12 +18,21 @@ mod_zoneCompare_process_ui <- function(id){
 #'
 #' @noRd 
 mod_zoneCompare_process_server <- function(id,
-                                           zoneCompare_param){
+                                           zoneCompare_param,
+                                           button){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
  
-    reactive({
+    # reactive({
+      eventReactive(button(), {
       req(zoneCompare_param())
+      
+      
+      id <-
+        showNotification(loadingText("Comparing zones means..."),
+                         duration = NULL,
+                         closeButton = FALSE)
+      on.exit(removeNotification(id), add = TRUE)
       
       zoneCompare_param <- zoneCompare_param()
       req(zoneCompare_param$zonesCol)

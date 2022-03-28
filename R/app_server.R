@@ -188,7 +188,8 @@ app_server <- function(input, output, session) {
   
   zone_process <-
     mod_zoneCompare_process_server("zone_precess",
-                                   zone_param$zoneCompare_param)
+                                   zone_param$zoneCompare_param,
+                                   zone_param$btnStart)
   
   mod_zoneCompare_results_server(
     "zone_results",
