@@ -105,7 +105,7 @@ app_server <- function(input, output, session) {
                                       myDataset,
                                       myVariables$coords,
                                       myVariables$tgtvariable)
- 
+
   mod_visualize_spatial_data_server("mymap",
                                     datasetTransf,
                                     myVariables$tgtvariable)
@@ -131,14 +131,14 @@ app_server <- function(input, output, session) {
       field_boundary,
       myDepParams$btnStart
     )
-  
+
   mod_depuration_results_server("depuration_results",
                                 myDepResults$wasDepurated,
                                 myDepResults$datasetWithCondition,
                                 myDepResults$depurated,
                                 myDepResults$summaryres)
 
-  
+
   krigParams <-
     mod_kriging_parameters_server("kriging_param",
                                   myVariables$tgtvariable)
@@ -170,31 +170,31 @@ app_server <- function(input, output, session) {
                                datasetTransf,
                                cluster_param$params,
                                cluster_param$btnStart)
-  
+
   mod_cluster_results_server(
     "cluster_results",
     clusterResults = cluster_process$cluster,
     variablesUsed = myVariables$tgtvariable,
     data_and_cluster =  cluster_process$data_and_cluster
   )
-  
+
   # It needs results from cluster process. This could be change to use other
-  # results from FastMapping. Maybe with Observer over datasets? 
-  zone_param <- 
+  # results from FastMapping. Maybe with Observer over datasets?
+  zone_param <-
     mod_zoneCompare_parameters_server("zone_param",
                                       cluster_process$data_and_cluster
                                       # myDepResults$finalDataset
     )
-  
+
   zone_process <-
     mod_zoneCompare_process_server("zone_precess",
                                    zone_param$zoneCompare_param,
                                    zone_param$btnStart)
-  
+
   mod_zoneCompare_results_server(
     "zone_results",
     zone_process
   )
-  
+
   
 }

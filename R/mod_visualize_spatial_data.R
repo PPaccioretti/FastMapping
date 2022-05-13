@@ -40,6 +40,7 @@ mod_visualize_spatial_data_server <-
   
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    
     observeEvent(dataset(), {
       ## INITIAL STATE
       shinyjs::reset("varToPlot")

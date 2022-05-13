@@ -84,7 +84,7 @@ mod_spatial_transformation_server <-
                        req(!is.null(coords()))
                      }
                      # req(!is.null(coords()), cancelOutput = TRUE)
-                     req(readyToShow())
+                     req(readyToShow(), cancelOutput = TRUE)
                      if (!inherits(dataset(), "sf")) {
                        shinyjs::delay(500, shinyjs::show('epsg_orig'))
                        shinyjs::delay(500, shinyjs::show('epsg_tgt'))
@@ -203,16 +203,21 @@ mod_spatial_transformation_server <-
         
         coords <- coords()
         dat <- dataset()
-        tryCatch({
+        myDat <- tryCatch({
           spatial_transformation(
             dat,
             coords = coords,
             orgn_epsg = input$epsg_orig,
             tgt_epsg = input$epsg_tgt
           )
-        }, error = function(e) {return()})
+        }, error = function(e) {NULL})
        
+        if (all(sf::st_is_empty(myDat))) {
+          myDat <- NULL
+        }
         
+        return(myDat)
+
       })
       
       
