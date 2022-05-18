@@ -16,6 +16,21 @@ get_os <- function() {
   }
 }
 
+
+install_package_c <- function() {
+  passthr <- Sys.getenv(c("ESHINE_PASSTHRUPATH"))
+  remotes_code <- Sys.getenv(c("ESHINE_remotes_code"))
+  return_file_path <- Sys.getenv(c("ESHINE_package_return"))
+  if (!nchar(passthr) > 0) {
+    stop("Empty path")
+  }
+  passthr <- normalizePath(passthr, winslash = "/")
+  load(passthr)
+  remotes_code <- getFromNamespace(remotes_code, ns = "remotes")
+  z <- do.call(remotes_code, passthr)
+  writeLines(z, con = return_file_path)
+}
+
 cran_like_url <- paste0("https://cran.microsoft.com/snapshot/", Sys.Date())
 
 
@@ -123,8 +138,36 @@ if (identical(os, "mac")) {
 
 tmp_file <- tempfile()
 save(list = c("remotes_code", "passthr"), file = tmp_file)
-remotes_library <- copy_remotes_package()
-copy_electricshine_package()
+
+## electricShine:::copy_remotes_package
+remotes_path <- system.file(package = "remotes")
+new_path <- file.path(tempdir(), "electricShine")
+dir.create(new_path)
+new_path <- file.path(tempdir(), "electricShine", "templib")
+dir.create(new_path)
+file.copy(remotes_path, new_path, recursive = TRUE, copy.mode = F)
+test <- file.path(new_path, "remotes")
+if (!file.exists(test)) {
+  stop("Wasn't able to copy remotes package.")
+}
+remotes_library <- normalizePath(new_path, winslash = "/")
+
+
+# copy_electricshine_package()
+remotes_path <- system.file(package = "electricShine")
+new_path <- file.path(tempdir(), "electricShine")
+suppressWarnings(dir.create(new_path))
+new_path <- file.path(tempdir(), "electricShine", "templib")
+suppressWarnings(dir.create(new_path))
+file.copy(remotes_path, new_path, recursive = TRUE, copy.mode = F)
+test <- file.path(new_path, "electricShine")
+if (!file.exists(test)) {
+  stop("Wasn't able to copy electricShine package.")
+}
+invisible(normalizePath(new_path, winslash = "/"))
+
+
+
 old_R_LIBS <- Sys.getenv("R_LIBS")
 old_R_LIBS_USER <- Sys.getenv("R_LIBS_USER")
 old_R_LIBS_SITE <- Sys.getenv("R_LIBS_SITE")
@@ -137,14 +180,27 @@ tmp_file2 <- tempfile()
 file.create(tmp_file2)
 Sys.setenv(ESHINE_package_return = tmp_file2)
 message("Installing your Shiny package into electricShine framework.")
-system_install_pkgs(rscript_path)
-on.exit({
+# system_install_pkgs(rscript_path)
+if (identical(os, "win")) {
+  system2(rscript_path, 
+          c("-e", "electricShine::install_package()"), 
+          wait = TRUE, stdout = "")
+}
+if (identical(os, "mac")) {
+  system2(rscript_path, c(" -vanilla ",
+                          "-e ",
+                          "'", 
+                          "electricShine::install_package()", 
+                          "'"), wait = TRUE, stdout = "")
+}
+
+
   Sys.setenv(R_LIBS = old_R_LIBS)
   Sys.setenv(R_LIBS_USER = old_R_LIBS_USER)
   Sys.setenv(R_LIBS_SITE = old_R_LIBS_SITE)
   Sys.setenv(ESHINE_PASSTHRUPATH = "")
   Sys.setenv(ESHINE_remotes_code = "")
-})
+  
 message("Finshed: Installing your Shiny package into electricShine framework")
 user_pkg <- readLines(tmp_file2)
 return(user_pkg)
