@@ -25,7 +25,7 @@ mod_depuration_results_ui <- function(id) {
       
       plotly::plotlyOutput(ns("DepuratedPlot")),
       shinyjs::hidden(downloadButton(
-        ns("downloadDepurated"), "Download depurated data"
+        ns("downloadDepurated"), "Download data with finally condition"
       ))
     )
   )

@@ -123,7 +123,7 @@ mod_visualize_spatial_data_server <-
 
     })
 
-    observeEvent(vars(), {
+    observeEvent(vars() == 2 | is.data.frame(data()), {
       req(data())
       req(vars())
 
@@ -244,8 +244,8 @@ mod_visualize_spatial_data_server <-
         leaflet::addPolygons(
           data = poly,
           group = "Boundary",
-          color = "#444444",
-          weight = 1,
+          color = "#EB0707",
+          weight = 4,
           smoothFactor = 0.5,
           opacity = 1.0,
           fillOpacity = 0

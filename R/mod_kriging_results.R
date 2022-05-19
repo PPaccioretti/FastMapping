@@ -88,7 +88,10 @@ mod_kriging_results_server <- function(id,
           stars::geom_stars(data = kriging(), 
                             ggplot2::aes(fill = var1.pred, x = x, y = y)) +
           ggplot2::scale_fill_gradientn(colours = grDevices::terrain.colors(20)) +
-          ggplot2::theme(legend.position = "bottom")
+          # ggplot2::theme(legend.position = "bottom") +
+          ggplot2::guides(fill = ggplot2::guide_colourbar(
+            barwidth = 30, 
+            label.position = "bottom"))
         
     })
     
@@ -116,7 +119,10 @@ mod_kriging_results_server <- function(id,
           stars::geom_stars(data = kriging(), 
                             ggplot2::aes(fill = var1.var, x = x, y = y)) +
           ggplot2::scale_fill_gradientn(colours = grDevices::cm.colors(20)) +
-          ggplot2::theme(legend.position = "bottom")
+          # ggplot2::theme(legend.position = "bottom") +
+          ggplot2::guides(fill = ggplot2::guide_colourbar(
+            barwidth = 30, 
+            label.position = "bottom"))
 
     })
     

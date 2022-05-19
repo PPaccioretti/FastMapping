@@ -27,7 +27,7 @@ mod_kriging_process_server <- function(id,
     ns <- session$ns
 
     
-    MiKrige <- reactive({
+    MiKrige <- eventReactive(button(), {
       req(dataset())
       req(kriging_param())
 
@@ -58,8 +58,7 @@ mod_kriging_process_server <- function(id,
       
     })
     
-    #
-    MejorModelo <- reactive({
+    MejorModelo <- eventReactive(button(), {
 
       ValidationTable = MiKrige()
       tryCatch({
@@ -136,7 +135,7 @@ mod_kriging_process_server <- function(id,
       )
     })
     
-    variogram <- reactive({
+    variogram <- eventReactive(button(), {
       # req(dataset())
       # req(kriging_param())
       # req(MejorModelo())
@@ -158,8 +157,7 @@ mod_kriging_process_server <- function(id,
       varioagramModel
     })
     
-    
-    Mygr <- reactive({
+    Mygr <- eventReactive(button(), {
       req(dataset())
       req(kriging_param())
       req(boundary_poly())
@@ -213,7 +211,17 @@ mod_kriging_process_server <- function(id,
       grid = Mygr,
       variogram = variogram,
       allModels = MiKrige,
-      variablesForVariogramPlot = variablesForVariogramPlot
+      variablesForVariogramPlot = variablesForVariogramPlot,
+      'wasInterpolated' = reactive({
+        ifelse(is.null(kriging_param()), FALSE, TRUE)
+      }),
+      'finalDataset' = reactive({
+        if (is.null(kriging_param())) {
+          dataset()
+        } else {
+          sf::st_as_sf(kriging())
+        }
+      })
     )
   })
 }

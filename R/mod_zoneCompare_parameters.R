@@ -51,7 +51,7 @@ mod_zoneCompare_parameters_ui <- function(id,
     )
     ),
     div(style = "float: right;", 
-        actionButton(ns("strtZoning"), label = "Start Zoning validation!", class = "btn-warning")
+        actionButton(ns("strtZoning"), label = "Start Zone validation!", class = "btn-warning")
   )
   )
 }

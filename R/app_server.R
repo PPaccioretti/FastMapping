@@ -165,9 +165,27 @@ app_server <- function(input, output, session) {
   cluster_param <-
     mod_cluster_parameters_server("cluster_param",
                                   myVariables$tgtvariable)
+  
+  dataSet_cluster <- reactive({
+    req(datasetTransf())
+    tryCatch({
+      kriging_process$kriging()
+    },
+    error = function(e) {
+      myDepResults$depurated()
+    },
+    error = function(e) {
+      datasetTransf()
+    })
+  })
+  
+  
+  observeEvent(myVariables$tgtvariable() == 2, 
+               browser()
+               )
   cluster_process <-
     mod_cluster_process_server("cluster_precess",
-                               datasetTransf,
+                               dataSet_cluster,
                                cluster_param$params,
                                cluster_param$btnStart)
 
@@ -178,8 +196,8 @@ app_server <- function(input, output, session) {
     data_and_cluster =  cluster_process$data_and_cluster
   )
 
-  # It needs results from cluster process. This could be change to use other
-  # results from FastMapping. Maybe with Observer over datasets?
+  # It needs results from cluster process. This could be change to use an other
+  # result from FastMapping. Maybe with Observer over datasets?
   zone_param <-
     mod_zoneCompare_parameters_server("zone_param",
                                       cluster_process$data_and_cluster

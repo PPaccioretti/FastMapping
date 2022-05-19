@@ -18,7 +18,10 @@ app_ui <- function(request) {
         title = "",
         icon = icon("home"),
         value = "navhome",
-        mainPanel(mod_home_text_ui("start_aplication"))
+        mainPanel(
+          style = "margin: 0 auto",
+            mod_home_text_ui("start_aplication")
+          )
       ),
       
       bslib::nav(
@@ -62,18 +65,18 @@ app_ui <- function(request) {
           bslib::nav(
             title = "Depuration Parameters",
             value = "navdepparam",
-            mainPanel(mod_depuration_parameters_ui("depuration_param")
+            mainPanel(mod_depuration_parameters_ui("depuration_param"), width = 12
                       )
           ),
           bslib::nav(
             title = "Kriging Parameters",
             value = "navkrigparam",
-            mainPanel(mod_kriging_parameters_ui("kriging_param"))
+            mainPanel(mod_kriging_parameters_ui("kriging_param"), width = 12)
           ),
           bslib::nav(
             title = "Cluster Parameters",
             value = "navclustparam",
-            mainPanel(mod_cluster_parameters_ui("cluster_param"))
+            mainPanel(mod_cluster_parameters_ui("cluster_param"), width = 12)
           )
           
         )
@@ -88,7 +91,8 @@ app_ui <- function(request) {
             value = "navdepresults",
             mainPanel(
               mod_depuration_process_ui("depuration_process"),
-              mod_depuration_results_ui("depuration_results")
+              mod_depuration_results_ui("depuration_results"),
+              width = 12
               )
           ),
           bslib::nav(
@@ -96,7 +100,8 @@ app_ui <- function(request) {
             value = "navkrigresults",
             mainPanel(
               mod_kriging_process_ui("kriging_process"),
-              mod_kriging_results_ui("kriging_results")
+              mod_kriging_results_ui("kriging_results"), 
+              width = 12
             )
           ),
           bslib::nav(
@@ -104,11 +109,12 @@ app_ui <- function(request) {
             value = "navclustresults",
             mainPanel(h5("Statistical Indices"),
                       mod_cluster_process_ui("cluster_precess"),
-                      mod_cluster_results_ui("cluster_results")
+                      mod_cluster_results_ui("cluster_results"), 
+                      width = 12
             )
           ),
           bslib::nav_menu(
-            title = "Zone validation",
+            title = "Zone Validation",
             value = "navzoneval",
             bslib::nav(
               title = "Zone Compare Parameters",
@@ -118,7 +124,7 @@ app_ui <- function(request) {
                             actionButton("zoneResults", 
                                          label = "Go to results tab", 
                                          class = "btn-secondary")
-                        ))
+                        ), width = 12)
             ),
             
             bslib::nav(
@@ -127,7 +133,8 @@ app_ui <- function(request) {
               mainPanel(
                 h5("Statistical Indices"),
                 mod_zoneCompare_process_ui("zone_precess"),
-                mod_zoneCompare_results_ui("zone_results")
+                mod_zoneCompare_results_ui("zone_results"), 
+                width = 12
               )
             )
           )
