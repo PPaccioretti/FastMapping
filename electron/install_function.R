@@ -40,11 +40,15 @@ install_r_and_package <-
                                         cran_like_url = cran_like_url)
     # electricShine::create_folder(app_root_path)
     # electricShine::copy_template(app_root_path)
-    electricShine::install_r(cran_like_url = cran_like_url, 
-                             app_root_path = app_root_path, 
-                             mac_url = mac_url, 
-                             permission_to_install = permission_to_install_r)
-    electricShine::trim_r(app_root_path = app_root_path)
+   
+    
+    #  electricShine::install_r(cran_like_url = cran_like_url, 
+    #                          app_root_path = app_root_path, 
+    #                          mac_url = mac_url, 
+    #                          permission_to_install = permission_to_install_r)
+    # electricShine::trim_r(app_root_path = app_root_path)
+   
+    
     if (identical(os, "win")) {
       library_path <- base::file.path(app_root_path, "app", 
                                       "r_lang", "library", fsep = "/")
