@@ -41,7 +41,7 @@ install_r_and_package <-
     # electricShine::create_folder(app_root_path)
     # electricShine::copy_template(app_root_path)
    
-    
+    ## ACTIVATE THIS IF YOU WANT TO INSTALL R
     #  electricShine::install_r(cran_like_url = cran_like_url, 
     #                          app_root_path = app_root_path, 
     #                          mac_url = mac_url, 
