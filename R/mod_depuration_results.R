@@ -74,11 +74,24 @@ mod_depuration_results_server <- function(id,
     
     output$summaryResults <- DT::renderDataTable({
       summaryres()
-    })
+    }, rownames = FALSE,
+    options = list(
+      autoWidth = TRUE,
+      dom = 't',
+      ordering = FALSE,
+      paging = FALSE,
+      searching = FALSE,
+      columnDefs = list(list(width = '200px', targets = "_all"))
+    ))
     
     output$DepuratedPlot <- plotly::renderPlotly({
       # build graph with ggplot syntax
-      p <- ggplot2::ggplot(dataset_withCond(), 
+      myDataset <- dataset_withCond()
+      if (all(is.na(myDataset[[input$colorplot]]))) {
+        myDataset[input$colorplot] <- "No Outlier"
+      }
+      
+      p <- ggplot2::ggplot(myDataset, 
                            ggplot2::aes(
                              color = .data[[input$colorplot]], 
                              text = .data[[input$colorplot]])) +

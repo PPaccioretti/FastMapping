@@ -180,9 +180,6 @@ app_server <- function(input, output, session) {
   })
   
   
-  observeEvent(myVariables$tgtvariable() == 2, 
-               browser()
-               )
   cluster_process <-
     mod_cluster_process_server("cluster_precess",
                                dataSet_cluster,

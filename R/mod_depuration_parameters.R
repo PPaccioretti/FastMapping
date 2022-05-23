@@ -330,6 +330,11 @@ mod_depuration_parameters_server <- function(id){
           
       })
       
+      criteria <- reactive({
+        if (input$moranPlot) {
+          c("LM", "MP")
+        } else { c("LM") }
+      })
       
       list(
         btnStart = reactive(input$strtDep),
@@ -344,7 +349,8 @@ mod_depuration_parameters_server <- function(id){
             ylimitmin = input$ylimitmin,
             sdout = input$sd_out,
             ldist = input$neighbor_min_dist,
-            udist = input$neighbor_max_dist
+            udist = input$neighbor_max_dist,
+            criteria = criteria()
           )
         })
       )

@@ -55,6 +55,7 @@ mod_depuration_process_server <-
           sdout = myParam$sdout,
           ldist = myParam$ldist,
           udist = myParam$udist,
+          criteria =  myParam$criteria,
           zero.policy = NULL,
           poly_border = myBoundary
         )
