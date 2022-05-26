@@ -38,9 +38,8 @@ mod_zoneCompare_process_server <- function(id,
       req(zoneCompare_param$zonesCol)
       req(zoneCompare_param$variable)
 
-
       paar::compare_zone(
-        data = zoneCompare_param$data,
+        data = sf::st_centroid(zoneCompare_param$data),
         variable = zoneCompare_param$variable,
         zonesCol = zoneCompare_param$zonesCol,
         alpha = zoneCompare_param$alpha

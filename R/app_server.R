@@ -168,7 +168,6 @@ app_server <- function(input, output, session) {
   
   dataSet_cluster <- reactive({
     req(datasetTransf())
-    browser()
     tryCatch({
       miDf <- kriging_process$kriging()
       
