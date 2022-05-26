@@ -28,6 +28,16 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/PPaccioretti/FastMapping/workflows/R-CMD-check/badge.svg)](https://github.com/PPaccioretti/FastMapping/actions)
 <!-- badges: end -->
 
+## A Shinny App for spatial analysis
+
+FastMapping implements statistical tools for spatial data depuration, 
+quasi automatic variogram fitting and selection of the best geostatistical model 
+for kriging prediction by crossvalidation. As aid of result interpretation, 
+the program allows for prediction error statistics to be calculated and 
+visualized graphically. Input databases, should be composed of bidimensional 
+coordinates and the variable to be mapped.
+
+
 
 ## Installation
 

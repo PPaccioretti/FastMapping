@@ -16,7 +16,7 @@ install_r_and_package <-
             # nodejs_path = file.path(system.file(package = "electricShine"),
             #                         "nodejs"),
             # nodejs_version = "v12.16.2",
-            permission = TRUE,
+            install_R = FALSE,
             mac_url = "https://mac.r-project.org/el-capitan/R-3.6-branch/R-3.6-branch-el-capitan-sa-x86_64.tar.gz") {
     
     if (is.null(app_name)) {
@@ -29,12 +29,15 @@ install_r_and_package <-
       }
     }
     app_root_path <- file.path(build_path, app_name)
-    if (!isTRUE(permission)) {
-      permission_to_install_r <- electricShine:::.prompt_install_r(app_root_path)
-    }
-    else {
-      permission_to_install_r <- TRUE
-    }
+    
+    
+    # if (!isTRUE(permission)) {
+    #   permission_to_install_r <- electricShine:::.prompt_install_r(app_root_path)
+    # }
+    # else {
+    #   permission_to_install_r <- TRUE
+    # }
+    
     os <- electricShine::get_os()
     cran_like_url <- electricShine:::construct_mran_url(mran_date = mran_date, 
                                         cran_like_url = cran_like_url)
@@ -42,12 +45,13 @@ install_r_and_package <-
     # electricShine::copy_template(app_root_path)
    
     ## ACTIVATE THIS IF YOU WANT TO INSTALL R
-    #  electricShine::install_r(cran_like_url = cran_like_url, 
-    #                          app_root_path = app_root_path, 
-    #                          mac_url = mac_url, 
-    #                          permission_to_install = permission_to_install_r)
-    # electricShine::trim_r(app_root_path = app_root_path)
-   
+    if (install_R) {
+      electricShine::install_r(cran_like_url = cran_like_url,
+                               app_root_path = app_root_path,
+                               mac_url = mac_url,
+                               permission_to_install = permission_to_install_r)
+      electricShine::trim_r(app_root_path = app_root_path)
+    }
     
     if (identical(os, "win")) {
       library_path <- base::file.path(app_root_path, "app", 
@@ -108,7 +112,7 @@ install_r_and_package(app_name = "FastMapping",
                       # nodejs_path = file.path(system.file(package = "electricShine"),
                       #                         "nodejs"),
                       # nodejs_version = "v12.16.2",
-                      permission = TRUE,
+                      install_R = FALSE,
                       mac_url = "https://mac.r-project.org/el-capitan/R-3.6-branch/R-3.6-branch-el-capitan-sa-x86_64.tar.gz")
 
 
