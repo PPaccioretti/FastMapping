@@ -168,8 +168,16 @@ app_server <- function(input, output, session) {
   
   dataSet_cluster <- reactive({
     req(datasetTransf())
+    browser()
     tryCatch({
-      kriging_process$kriging()
+      miDf <- kriging_process$kriging()
+      
+      if (inherits(miDf, "stars")) {
+        miDf <- sf::st_as_sf(miDf)
+        colnames(miDf)[colnames(miDf) %in% "var1.pred"] <- myVariables$tgtvariable()
+        miDf
+      }
+      miDf
     },
     error = function(e) {
       myDepResults$depurated()

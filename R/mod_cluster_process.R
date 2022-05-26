@@ -57,12 +57,12 @@ mod_cluster_process_server <- function(id,
         variables = myParam$variables,
         number_cluster =  myParam$number_cluster,
         explainedVariance =  myParam$explainedVariance,
-        ldist =  myParam$ldist,
-        udist =  myParam$udist,
-        center =  myParam$center,
+        ldist = myParam$ldist,
+        udist = myParam$udist,
+        center = myParam$center,
         fuzzyness = myParam$fuzzyness,
-        distance =  myParam$distance,
-        zero.policy =  myParam$zeroPolicy
+        distance = myParam$distance,
+        zero.policy = myParam$zeroPolicy
       )
     })
     
