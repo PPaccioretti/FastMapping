@@ -13,6 +13,14 @@ knitr::opts_chunk$set(
 )
 ```
 
+
+
+<!-- Dear Programmer: -->
+<!-- When I wrote this code, only god and I knew how it worked.  -->
+<!-- Now, only god knows it! Good Luck if you are trying to improve  -->
+<!-- this code!!  -->
+
+
 # FastMapping
 
 <!-- badges: start -->
@@ -23,7 +31,14 @@ knitr::opts_chunk$set(
 
 ## Installation
 
-You can install the development version of FastMapping like so:
+You can install FastMapping running:
+
+``` r
+devtools::install_github("PPaccioretti/FastMapping")
+```
+
+
+You can install the development version of FastMapping running in R:
 
 ``` r
 devtools::install_github("PPaccioretti/FastMapping", ref = "pkg")
