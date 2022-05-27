@@ -14,3 +14,7 @@ $run_dev.*
 ^rsconnect$
 ^Dockerfile$
 ^\.dockerignore$
+
+electron/
+.vscode
+extra

@@ -1,7 +1,7 @@
 {
   "name": "FastMapping",
   "productName": "FastMapping",
-  "description": "description",
+  "description": "Web-based application developed to easily map within field variability",
   "version": "1.0.0",
   "private": true,
   "author": "",

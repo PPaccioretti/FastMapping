@@ -13,6 +13,14 @@ knitr::opts_chunk$set(
 )
 ```
 
+
+
+<!-- Dear Programmer: -->
+<!-- When I wrote this code, only god and I knew how it worked.  -->
+<!-- Now, only god knows it! Good Luck if you are trying to improve  -->
+<!-- this code!!  -->
+
+
 # FastMapping
 
 <!-- badges: start -->
@@ -20,10 +28,27 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/PPaccioretti/FastMapping/workflows/R-CMD-check/badge.svg)](https://github.com/PPaccioretti/FastMapping/actions)
 <!-- badges: end -->
 
+## A Shinny App for spatial analysis
+
+FastMapping implements statistical tools for spatial data depuration, 
+quasi automatic variogram fitting and selection of the best geostatistical model 
+for kriging prediction by crossvalidation. As aid of result interpretation, 
+the program allows for prediction error statistics to be calculated and 
+visualized graphically. Input databases, should be composed of bidimensional 
+coordinates and the variable to be mapped.
+
+
 
 ## Installation
 
-You can install the development version of FastMapping like so:
+You can install FastMapping running:
+
+``` r
+devtools::install_github("PPaccioretti/FastMapping")
+```
+
+
+You can install the development version of FastMapping running in R:
 
 ``` r
 devtools::install_github("PPaccioretti/FastMapping", ref = "pkg")
@@ -31,7 +56,7 @@ devtools::install_github("PPaccioretti/FastMapping", ref = "pkg")
 
 ## Example
 
-To use FastMapping yoou only need to run this code:
+To use FastMapping you only need to run this code:
 
 ```{r example, eval = FALSE}
 library(FastMapping)
@@ -41,5 +66,7 @@ FastMapping::run_app()
 
 ## Code of Conduct
 
-Please note that the FastMapping project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
+Please note that the FastMapping project is released with a 
+[Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). 
+By contributing to this project, you agree to abide by its terms.
 
