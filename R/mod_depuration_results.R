@@ -14,7 +14,11 @@ mod_depuration_results_ui <- function(id) {
         p("No depuration process was made.")),
     div(
       id = ns("yesDepurated"),
-      DT::dataTableOutput(ns("summaryResults")),
+      div(
+        style = "width: 400px; margin: auto;",
+        shinycssloaders::withSpinner(
+          DT::dataTableOutput(ns("summaryResults")))
+      ),
       selectInput(
         ns('colorplot'),
         "Color by",
@@ -23,7 +27,8 @@ mod_depuration_results_ui <- function(id) {
         multiple = FALSE
       ),
       
-      plotly::plotlyOutput(ns("DepuratedPlot")),
+      shinycssloaders::withSpinner(
+        plotly::plotlyOutput(ns("DepuratedPlot"))),
       shinyjs::hidden(downloadButton(
         ns("downloadDepurated"), "Download data with finally condition"
       ))
@@ -73,7 +78,9 @@ mod_depuration_results_server <- function(id,
     })
     
     output$summaryResults <- DT::renderDataTable({
-      summaryres()
+      myTable <- summaryres()
+      myTable[,3] <- round(myTable[,3], 3)
+      myTable
     }, rownames = FALSE,
     options = list(
       autoWidth = TRUE,
@@ -81,7 +88,14 @@ mod_depuration_results_server <- function(id,
       ordering = FALSE,
       paging = FALSE,
       searching = FALSE,
-      columnDefs = list(list(width = '200px', targets = "_all"))
+      select = FALSE,
+      columnDefs = list(list(className = 'dt-left', 
+                             targets = 2)),
+      columns = list(
+        list(title = 'Point Condition'),
+        list(title = 'n'),
+        list(title = '%')
+      )
     ))
     
     output$DepuratedPlot <- plotly::renderPlotly({
@@ -106,7 +120,7 @@ mod_depuration_results_server <- function(id,
     
     output$downloadDepurated <- downloadHandler(
       filename = function() {
-        paste('DepuratedData-', Sys.Date(), '.gpkg', sep = '')
+        paste('DepurationProcessData-', Sys.Date(), '.gpkg', sep = '')
       },
       content = function(file) {
         req(dataset_withCond())

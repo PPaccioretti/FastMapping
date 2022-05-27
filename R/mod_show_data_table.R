@@ -48,6 +48,11 @@ mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
      
     },
     options = list(
+      # dom = 't',
+      ordering = FALSE,
+      # paging = FALSE,
+      searching = FALSE,
+      select = FALSE,
       pageLength = 5,
       scrollX = TRUE#,
       # lengthMenu = {

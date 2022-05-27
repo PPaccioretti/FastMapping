@@ -25,7 +25,7 @@ mod_depuration_parameters_ui <- function(id){
       actionButton(
         ns("resetState"),
         "Set default Options",
-        icon = icon("trash-restore")
+        icon = icon("rotate-left")
       )
       ),
       checkboxGroupInput(
@@ -162,7 +162,9 @@ mod_depuration_parameters_ui <- function(id){
         )
       ), 
     div(style = "float: right;", 
-        actionButton(ns("strtDep"), label = "Start depuration!", class = "btn-warning")
+        actionButton(ns("strtDep"), 
+                     label = "Start depuration!", 
+                     class = "btn-warning")
     )
   )
 }
@@ -262,7 +264,7 @@ mod_depuration_parameters_server <- function(id){
 
         updateNumericInput(
           inputId = "ylimitmax", 
-          value = NA,
+          value = NA_real_,
           session = session
         )
         
@@ -336,6 +338,15 @@ mod_depuration_parameters_server <- function(id){
         } else { c("LM") }
       })
       
+      
+      myMax <- reactive({
+        if (input$automatic_dep %in% "automatic") {
+          return(Inf)
+        } else {
+          input$ylimitmax
+        }
+      })
+      
       list(
         btnStart = reactive(input$strtDep),
         params = reactive({
@@ -345,7 +356,7 @@ mod_depuration_parameters_server <- function(id){
           list(
             toremove = toRemove(),
             buffer = input$buffer,
-            ylimitmax = input$ylimitmax,
+            ylimitmax = myMax(),
             ylimitmin = input$ylimitmin,
             sdout = input$sd_out,
             ldist = input$neighbor_min_dist,
