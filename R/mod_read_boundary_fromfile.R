@@ -51,6 +51,8 @@ mod_read_boundary_fromfile_server  <- function(id,
                                         myBoundCoords$coords,
                                         isReady)
     
+    
+    
     myBoundaryT
     
   })

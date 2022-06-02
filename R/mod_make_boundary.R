@@ -64,45 +64,96 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
       
     })
     
-    # observeEvent(myHull(), {
-    #   req(MyHull())
-    #   shinyjs::show("btndndboundary")
-    # })
+    observeEvent(myHull(), {
+      req(getBorders())
+      shinyjs::show("btndndboundary")
+    })
 
-    # output$btndndboundary <- downloadHandler(
-    #   
-    #   filename = function() {
-    #     paste('Boundary-',
-    #           format(Sys.time(), "%Y_%m_%d-%H_%M"),
-    #           '.gpkg',
-    #           sep = '')
-    #   },
-    #   content = function(con) {
-    #     borders_data <- getBorders()
-    #     sf::write_sf(borders_data, con)
-    #   }
-    # )
+    output$btndndboundary <- downloadHandler(
+      
+      filename = function() {
+        paste('Boundary-',
+              format(Sys.time(), "%Y_%m_%d-%H_%M"),
+              '.gpkg',
+              sep = '')
+      },
+      content = function(con) {
+        req(getBorders())
+        borders_data <- getBorders()
+        sf::write_sf(borders_data, con)
+      }
+    )
     
     myData <- mod_read_boundary_fromfile_server("readboundary")
+
+    myHull <- mod_concave_hull_server("makeboundary", 
+                                      myBoundary_file()[['dataset']])
     
-    
-    myHull <- mod_concave_hull_server("makeboundary", dataset)
-    
-    observeEvent(myData(), {
-      req(myData())
+    myBoundary_file <- reactive({
+      req(dataset())
+      # req(myData())
       
-      if (!has_sf_polygon(myData())) {
-        shinyjs::show("concave_hull_content")
-        dataset <- myData
-      } else {
-        myHull <- myData
+     
+      if (isFALSE(input$hasfile)) {
+        return(list(return_my_Hull = TRUE,
+                    dataset = reactive(dataset())))
+      } 
+      shinyjs::hide("concave_hull_content")
+      # browser()
+      if (isTRUE(input$hasfile)) {
+        if (inherits(try(myData(), silent = TRUE), "try-error")) {
+          shinyjs::hide("concave_hull_content")
+          req(myData())
+        }
       }
+      myPossibleBoundary <- try({
+        sf::st_as_sf(
+          sf::st_cast(
+            sf::st_combine(myData()), 
+            "POLYGON")
+        )
+      }, silent = TRUE)
+      
+      if (inherits(myPossibleBoundary, 'try-error') || 
+          !has_sf_polygon(myPossibleBoundary)) {
+        
+        showNotification(
+          'Please check EPSG codes!! Probably something is wrong!',
+          id = ns('error-coordinates'),
+          type = "warning",
+          session = session
+        )
+        
+        if (!is.null(myData())) {
+          shinyjs::show("concave_hull_content")
+        }
+        
+        my_dataset <- reactive(dataset())
+        return_my_Hull <- TRUE
+      } else {
+        shinyjs::hide("concave_hull_content")
+        return_my_Hull <- FALSE
+        my_dataset <- reactive(myPossibleBoundary)
+      }
+      list(return_my_Hull = return_my_Hull,
+           dataset = my_dataset)
     })
     
-    reactive({
-      req(myHull())
-      myHull()
-    })
+    
+    getBorders <-
+      reactive({
+        req(dataset())
+        # req(myData())
+        # req(is.logical(myBoundary_file()[['return_my_Hull']]))
+        
+        if (myBoundary_file()[["return_my_Hull"]]) {
+          return(myHull())
+        } else {
+          return(myBoundary_file()[['dataset']]())
+        }
+
+      })
+    getBorders
   })
 }
 

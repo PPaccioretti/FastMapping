@@ -12,8 +12,8 @@ mod_concave_hull_ui <- function(id,
                                 lblthresh = "Segment length threshold") {
   ns <- NS(id)
   tagList(
-    column(
-      width = 6,
+    # column(
+    #   width = 6,
       numericInput(
         ns("concavity"),
         lblconvty,
@@ -21,10 +21,10 @@ mod_concave_hull_ui <- function(id,
         max = 10,
         value = 2,
         step = 0.2
-      )
+      # )
     ),
-    column(
-      width = 6,
+    # column(
+    #   width = 6,
       numericInput(
         ns("length_threshold"),
         lblthresh,
@@ -32,7 +32,7 @@ mod_concave_hull_ui <- function(id,
         max = NA,
         value = 0,
         step = 0.5
-      )
+      # )
     )
   )
 }
@@ -46,8 +46,8 @@ mod_concave_hull_server <- function(id, dataset){
     reactive({
       req(dataset())
       req(inherits(dataset(), "sf"))
-      req(input$concavity)
-      req(input$length_threshold)
+      # req(input$concavity)
+      # req(input$length_threshold)
       
     # try({
           
