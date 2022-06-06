@@ -30,8 +30,11 @@ mod_depuration_results_ui <- function(id) {
       shinycssloaders::withSpinner(
         plotly::plotlyOutput(ns("DepuratedPlot"))),
       shinyjs::hidden(downloadButton(
-        ns("downloadDepurated"), "Download data with finally condition"
-      ))
+        ns("downloadDepurated_dep"), "Download depurated data"
+      )),
+      shinyjs::hidden(downloadButton(
+        ns("downloadDepurated_cond"), "Download data with finally condition"
+      )),
     )
   )
 }
@@ -49,11 +52,12 @@ mod_depuration_results_server <- function(id,
     
     observeEvent(wasDepurated(),{
       if (wasDepurated()) {
-        # shinyjs::show("downloadDepurated")
+        # shinyjs::show("downloadDepurated_cond")
         shinyjs::hide("noDepurated")
         # shinyjs::show("yesDepurated")
       } else {
-        shinyjs::hide("downloadDepurated")
+        shinyjs::hide("downloadDepurated_cond")
+        shinyjs::hide("downloadDepurated_dep")
         shinyjs::show("noDepurated")
         shinyjs::hide("yesDepurated")
       }
@@ -62,7 +66,9 @@ mod_depuration_results_server <- function(id,
     observeEvent(dataset_withCond(), {
       req(dataset_withCond())
       shinyjs::show("yesDepurated")
-      shinyjs::show("downloadDepurated")
+      shinyjs::show("downloadDepurated_cond")
+      shinyjs::show("downloadDepurated_dep")
+      
       choices <- colnames(sf::st_drop_geometry(dataset_withCond()))
       hasCond <- agrepl("condition", choices)
       if (any(hasCond)) {
@@ -118,15 +124,31 @@ mod_depuration_results_server <- function(id,
     
 
     
-    output$downloadDepurated <- downloadHandler(
+    output$downloadDepurated_cond <- downloadHandler(
       filename = function() {
-        paste('DepurationProcessData-', Sys.Date(), '.gpkg', sep = '')
+        paste('DepurationProcessDataCondition-',
+              Sys.Date(),
+              '.gpkg',
+              sep = '')
       },
       content = function(file) {
         req(dataset_withCond())
-        sf::write_sf(
-          dataset_withCond(),
-          file)
+        sf::write_sf(dataset_withCond(),
+                     file)
+      }
+    )
+    
+    output$downloadDepurated_dep <- downloadHandler(
+      filename = function() {
+        paste('DepurationProcessDataDepurated-',
+              Sys.Date(),
+              '.gpkg',
+              sep = '')
+      },
+      content = function(file) {
+        req(depurated())
+        sf::write_sf(depurated(),
+                     file)
       }
     )
     

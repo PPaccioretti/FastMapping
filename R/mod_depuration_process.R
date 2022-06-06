@@ -44,21 +44,34 @@ mod_depuration_process_server <-
         myBoundary <- myBoundary()
         dataset <- dataset()
         targetVar <- targetVar()
-
-       paar::depurate(
-          x = dataset,
-          y = targetVar,
-          toremove = myParam$toremove,
-          buffer = myParam$buffer,
-          ylimitmax = myParam$ylimitmax,
-          ylimitmin = myParam$ylimitmin,
-          sdout = myParam$sdout,
-          ldist = myParam$ldist,
-          udist = myParam$udist,
-          criteria =  myParam$criteria,
-          zero.policy = NULL,
-          poly_border = myBoundary
-        )
+        tryCatch({
+          paar::depurate(
+            x = dataset,
+            y = targetVar,
+            toremove = myParam$toremove,
+            buffer = myParam$buffer,
+            ylimitmax = myParam$ylimitmax,
+            ylimitmin = myParam$ylimitmin,
+            sdout = myParam$sdout,
+            ldist = myParam$ldist,
+            udist = myParam$udist,
+            criteria =  myParam$criteria,
+            zero.policy = NULL,
+            poly_border = myBoundary
+          )
+        }, error = function(e) {
+          if (agrepl("try modifying the ldist or udist values", e)) {
+            showNotification(
+              paste(
+                "Something went wrong while depurating.",
+                "Try modifying Min or Max distance value"),
+                             duration = 10,
+                             closeButton = FALSE,
+                             type = "error")
+          }
+          NULL
+        })
+       
 
       
       })

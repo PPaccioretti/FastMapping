@@ -340,7 +340,8 @@ mod_depuration_parameters_server <- function(id){
       
       
       myMax <- reactive({
-        if (input$automatic_dep %in% "automatic") {
+
+        if ("automatic" %in% input$automatic_dep) {
           return(Inf)
         } else {
           input$ylimitmax
