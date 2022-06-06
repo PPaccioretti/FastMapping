@@ -66,34 +66,34 @@ mod_select_variables_server <-
       
       
       shiny::observeEvent(dataset(), {
-        ### INITIAL STATE
-        ## reset if dataset changed
-        shinyjs::hide("xDataset")
-        shinyjs::hide("yDataset")
-        shinyjs::hide("targetVariable")
-        shiny::updateSelectInput(
-          'xDataset',
-          choices = NULL,
-          selected = NULL,
-          session = session
-          
-        )
-        
-        shiny::updateSelectInput(
-          'yDataset',
-          choices = NULL,
-          selected = NULL,
-          session = session
-          
-        )
-        
-        shiny::updateSelectInput(
-          'targetVariable',
-          choices = NULL,
-          selected = NULL,
-          session = session
-        )
-        ### END INITIAL STATE
+        # ### INITIAL STATE
+        # ## reset if dataset changed
+        # shinyjs::hide("xDataset")
+        # shinyjs::hide("yDataset")
+        # shinyjs::hide("targetVariable")
+        # shiny::updateSelectInput(
+        #   'xDataset',
+        #   choices = NULL,
+        #   selected = NULL,
+        #   session = session
+        #   
+        # )
+        # 
+        # shiny::updateSelectInput(
+        #   'yDataset',
+        #   choices = NULL,
+        #   selected = NULL,
+        #   session = session
+        #   
+        # )
+        # 
+        # shiny::updateSelectInput(
+        #   'targetVariable',
+        #   choices = NULL,
+        #   selected = NULL,
+        #   session = session
+        # )
+        # ### END INITIAL STATE
         
         
         if (!onlyCoords) {

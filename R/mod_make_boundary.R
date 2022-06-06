@@ -101,10 +101,15 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
       shinyjs::hide("concave_hull_content")
       # browser()
       if (isTRUE(input$hasfile)) {
+        
         if (inherits(try(myData(), silent = TRUE), "try-error")) {
           shinyjs::hide("concave_hull_content")
           req(myData())
+        } else {
+          myDataToRet <- myData()
         }
+      } else {
+        myDataToRet <- dataset()
       }
       myPossibleBoundary <- try({
         sf::st_as_sf(
@@ -128,7 +133,7 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
           shinyjs::show("concave_hull_content")
         }
         
-        my_dataset <- reactive(dataset())
+        my_dataset <- reactive(myDataToRet())
         return_my_Hull <- TRUE
       } else {
         shinyjs::hide("concave_hull_content")

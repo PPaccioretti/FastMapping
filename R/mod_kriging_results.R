@@ -91,7 +91,8 @@ mod_kriging_results_server <- function(id,
           ggplot2::theme(legend.position = "bottom") +
           ggplot2::guides(fill = ggplot2::guide_colourbar(
             barwidth = 20, 
-            label.position = "bottom"))
+            label.position = "bottom")) +
+          ggplot2::coord_equal()
         
     })
     
@@ -122,7 +123,8 @@ mod_kriging_results_server <- function(id,
           ggplot2::theme(legend.position = "bottom") +
           ggplot2::guides(fill = ggplot2::guide_colourbar(
             barwidth = 20, 
-            label.position = "bottom"))
+            label.position = "bottom")) +
+          ggplot2::coord_equal()
 
     })
     

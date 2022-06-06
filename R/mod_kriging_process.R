@@ -164,7 +164,7 @@ mod_kriging_process_server <- function(id,
 
       file <- dataset()
       myParam <- kriging_param()
-      sf::st_bbox(file) %>%
+      sf::st_bbox(boundary_poly()) %>%
         stars::st_as_stars(dx = myParam$cellsize) %>%
         sf::st_crop(boundary_poly())
     })
