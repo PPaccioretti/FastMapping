@@ -31,7 +31,7 @@ mod_home_text_ui <- function(id){
       actionButton(
         ns("startApl"),
         "Start!",
-        icon = icon("play-circle"),
+        icon = icon("circle-play"),
         class = "btn-success",
         style = 'text-align: center; font-size:110%;'
       )

@@ -16,7 +16,7 @@ app_ui <- function(request) {
       theme = bslib::bs_theme(bootswatch = "united"),
       bslib::nav(
         title = "",
-        icon = icon("home"),
+        icon = icon("house"),
         value = "navhome",
         mainPanel(
           style = "margin: 0 auto",

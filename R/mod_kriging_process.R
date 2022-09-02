@@ -25,7 +25,37 @@ mod_kriging_process_server <- function(id,
   
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
-
+    
+    myFormulaReactored <- reactive({
+      req(dataset())
+      req(kriging_param())
+      # browser()
+      file <- dataset()
+      file <- sf::as_Spatial(file)
+      
+      myParam <- kriging_param()
+      myFormula <- myParam$formula
+      ### Formula Refactoring
+      # Get the (predictor) variables
+      vars <- attr(terms(myParam$formula), which = "term.labels")
+      
+      if (length(vars) == 2) {
+        vars[1] <- gsub('x', colnames(file@coords)[1], vars[1])
+        vars[2] <- gsub('y', colnames(file@coords)[2], vars[2])
+        # Get the response
+        vv <- attr(terms(myParam$formula), which = "variables")
+        rr <- as.character(vv[[2]]) # The response variable name
+        # Now the predictors
+        pp <- paste(vars, collapse = " + ")
+        # Build a formula
+        myFormula <- paste(rr, " ~ ", pp)
+      }
+      
+      ###
+      as.formula(myFormula)
+    })
+    
+    
     
     MiKrige <- eventReactive(button(), {
       req(dataset())
@@ -47,7 +77,7 @@ mod_kriging_process_server <- function(id,
       file <- sf::as_Spatial(file)
       myParam <- kriging_param()
       
-      testMultipleModelsKrige(myParam$formula,
+      testMultipleModelsKrige(myFormulaReactored(),
                               file,
                               myParam$selectedModels,
                               myParam$nmax, 
@@ -143,10 +173,13 @@ mod_kriging_process_server <- function(id,
       file <- dataset()
       file <- sf::as_Spatial(file)
       
+      
+      
       myParam <- kriging_param()
+      
       varioagramModel <- 
         automap::autofitVariogram(
-          myParam$formula,
+          myFormulaReactored(),
           file,
           model = MejorModelo(),
           cutoff = 10000,
@@ -183,12 +216,16 @@ mod_kriging_process_server <- function(id,
       on.exit(removeNotification(id), add = TRUE)
       
       file <- dataset()
+      file <- removeSpatialDuplicated(file, session = session)
+      coords <- sf::st_coordinates(file)
+      colnames(coords) <- c('x', 'y')
+      file <- cbind(file, coords)
       myParam <- kriging_param()
       Mygr <- Mygr()
       Modelo <- MejorModelo()
-      
+
       gstat::krige(
-        formula = myParam$formula,
+        formula = myParam$formula, #myParam$formula, #myFormulaReactored(),
         locations = file,
         newdata = Mygr,
         variogram()$var_model,

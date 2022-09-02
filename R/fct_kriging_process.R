@@ -8,7 +8,12 @@
 
 removeSpatialDuplicated <- function(file, session = session) {
   completefile <- file
-  removedfile <- sp::remove.duplicates(file)
+  
+  if (inherits(file, "sf")) {
+    completefile <- sf::as_Spatial(completefile)
+  }
+  
+  removedfile <- sp::remove.duplicates(completefile)
   
   if (nrow(completefile) > nrow(removedfile)) {
     difRow <- nrow(completefile) - nrow(removedfile)
@@ -31,7 +36,12 @@ removeSpatialDuplicated <- function(file, session = session) {
     showNotification(mensajeElim ,
                      type = "default",
                      duration = 3,
+                     id = 'Notification_duplicated',
                      session = session)
+  }
+  
+  if (inherits(file, "sf")) {
+    removedfile <- sf::st_as_sf(removedfile)
   }
   removedfile
 }

@@ -412,3 +412,29 @@ make_action_button <- function(tag, inputId = NULL) {
 #'   
 #'   return(HTML(html))
 #' }
+
+
+
+
+#' Make a DownloadButton centered
+#'
+#' @param ns NameSpace from NS(id) funtion
+#' @param id to be placed inside ns function
+#' @param label
+#'
+#' @return downloadButtom centered
+#' @noRd
+#' 
+#' @examples
+#' btn_dwnd_centered("id", "label")
+#' 
+#' @importFrom shiny downloadButton div
+btn_dwnd_centered <- function(outputId, label, style = 'text-align: center; font-size:90%;') {
+  shiny::div(
+    style = "text-align: center",
+    shiny::downloadButton(outputId, 
+                          label,
+                          style = style)
+    
+  )
+}

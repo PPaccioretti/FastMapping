@@ -6,26 +6,40 @@
 #'
 #' @noRd 
 #'
-#' @importFrom shiny NS tagList 
+#' @importFrom shiny NS tagList
 mod_kriging_results_ui <- function(id) {
   ns <- NS(id)
   tagList(fluidRow(
     column(
       12 / 3,
+      # fluidRow(
       h4("Variogram Plot"),
-      shinycssloaders::withSpinner(plotOutput(ns("VariogramPlot")))
+      shinycssloaders::withSpinner(plotOutput(ns("VariogramPlot"))),
+      btn_dwnd_centered(ns("download_variogram_plot"), "Download Plot")
+      # )
     ),
+    
     column(
       12 / 3,
       h4("Predicted values"),
       shinycssloaders::withSpinner(plotOutput(ns("KrigingPlot"))),
-      downloadButton(ns("download_pred_tiff"), "Download Tif")
+      btn_dwnd_centered(ns("download_predicted_plot"), "Download Predicted Plot")
+      
+      # downloadButton(ns("download_pred_tiff"), "Download Tif")
     ),
     column(
       12 / 3,
       h4("Predicted variance values"),
-      shinycssloaders::withSpinner(plotOutput(ns("varKrigingPlot")))
-    )
+      shinycssloaders::withSpinner(plotOutput(ns("VarKrigingPlot"))),
+      btn_dwnd_centered(ns("download_variance_plot"), "Download Variance Plot")
+    ),
+    fluidRow(column(
+      12,
+      br(),
+      btn_dwnd_centered(ns("download_pred_tiff"),
+                        "Download Tif",
+                        style = 'text-align: center; font-size:100%;')
+    ))
   ))
 }
 
@@ -44,7 +58,8 @@ mod_kriging_results_server <- function(id,
       stars::st_as_stars(kriging())
     })
     
-    output$VariogramPlot <- renderPlot({
+    
+    variogramPlot <- reactive({
       req(variablesForVariogramPlot())
       mydata <- variablesForVariogramPlot()
       variogg <- ggplot2::ggplot(data = mydata$variogramline) +
@@ -61,7 +76,7 @@ mod_kriging_results_server <- function(id,
           y = -Inf,
           hjust = 1,
           vjust = -0.1,
-          size = 3
+          size = 4
         ) +
         ggplot2::scale_y_continuous(limits = c(0, NA)) +
         ggplot2::ggtitle("Experimental variogram and fitted variogram model")
@@ -69,7 +84,11 @@ mod_kriging_results_server <- function(id,
       variogg
     })
     
-    output$KrigingPlot <- renderPlot({
+    output$VariogramPlot <- renderPlot({
+      variogramPlot()
+    })
+    
+    krigingPlot <- reactive({
       req(kriging())
       req(kriging_plot())
       
@@ -79,25 +98,77 @@ mod_kriging_results_server <- function(id,
       zmax <- krigin_plot$max
       
       # if (is.na(zmin)) {
-        zmin <- min(kriging()$var1.pred, na.rm = T)
+      zmin <- min(kriging()$var1.pred, na.rm = T)
       # }
       # if (is.na(zmax)) {
-        zmax <- max(kriging()$var1.pred, na.rm = T)
+      zmax <- max(kriging()$var1.pred, na.rm = T)
       # }
-        ggplot2::ggplot() + 
-          stars::geom_stars(data = kriging(), 
-                            ggplot2::aes(fill = var1.pred, x = x, y = y)) +
-          ggplot2::scale_fill_gradientn(colours = grDevices::terrain.colors(20)) +
-          ggplot2::theme(legend.position = "bottom") +
-          ggplot2::guides(fill = ggplot2::guide_colourbar(
-            barwidth = 20, 
-            label.position = "bottom")) +
-          ggplot2::coord_equal()
-        
+      krigingPlot <- 
+      ggplot2::ggplot() + 
+        stars::geom_stars(data = kriging(), 
+                          ggplot2::aes(fill = var1.pred, x = x, y = y)) +
+        ggplot2::scale_fill_gradientn(colours = grDevices::terrain.colors(20),
+                                      na.value = "transparent") +
+        ggplot2::theme(legend.position = "bottom") +
+        ggplot2::guides(fill = ggplot2::guide_colourbar(
+          barwidth = 17, 
+          label.position = "bottom")) +
+        ggplot2::coord_equal()
+      krigingPlot
+      
     })
     
     
-    output$varKrigingPlot <- renderPlot({
+    output$KrigingPlot <- renderPlot({
+      req(krigingPlot())
+      krigingPlot()
+        
+    })
+    
+    #VariogramPlot download
+    output$download_variogram_plot <- downloadHandler(
+      filename = function() {
+        paste('VariogramPlot-', Sys.Date(), '.png', sep = '')
+      },
+      content = function(con) {
+        req(variogramPlot())
+        ggplot2::ggsave(con, plot = variogramPlot(), device = 'png')
+      }
+    )
+    #KrigingmPlot download
+    output$download_predicted_plot <- downloadHandler(
+      filename = function() {
+        paste('KrigingPlot-predicted-', Sys.Date(), '.png', sep = '')
+      },
+      content = function(con) {
+        req(krigingPlot())
+        ggplot2::ggsave(con, 
+                        plot = krigingPlot(), 
+                        width = 15,
+                        height = 15,
+                        units = "cm",
+                        device = 'png')
+      }
+    )
+    output$download_variance_plot <- downloadHandler(
+      filename = function() {
+        paste('KrigingPlot-variance-', Sys.Date(), '.png', sep = '')
+      },
+      content = function(con) {
+        req(varkrigingPlot())
+        ggplot2::ggsave(con, 
+                        plot = varkrigingPlot(), 
+                        width = 15,
+                        height = 15,
+                        units = "cm",
+                        device = 'png')
+      }
+    )
+    
+    
+    
+    varkrigingPlot <- reactive({
+      
       req(kriging())
       req(kriging_plot())
       
@@ -116,15 +187,24 @@ mod_kriging_results_server <- function(id,
       # # if (is.na(zmax_var)) {
       #   zmax_var <- max(kriging()$var1.var, na.rm = T)
       # }
-        ggplot2::ggplot() + 
-          stars::geom_stars(data = kriging(), 
-                            ggplot2::aes(fill = var1.var, x = x, y = y)) +
-          ggplot2::scale_fill_gradientn(colours = grDevices::cm.colors(20)) +
-          ggplot2::theme(legend.position = "bottom") +
-          ggplot2::guides(fill = ggplot2::guide_colourbar(
-            barwidth = 20, 
-            label.position = "bottom")) +
-          ggplot2::coord_equal()
+      ggplot2::ggplot() + 
+        stars::geom_stars(data = kriging(), 
+                          ggplot2::aes(fill = var1.var, x = x, y = y)) +
+        ggplot2::scale_fill_gradientn(colours = grDevices::cm.colors(20),
+                                      na.value = "transparent") +
+        ggplot2::theme(legend.position = "bottom") +
+        ggplot2::guides(fill = ggplot2::guide_colourbar(
+          barwidth = 17, 
+          label.position = "bottom")) +
+        ggplot2::coord_equal()
+      
+      
+    })
+    
+    output$VarKrigingPlot <- renderPlot({
+      req(varkrigingPlot())
+      
+      varkrigingPlot()
 
     })
     

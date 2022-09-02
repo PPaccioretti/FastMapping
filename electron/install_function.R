@@ -49,7 +49,7 @@ install_r_and_package <-
       electricShine::install_r(cran_like_url = cran_like_url,
                                app_root_path = app_root_path,
                                mac_url = mac_url,
-                               permission_to_install = permission_to_install_r)
+                               permission_to_install = TRUE)
       electricShine::trim_r(app_root_path = app_root_path)
     }
     
@@ -92,7 +92,7 @@ install_r_and_package <-
 #                          cran_like_url = "https://cran.r-project.org"
 # )
 
-
+options(timeout = 60 * 10)
 install_r_and_package(app_name = "FastMapping",
                       # product_name = "product_name",
                       # short_description = NULL,
@@ -102,7 +102,7 @@ install_r_and_package(app_name = "FastMapping",
                       cran_like_url = "http://cran.r-project.org",
                       # function_name = NULL,
                       git_host = "github",
-                      git_repo = "PPaccioretti/FastMapping@pkg",
+                      git_repo = "PPaccioretti/FastMapping",
                       package_install_opts = list(type = "binary",
                                                   dependencies = c("Depends", 
                                                                    "Imports")
@@ -112,7 +112,7 @@ install_r_and_package(app_name = "FastMapping",
                       # nodejs_path = file.path(system.file(package = "electricShine"),
                       #                         "nodejs"),
                       # nodejs_version = "v12.16.2",
-                      install_R = FALSE,
+                      install_R = TRUE,
                       mac_url = "https://mac.r-project.org/el-capitan/R-3.6-branch/R-3.6-branch-el-capitan-sa-x86_64.tar.gz")
 
 
