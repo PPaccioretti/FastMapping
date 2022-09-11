@@ -46,4 +46,22 @@ spatial_transformation <-
 
 test_latlong <- function(epsg) {
   suppressWarnings(sf::st_is_longlat(sf::st_crs(epsg)))
-}    
+}
+
+
+
+guess_utm <- function(data) {
+  # Adivina la zona UTM ----
+  long <- sf::st_coordinates(data)[, 'X']
+  ## Se calcula el quatile por si cae en dos zonas
+  zone <- quantile(floor((long + 180) / 6) + 1, 0.90)
+  
+  long <- sf::st_coordinates(data)[, 'Y']
+  hemisphere <- '7'
+  if (all(long > 0)) {
+    hemisphere <- '6'
+  }
+  
+  epsg <- as.numeric(paste0("32", hemisphere, zone))
+  epsg
+}

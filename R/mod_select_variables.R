@@ -113,21 +113,45 @@ mod_select_variables_server <-
           shinyjs::show('xDataset')
           shinyjs::show('yDataset')
           
-          shiny::updateSelectInput(
-            'xDataset',
-            choices = var_names(),
-            selected = var_names()[1],
-            session = session
+          # Try guess lat Column ----
+          posible_lat <- grep('(?i)lat|Y(?-i).*',
+                              var_names(),
+                              perl = TRUE)
+          if (length(posible_lat) == 1) {
+            lat_selected <- var_names()[posible_lat]
             
-          )
+          } else {
+            lat_selected <- NULL
+          }
           
           shiny::updateSelectInput(
             'yDataset',
             choices = var_names(),
-            selected = var_names()[2],
+            selected = lat_selected,
             session = session
             
           )
+          
+          # Try guess long Column ----
+          posible_long <- grep('(?i)long|X(?-i).*',
+                               var_names(),
+                               perl = TRUE)
+          
+          if (length(posible_lat)  == 1) {
+            long_selected <- var_names()[posible_long]
+          } else {
+            long_selected <- var_names()[1]
+          }
+          
+          shiny::updateSelectInput(
+            'xDataset',
+            choices = var_names(),
+            selected = long_selected,
+            session = session
+            
+          )
+          
+         
           
         }
       })

@@ -61,9 +61,12 @@ mod_spatial_transformation_server <-
           inputId = ns("epsg_orig"),
           session = session
         )
-        
+        epsg <- 32720
+        if (inherits(dataset(), 'sf')) {
+          epsg <- guess_utm(dataset())
+        }
         updateNumericInput(
-          value = NULL,
+          value = epsg,
           inputId = ns("epsg_tgt"),
           session = session
         )

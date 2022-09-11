@@ -165,7 +165,10 @@ golem_add_external_resources <- function() {
     # use_waiter(),
     shinyjs::useShinyjs(),
     waiter::useWaitress(),
-    tags$link(rel = "stylesheet", type = "text/css", href = "www/mycssstyles.css")
+    shiny::tags$script(
+      src = "https://www.googletagmanager.com/gtag/js?id=G-2XNDM9NJ7P",
+      async = ""
+    )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
     
