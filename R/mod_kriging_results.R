@@ -38,6 +38,10 @@ mod_kriging_results_ui <- function(id) {
       br(),
       btn_dwnd_centered(ns("download_pred_tiff"),
                         "Download Tif",
+                        style = 'text-align: center; font-size:100%;'),
+      br(),
+      btn_dwnd_centered(ns("download_pred_gpkg"),
+                        "Download vector data",
                         style = 'text-align: center; font-size:100%;')
     ))
   ))
@@ -203,17 +207,9 @@ mod_kriging_results_server <- function(id,
     
     output$VarKrigingPlot <- renderPlot({
       req(varkrigingPlot())
-      
       varkrigingPlot()
-
     })
     
-    # output$TiffPlot1 <- renderPlot({
-    #   validate(need(input$file, 'Check input file!'))
-    #   plot(raster_Pred(), col = terrain.colors(100))
-    #   
-    # }, width = 600, height = 600, res = 100)
-    # 
     
     #Descarga del GeoTiff
     output$download_pred_tiff <- downloadHandler(
@@ -227,8 +223,17 @@ mod_kriging_results_server <- function(id,
                            layer = attributes(Predicted_Tiff)$names)
       }
     )
-    
-    
+    #Descarga del archivo vectorial gpkg
+    output$download_pred_gpkg <- downloadHandler(
+      filename = function() {
+        paste('Map-', Sys.Date(), '.gpkg', sep = '')
+      },
+      content = function(con) {
+        Predicted_sf <- sf::as_sf(raster_Pred())
+        sf::write_sf(Predicted_sf, 
+                     con)
+      }
+    )
     
   })
 }
