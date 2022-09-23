@@ -51,19 +51,38 @@ mod_cluster_process_server <- function(id,
           myParam$distance, 
           cancelOutput = TRUE
           )
-
-      paar::kmspc(
-        dataset(),
-        variables = myParam$variables,
-        number_cluster =  myParam$number_cluster,
-        explainedVariance =  myParam$explainedVariance,
-        ldist = myParam$ldist,
-        udist = myParam$udist,
-        center = myParam$center,
-        fuzzyness = myParam$fuzzyness,
-        distance = myParam$distance,
-        zero.policy = myParam$zeroPolicy
-      )
+      kmspc_rep <- repeatable(paar::kmspc, seed = 169)
+      myResult <- tryCatch({
+        kmspc_rep(
+          dataset(),
+          variables = myParam$variables,
+          number_cluster =  myParam$number_cluster,
+          explainedVariance =  myParam$explainedVariance,
+          ldist = myParam$ldist,
+          udist = myParam$udist,
+          center = myParam$center,
+          fuzzyness = myParam$fuzzyness,
+          distance = myParam$distance,
+          zero.policy = myParam$zeroPolicy
+        )
+      }, error = function(e) {
+        if (grepl('Empty neighbour sets found', e)) {
+          message <- paste('Empty neighbour sets found,',
+                           'try with a bigger maximum value in',
+                           'Distance between neighbors')
+        } else {
+          message <- e
+        }
+        shiny::showNotification(message,
+                                duration = 15,
+                                closeButton = FALSE,
+                                type = 'error',
+                                session = session,
+                                id = 'errorKmsPC')
+        NULL
+       
+      })
+      myResult
     })
     
     

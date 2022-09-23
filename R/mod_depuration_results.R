@@ -11,30 +11,50 @@ mod_depuration_results_ui <- function(id) {
   ns <- NS(id)
   tagList(
     div(id = ns("noDepurated"),
-        p("No depuration process was made.")),
+        p("No depuration process was made.")
+    ),
     div(
       id = ns("yesDepurated"),
-      div(
-        style = "width: 400px; margin: auto;",
-        shinycssloaders::withSpinner(
-          DT::dataTableOutput(ns("summaryResults")))
-      ),
-      selectInput(
-        ns('colorplot'),
-        "Color by",
-        choices = NULL,
-        selected = NULL,
-        multiple = FALSE
-      ),
-      
       shinycssloaders::withSpinner(
-        plotly::plotlyOutput(ns("DepuratedPlot"))),
-      shinyjs::hidden(downloadButton(
-        ns("downloadDepurated_dep"), "Download depurated data"
-      )),
-      shinyjs::hidden(downloadButton(
-        ns("downloadDepurated_cond"), "Download data with finally condition"
-      )),
+        tagList(
+          splitLayout(
+            div(style = "width: 400px; margin: auto;",
+                DT::dataTableOutput(ns("summaryResults"))
+            ),
+            shinyjs::hidden(
+              div(style = "width: 90%; margin: auto;",
+                  id = ns("download_btns"),
+                  tagList(
+                    downloadButton(
+                      ns("downloadDepurated_dep"), 
+                      "Download depurated data"
+                    ),
+                    br(),
+                    br(),
+                    downloadButton(
+                      ns("downloadDepurated_cond"), 
+                      "Download data with finally condition"
+                    )
+                  )
+              )
+            )
+          ),
+          shinyjs::hidden(
+          selectInput(
+            ns('colorplot'),
+            "Color by",
+            choices = NULL,
+            selected = NULL,
+            multiple = FALSE
+          )
+          ),
+          
+          plotly::plotlyOutput(
+            ns("DepuratedPlot"),
+            width = "90%",
+            height = "500px")
+        )
+      )
     )
   )
 }
@@ -56,8 +76,9 @@ mod_depuration_results_server <- function(id,
         shinyjs::hide("noDepurated")
         # shinyjs::show("yesDepurated")
       } else {
-        shinyjs::hide("downloadDepurated_cond")
-        shinyjs::hide("downloadDepurated_dep")
+        shinyjs::hide("download_btns")
+        shinyjs::hide("colorplot")
+        
         shinyjs::show("noDepurated")
         shinyjs::hide("yesDepurated")
       }
@@ -65,10 +86,10 @@ mod_depuration_results_server <- function(id,
     
     observeEvent(dataset_withCond(), {
       req(dataset_withCond())
+      req(summaryres())
       shinyjs::show("yesDepurated")
-      shinyjs::show("downloadDepurated_cond")
-      shinyjs::show("downloadDepurated_dep")
-      
+      # shinyjs::show("download_btns")
+
       choices <- colnames(sf::st_drop_geometry(dataset_withCond()))
       hasCond <- agrepl("condition", choices)
       if (any(hasCond)) {
@@ -104,8 +125,18 @@ mod_depuration_results_server <- function(id,
       )
     ))
     
-    output$DepuratedPlot <- plotly::renderPlotly({
-      # build graph with ggplot syntax
+    makePlot <- reactive({
+      
+       on.exit({
+        shinyjs::show("download_btns", 
+                      anim = TRUE,
+                      animType = "fade")
+         
+         shinyjs::show("colorplot", 
+                       anim = TRUE,
+                       animType = "fade")
+      }, add = TRUE)
+      
       myDataset <- dataset_withCond()
       if (all(is.na(myDataset[[input$colorplot]]))) {
         myDataset[input$colorplot] <- "No Outlier"
@@ -117,12 +148,19 @@ mod_depuration_results_server <- function(id,
                              text = .data[[input$colorplot]])) +
         ggplot2::geom_sf()
       
-      plotly::ggplotly(p) %>%
-        plotly::layout(autosize = TRUE)
-     
+      plotly::ggplotly(p)
     })
     
+    output$DepuratedPlot <- plotly::renderPlotly({
+      # build graph with ggplot syntax
 
+     
+      makePlot() %>%
+        plotly::layout(autosize = TRUE)
+      
+    })
+    
+    
     
     output$downloadDepurated_cond <- downloadHandler(
       filename = function() {
@@ -155,9 +193,9 @@ mod_depuration_results_server <- function(id,
     
   })
 }
-    
+
 ## To be copied in the UI
 # mod_depuration_results_ui("depuration_results_ui_1")
-    
+
 ## To be copied in the server
 # mod_depuration_results_server("depuration_results_ui_1")

@@ -76,15 +76,16 @@ mod_kriging_process_server <- function(id,
       
       file <- sf::as_Spatial(file)
       myParam <- kriging_param()
-      
-      testMultipleModelsKrige(myFormulaReactored(),
-                              file,
-                              myParam$selectedModels,
-                              myParam$nmax, 
-                              myParam$nmin, 
-                              myParam$max_dist,
-                              myParam$cressie,
-                              session = session)
+      krige_cv <- repeatable(testMultipleModelsKrige, 
+                 seed = 169)
+      krige_cv(myFormulaReactored(),
+               file,
+               myParam$selectedModels,
+               myParam$nmax, 
+               myParam$nmin, 
+               myParam$max_dist,
+               myParam$cressie,
+               session = session)
       
     })
     

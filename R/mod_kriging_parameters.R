@@ -29,8 +29,9 @@ mod_kriging_parameters_ui <- function(id,
         h4("Select kriging method for spatial interpolation"),
         choices = list(
           "Ordinary" = 1,
-          "Universal Kriging (First Order)" = 2,
-          "Universal Kriging (Second Order)" = 3
+          "Universal Kriging" = 2
+          # "Universal Kriging (First Order)" = 2#,
+          # "Universal Kriging (Second Order)" = 3
         ),
         inline = F
       ),

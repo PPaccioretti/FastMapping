@@ -140,6 +140,7 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
         return_my_Hull <- FALSE
         my_dataset <- reactive(myPossibleBoundary)
       }
+      
       list(return_my_Hull = return_my_Hull,
            dataset = my_dataset)
     })
@@ -152,9 +153,25 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
         # req(is.logical(myBoundary_file()[['return_my_Hull']]))
         
         if (myBoundary_file()[["return_my_Hull"]]) {
+          
+
           return(myHull())
         } else {
-          return(myBoundary_file()[['dataset']]())
+          
+          #Check if boundary file has same crs than uploaded file
+          myBoundary <- myBoundary_file()[['dataset']]()
+          if (sf::st_crs(dataset()) != sf::st_crs(myBoundary)) {
+            showNotification(
+              'The crs of the boundary will be changed to match the crs of the file',
+              id = ns('msg-crs'),
+              type = "message",
+              session = session
+            )
+            
+            myBoundary <- sf::st_transform(myBoundary, 
+                                           sf::st_crs(dataset()))
+          }
+          return(myBoundary)
         }
 
       })
