@@ -61,7 +61,6 @@ testMultipleModelsKrige <- function(formula,
                value = 0,
                session = session,
                {
-                 
                  myformula <- stats::as.formula(formula)
                  myDataNoDup <- removeSpatialDuplicated(file, 
                                                         session = session)
@@ -95,8 +94,28 @@ testMultipleModelsKrige <- function(formula,
                        miscFitOptions = list(cressie = cressie)
                      )
                    },
-                   error = function(e)
-                     print(e))
+                   error = function(e) {
+                     if (agrepl("attempt to select less than one element in get1index",
+                            e$message)) {
+                       error_msg <- paste0('Error during cross validation in model ',
+                                          model, '. To fix this, You can try ',
+                                          'depurating your data befor doing interpolation, ',
+                                          'or you can remove this model.'
+                                          )
+                       
+                       showNotification(error_msg ,
+                                        type = "error",
+                                        duration = 15,
+                                        id = 'Notification_error',
+                                        session = session)
+                       
+                       NULL
+                     }
+                     
+                     
+                     
+                     })
+                  
                    
                    MyMod[[model]] = MyAK
                    incProgress(1 / length(modelsSelected),
@@ -135,7 +154,7 @@ testMultipleModelsKrige <- function(formula,
                      }
                    )})
                  modelsTested = do.call("cbind", ModList)
-                 colnames(modelsTested) = modelsSelected
+                 colnames(modelsTested) = names(ModList)
                  # ValoresOutput$MiKrige <- modelsTested
                  return(modelsTested)
                })

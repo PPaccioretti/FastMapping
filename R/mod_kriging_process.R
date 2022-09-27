@@ -26,10 +26,10 @@ mod_kriging_process_server <- function(id,
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
-    myFormulaReactored <- reactive({
+    myFormulaRefactored <- reactive({
       req(dataset())
       req(kriging_param())
-      # browser()
+
       file <- dataset()
       file <- sf::as_Spatial(file)
       
@@ -61,7 +61,6 @@ mod_kriging_process_server <- function(id,
       req(dataset())
       req(kriging_param())
 
-      
       id <-
         showNotification(loadingText("Searching for the best model..."),
                          duration = NULL,
@@ -78,7 +77,7 @@ mod_kriging_process_server <- function(id,
       myParam <- kriging_param()
       krige_cv <- repeatable(testMultipleModelsKrige, 
                  seed = 169)
-      krige_cv(myFormulaReactored(),
+      krige_cv(myFormulaRefactored(),
                file,
                myParam$selectedModels,
                myParam$nmax, 
@@ -180,7 +179,7 @@ mod_kriging_process_server <- function(id,
       
       varioagramModel <- 
         automap::autofitVariogram(
-          myFormulaReactored(),
+          myFormulaRefactored(),
           file,
           model = MejorModelo(),
           cutoff = 10000,
@@ -227,7 +226,7 @@ mod_kriging_process_server <- function(id,
       Modelo <- MejorModelo()
 
       gstat::krige(
-        formula = myParam$formula, #myParam$formula, #myFormulaReactored(),
+        formula = myParam$formula, #myParam$formula, #myFormulaRefactored(),
         locations = file,
         newdata = Mygr,
         variogram()$var_model,
