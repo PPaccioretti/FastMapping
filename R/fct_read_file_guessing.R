@@ -13,7 +13,6 @@ read_file_guessing <- function(datapath, name, session = session) {
   
   # datapath <- upload$datapath
   # name <- upload$name
-  
   ext <- tolower(tools::file_ext(datapath))
   
   if (length(ext) > 1 &
@@ -84,13 +83,18 @@ read_file_guessing <- function(datapath, name, session = session) {
       if (length(ext) > 1) {
         suppressWarnings(from <- normalizePath(datapath))
         to <- file.path(dirname(from), basename(name))
-        to <- normalizePath(to)
+        suppressWarnings(to <- normalizePath(to))
         file.rename(from, to)
-        sf::read_sf(unique(dirname(from)), 
-                    as_tibble = FALSE)
+        myData_sf <- sf::read_sf(unique(dirname(from)), 
+                                 as_tibble = FALSE)
+        myData_sf <- sf::st_zm(myData_sf)
+        myData_sf
       } else {
-        sf::read_sf(datapath, 
-                    as_tibble = FALSE)
+        myData_sf <- sf::read_sf(datapath, 
+                                 as_tibble = FALSE)
+        
+        myData_sf <- sf::st_zm(myData_sf)
+        myData_sf
       }
     },
     error = function(e) {

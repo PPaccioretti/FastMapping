@@ -95,7 +95,6 @@ mod_select_variables_server <-
         # )
         # ### END INITIAL STATE
         
-        
         if (!onlyCoords) {
           shinyjs::show('targetVariable')
           possibleTargetVariables <-
@@ -160,7 +159,7 @@ mod_select_variables_server <-
                      input$yDataset != 0 |
                      inherits(dataset(), "sf"),
                    {
-                     !inherits(dataset(), "sf")
+                     # !inherits(dataset(), "sf")
                      # is/are null x and/or y
                      # and is not sf
                      #or x and y are the same and

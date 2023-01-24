@@ -29,6 +29,7 @@ spatial_transformation <-
       }
       
       if (is.na(sf::st_crs(dataset))) {
+        dataset <- sf::st_zm(dataset)
         dataset <- sf::st_crs(dataset, orign_epsg)
       }
     }

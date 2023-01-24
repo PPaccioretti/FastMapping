@@ -99,7 +99,6 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
                     dataset = reactive(dataset())))
       } 
       shinyjs::hide("concave_hull_content")
-      # browser()
       if (isTRUE(input$hasfile)) {
         
         if (inherits(try(myData(), silent = TRUE), "try-error")) {

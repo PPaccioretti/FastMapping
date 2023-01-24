@@ -6,64 +6,73 @@
 #'
 #' @noRd 
 #'
-#' @importFrom shiny NS tagList 
+#' @importFrom shiny NS tagList
+#' @importFrom magrittr %>%
 mod_cluster_results_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    fluidRow(
-      column(
-        width = 8,
-        shinycssloaders::withSpinner(plotly::plotlyOutput(ns(
-          "GraficoIndicesConglo"
-        )))
-      )#,
-      # column(width = 4,
-      #        shinycssloaders::withSpinner(plotOutput(
-      #          ns("corrPlotClasif")
-      #        )))
+    div(id = ns("noClustered"),
+        p("No cluster process was made.")
     ),
-    fluidRow(column(width = 8,
-                    DT::dataTableOutput(
-                      ns("TablaIndicesConglo")
-                    ))),
-    fluidRow(
-      column(width = 4,
-             downloadButton(
-               ns("downloadClasification"), "Download Clasification"
-             ))
-    )#,
-    
-    
-    # fluidPage(fluidRow(
-    #   column(width = 12 / 4,
-    #          selectInput(ns('NumClust'),
-    #                      'Clusters',
-    #                      choices = NULL,
-    #                      selected = NULL)#SelectBestCluster()
-    #          # ListaChoices <-
-    #            # colnames(Clasificacion()$DatosConCongl)[!colnames(Clasificacion()$DatosConCongl) %in% c(input$xmapa, input$ymapa)]
-    #      ),
-    #   column(width = 12 - 12 / 4,
-    #          fluidPage(
-    #            shinycssloaders::withSpinner(plotly::plotlyOutput(ns(
-    #              'ClasificationPlot'
-    #            ),
-    #            height = "600px"))
-    #          ))
-    # ),
-    # fluidRow(column(
-    #   width = 12,
-    #   fluidPage(shinycssloaders::withSpinner(plotOutput(
-    #     ns('ClasifMatrCorr')
-    #   )))
-    # )))
-
-    # ,shinycssloaders::withSpinner(uiOutput(ns("clustervalidationTables")))
-    
+    div(
+      id = ns("yesClustered"),
+      tagList(
+        fluidRow(
+          h5("Statistical Indices"),
+          column(
+            width = 8,
+            shinycssloaders::withSpinner(plotly::plotlyOutput(ns(
+              "GraficoIndicesConglo"
+            )))
+          )#,
+          # column(width = 4,
+          #        shinycssloaders::withSpinner(plotOutput(
+          #          ns("corrPlotClasif")
+          #        )))
+        ),
+        fluidRow(column(width = 8,
+                        DT::dataTableOutput(
+                          ns("TablaIndicesConglo")
+                        ))),
+        fluidRow(
+          column(width = 4,
+                 downloadButton(
+                   ns("downloadClasification"), "Download Clasification"
+                 ))
+        )#,
+        
+        
+        # fluidPage(fluidRow(
+        #   column(width = 12 / 4,
+        #          selectInput(ns('NumClust'),
+        #                      'Clusters',
+        #                      choices = NULL,
+        #                      selected = NULL)#SelectBestCluster()
+        #          # ListaChoices <-
+        #            # colnames(Clasificacion()$DatosConCongl)[!colnames(Clasificacion()$DatosConCongl) %in% c(input$xmapa, input$ymapa)]
+        #      ),
+        #   column(width = 12 - 12 / 4,
+        #          fluidPage(
+        #            shinycssloaders::withSpinner(plotly::plotlyOutput(ns(
+        #              'ClasificationPlot'
+        #            ),
+        #            height = "600px"))
+        #          ))
+        # ),
+        # fluidRow(column(
+        #   width = 12,
+        #   fluidPage(shinycssloaders::withSpinner(plotOutput(
+        #     ns('ClasifMatrCorr')
+        #   )))
+        # )))
+        
+        # ,shinycssloaders::withSpinner(uiOutput(ns("clustervalidationTables")))
+        
+      )
+    )
   )
-  
 }
-    
+
 #' cluster_results Server Functions
 #'
 #' @noRd 
@@ -77,6 +86,21 @@ mod_cluster_results_server <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
  
+    myEvent <- bindEvent( reactive({
+      clusterResults()
+      variablesUsed()
+      data_and_cluster()
+    }), {
+      myRes <- try(clusterResults(), silent = T)
+      if (inherits(myRes, "try-error")) {
+        shinyjs::show("noClustered")
+        shinyjs::hide("yesClustered")
+      } else {
+        shinyjs::hide("noClustered")
+      }
+    }, ignoreNULL = FALSE)
+    
+    
     indices <- reactive({
       clusterResults()$indices
     })
@@ -86,6 +110,7 @@ mod_cluster_results_server <- function(id,
     })
     
     output$GraficoIndicesConglo <- plotly::renderPlotly({
+      myEvent()
       req(indices())
       indicesClust <- indices()
       dataIndicConglWide <-

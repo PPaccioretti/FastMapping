@@ -1,4 +1,5 @@
-
+# install.packages("remotes")
+# remotes::install_github("chasemc/electricShine")
 install_r_and_package <-
   function(app_name = NULL,
             # product_name = "product_name",
@@ -112,7 +113,7 @@ install_r_and_package(app_name = "FastMapping",
                       # nodejs_path = file.path(system.file(package = "electricShine"),
                       #                         "nodejs"),
                       # nodejs_version = "v12.16.2",
-                      install_R = FALSE,
+                      install_R = TRUE,
                       mac_url = "https://mac.r-project.org/el-capitan/R-3.6-branch/R-3.6-branch-el-capitan-sa-x86_64.tar.gz")
 
 

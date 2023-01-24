@@ -9,42 +9,49 @@
 #' @importFrom shiny NS tagList
 mod_kriging_results_ui <- function(id) {
   ns <- NS(id)
-  tagList(fluidRow(
-    column(
-      12 / 3,
-      # fluidRow(
-      h4("Variogram Plot"),
-      shinycssloaders::withSpinner(plotOutput(ns("VariogramPlot"))),
-      btn_dwnd_centered(ns("download_variogram_plot"), "Download Plot")
-      # )
-    ),
-    
-    column(
-      12 / 3,
-      h4("Predicted values"),
-      shinycssloaders::withSpinner(plotOutput(ns("KrigingPlot"))),
-      btn_dwnd_centered(ns("download_predicted_plot"), "Download Predicted Plot")
-      
-      # downloadButton(ns("download_pred_tiff"), "Download Tif")
-    ),
-    column(
-      12 / 3,
-      h4("Predicted variance values"),
-      shinycssloaders::withSpinner(plotOutput(ns("VarKrigingPlot"))),
-      btn_dwnd_centered(ns("download_variance_plot"), "Download Variance Plot")
-    ),
-    fluidRow(column(
-      12,
-      br(),
-      btn_dwnd_centered(ns("download_pred_tiff"),
-                        "Download Tif",
-                        style = 'text-align: center; font-size:100%;'),
-      br(),
-      btn_dwnd_centered(ns("download_pred_gpkg"),
-                        "Download vector data",
-                        style = 'text-align: center; font-size:100%;')
-    ))
-  ))
+  tagList(div(id = ns("noInterpolated"),
+              p("No interpolation process was made.")),
+          div(
+            id = ns("yesInterpolated"),
+            shinycssloaders::withSpinner(tagList(
+              fluidRow(
+                column(
+                  12 / 3,
+                  # fluidRow(
+                  h4("Variogram Plot"),
+                  shinycssloaders::withSpinner(plotOutput(ns("VariogramPlot"))),
+                  btn_dwnd_centered(ns("download_variogram_plot"), "Download Plot")
+                  # )
+                ),
+                
+                column(
+                  12 / 3,
+                  h4("Predicted values"),
+                  shinycssloaders::withSpinner(plotOutput(ns("KrigingPlot"))),
+                  btn_dwnd_centered(ns("download_predicted_plot"), "Download Predicted Plot")
+                  
+                  # downloadButton(ns("download_pred_tiff"), "Download Tif")
+                ),
+                column(
+                  12 / 3,
+                  h4("Predicted variance values"),
+                  shinycssloaders::withSpinner(plotOutput(ns("VarKrigingPlot"))),
+                  btn_dwnd_centered(ns("download_variance_plot"), "Download Variance Plot")
+                ),
+                fluidRow(column(
+                  12,
+                  br(),
+                  btn_dwnd_centered(ns("download_pred_tiff"),
+                                    "Download Tif",
+                                    style = 'text-align: center; font-size:100%;'),
+                  br(),
+                  btn_dwnd_centered(ns("download_pred_gpkg"),
+                                    "Download vector data",
+                                    style = 'text-align: center; font-size:100%;')
+                ))
+              )
+            ))
+          ))
 }
 
 #' kriging_results Server Functions
@@ -58,12 +65,30 @@ mod_kriging_results_server <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    myEvent <- bindEvent( reactive({
+      variablesForVariogramPlot()
+      kriging()
+      kriging_plot()
+      variogram()
+      }), {
+      myRes <- try(kriging(), silent = T)
+      if (inherits(myRes, "try-error")) {
+        shinyjs::show("noInterpolated")
+        shinyjs::hide("yesInterpolated")
+      } else {
+        shinyjs::hide("noInterpolated")
+      }
+    }, ignoreNULL = FALSE)
+    
+    
     raster_Pred <- reactive({ 
       stars::st_as_stars(kriging())
     })
     
     
+    
     variogramPlot <- reactive({
+      myEvent()
       req(variablesForVariogramPlot())
       mydata <- variablesForVariogramPlot()
       variogg <- ggplot2::ggplot(data = mydata$variogramline) +
@@ -93,6 +118,7 @@ mod_kriging_results_server <- function(id,
     })
     
     krigingPlot <- reactive({
+      myEvent()
       req(kriging())
       req(kriging_plot())
       

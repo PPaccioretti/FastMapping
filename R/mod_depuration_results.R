@@ -7,6 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
+#' @importFrom magrittr %>%
 mod_depuration_results_ui <- function(id) {
   ns <- NS(id)
   tagList(

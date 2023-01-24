@@ -41,7 +41,7 @@ mod_depuration_process_server <-
         on.exit(removeNotification(id), add = TRUE)
         
         myParam <- dep_param()
-        myBoundary <- myBoundary()
+        myBoundary <- sf::st_zm(myBoundary())
         dataset <- dataset()
         targetVar <- targetVar()
         tryCatch({
@@ -60,7 +60,9 @@ mod_depuration_process_server <-
             poly_border = myBoundary
           )
         }, error = function(e) {
+          errorCatched <- FALSE
           if (agrepl("try modifying the ldist or udist values", e)) {
+            errorCatched <- TRUE
             showNotification(
               paste(
                 "Something went wrong while depurating.",
@@ -69,6 +71,43 @@ mod_depuration_process_server <-
                              closeButton = FALSE,
                              type = "error")
           }
+  
+          if (agrepl("'buffer' value (...) is higher than all polygons border lengths", e)) {
+            errorCatched <- TRUE
+            showNotification(
+              paste(
+                "Something went wrong while depurating.",
+                "Try modifying 'buffer' due to is smaller than all polygons border lengths.",
+                "Maybe select a 'buffer' value more closser to 0"),
+              duration = 10,
+              closeButton = FALSE,
+              type = "error")
+          }
+
+          if (agrepl("spdep::dnearneigh(x, ldist, udist) : Point geometries required", e)) {
+            errorCatched <- TRUE
+            showNotification(
+              paste(
+                "Something went wrong while depurating.",
+                "Point geometries required for depuration.",
+                "Try uploading a file with points and not polygons as geometries."),
+              duration = 10,
+              closeButton = FALSE,
+              type = "error")
+          }
+          
+          if (!errorCatched) {
+            errorCatched <- FALSE
+            showNotification(
+              paste(
+                "Something went wrong while depurating.",
+                "Check data and parameters specified",
+                "The error was:", e),
+              duration = 10,
+              closeButton = FALSE,
+              type = "error")
+          }
+          
           NULL
         })
        

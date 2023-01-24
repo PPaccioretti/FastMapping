@@ -107,7 +107,7 @@ app_ui <- function(request) {
           bslib::nav(
             title = "Cluster Results",
             value = "navclustresults",
-            mainPanel(h5("Statistical Indices"),
+            mainPanel(#h5("Statistical Indices"),
                       mod_cluster_process_ui("cluster_precess"),
                       mod_cluster_results_ui("cluster_results"), 
                       width = 12

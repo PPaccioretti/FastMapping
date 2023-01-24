@@ -7,6 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
+#' @importFrom magrittr %>%
 mod_kriging_process_ui <- function(id){
   ns <- NS(id)
   tagList(
@@ -68,6 +69,7 @@ mod_kriging_process_server <- function(id,
       on.exit(removeNotification(id), add = TRUE)
       
       file <- dataset()
+      file <- sf::st_zm(file)
       
       if (nrow(file) > 20000) {
         file <- file[sample(nrow(file), 20000), ]
@@ -171,6 +173,7 @@ mod_kriging_process_server <- function(id,
       # req(MejorModelo())
 
       file <- dataset()
+      file <- sf::st_zm(file)
       file <- sf::as_Spatial(file)
       
       
@@ -196,6 +199,7 @@ mod_kriging_process_server <- function(id,
       req(boundary_poly())
 
       file <- dataset()
+      file <- sf::st_zm(file)
       myParam <- kriging_param()
       
       sf::st_bbox(boundary_poly()) %>%
@@ -208,7 +212,6 @@ mod_kriging_process_server <- function(id,
       req(dataset())
       req(kriging_param())
       req(Mygr())
-      
 
       id <-
         showNotification(loadingText("Interpolating..."),
@@ -217,6 +220,7 @@ mod_kriging_process_server <- function(id,
       on.exit(removeNotification(id), add = TRUE)
       
       file <- dataset()
+      file <- sf::st_zm(file)
       file <- removeSpatialDuplicated(file, session = session)
       coords <- sf::st_coordinates(file)
       colnames(coords) <- c('x', 'y')

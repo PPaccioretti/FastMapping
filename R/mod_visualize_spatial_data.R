@@ -7,7 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-#'
+#' @importFrom magrittr %>%
 mod_visualize_spatial_data_ui <-
   function(id,
            lblToPlot = "Variable to plot",
@@ -56,7 +56,6 @@ mod_visualize_spatial_data_server <-
     data <- reactive({
       req(inherits(dataset(), "sf"))
       df_sf <- sf::st_transform(dataset(), 4326)
-
       if (nrow(df_sf) > maxMarkerToShow() & not_null(maxMarkerToShow())) {
             showNotification(
               paste0(
@@ -144,16 +143,17 @@ mod_visualize_spatial_data_server <-
     })
 
     observeEvent(input$goDataset, {
+      req(data())
       bbox <- req(as.vector(sf::st_bbox(data())))
       
       myMap <- leaflet::leafletProxy("mylfltmap", session)
-      if (nrow(data()) < 3000) {
+      # if (nrow(data()) < 3000) {
         myMap %>% 
-          leaflet::flyToBounds(bbox[1], bbox[2],bbox[3],bbox[4])
-      } else {
-        myMap %>% 
-        leaflet::fitBounds(bbox[1], bbox[2],bbox[3],bbox[4])
-      }
+          leaflet::flyToBounds(bbox[1], bbox[2], bbox[3], bbox[4])
+      # } else {
+      #   myMap %>% 
+      #   leaflet::fitBounds(bbox[1], bbox[2],bbox[3],bbox[4])
+      # }
      
       
        
@@ -161,7 +161,8 @@ mod_visualize_spatial_data_server <-
     # 
     observeEvent(input$varToPlot, {
       req(data())
-      req(input$varToPlot, cancelOutput = TRUE)
+      # req(input$varToPlot, cancelOutput = TRUE)
+      req(input$varToPlot)
       df_sf <- data()
 
       MyMap <- leaflet::leafletProxy("mylfltmap", session)
@@ -169,14 +170,17 @@ mod_visualize_spatial_data_server <-
 
       for (i in input$varToPlot) {
         myTgtVct <- df_sf[[i]]
-
-        if (is.numeric(myTgtVct)) {
+        req(myTgtVct)
+        if (i == "") break
+        myCol <- NULL
+        if (is.numeric(myTgtVct) & !is.null(myTgtVct)) {
           myTgtVctrnd <- formatC(myTgtVct, format = "f")
           myPal <-
             sample(c("viridis", "magma", "inferno", "plasma"), 1)
           pal <- leaflet::colorNumeric(myPal, myTgtVct)
           myCol <- pal(myTgtVct)
-        } else {
+        } 
+        if (!is.numeric(myTgtVct) & !is.null(myTgtVct)) {
           myTgtVctrnd <- myTgtVct
           myPal <- sample(c("RdYlBu", "Blues"), 1)
           pal <- leaflet::colorFactor(myPal, myTgtVct)
@@ -187,24 +191,45 @@ mod_visualize_spatial_data_server <-
 
         MyMap <-
           MyMap %>%
+          leaflet::clearControls()
+        
+        if (has_sf_points(df_sf)) {
+          MyMap <-
+            MyMap %>%
+            leaflet::addCircleMarkers(
+              data = select_sf_points(df_sf),
+              color = myCol,
+              label = myTgtVctrnd,
+              labelOptions = leaflet::labelOptions(direction = "top"),
+              group = i,
+              stroke = FALSE,
+              fillOpacity = 0.7
+            )
+        }
+        if (has_sf_polygon(df_sf)) {
+          MyMap <-
+            MyMap %>%
+            leaflet::addPolygons(
+              data = select_sf_polygon(df_sf),
+              color = myCol,
+              label = myTgtVctrnd,
+              labelOptions = leaflet::labelOptions(direction = "top"),
+              group = i,
+              stroke = FALSE,
+              fillOpacity = 0.7
+            )
+        }
+        MyMap <-
+          MyMap %>%
           leaflet::clearControls() %>%
-          leaflet::addCircleMarkers(
-            data = df_sf,
-            color = myCol,
-            label = myTgtVctrnd,
-            labelOptions = leaflet::labelOptions(direction = "top"),
-            group = i,
-            stroke = FALSE,
-            fillOpacity = 0.7
-          ) %>%
           leaflet::addLegend(
             pal = pal,
             values = myTgtVct,
             title = i,
             opacity = 1.0
           )
+        
       }
-      #
       tryCatch({
         MyMap %>%
           leaflet::addLayersControl(
@@ -230,14 +255,15 @@ mod_visualize_spatial_data_server <-
         )
         return()
       })
-
     })
 
     observeEvent(poly(), {
-      req(poly())
+      req(poly(), cancelOutput = TRUE)
       req(inherits(poly(), "sf"))
-      poly <- sf::st_transform(poly(), 4326)
+      
+      poly <- sf::st_zm(sf::st_transform(poly(), 4326))
       bbox <- as.vector(sf::st_bbox(poly))
+      req(bbox)
 
       leaflet::leafletProxy("mylfltmap", session) %>%
         leaflet::clearGroup("Boundary") %>%
@@ -248,7 +274,8 @@ mod_visualize_spatial_data_server <-
           weight = 4,
           smoothFactor = 0.5,
           opacity = 1.0,
-          fillOpacity = 0
+          fillOpacity = 0,
+          options = leaflet::pathOptions()
         ) %>%
         leaflet::addLayersControl(
           baseGroups = c("OSM", "Satellite", "Topographic Map"),
@@ -257,8 +284,7 @@ mod_visualize_spatial_data_server <-
           position = "topleft"
         ) %>%
         leaflet::flyToBounds(bbox[1], bbox[2],bbox[3],bbox[4])
-
-    })
+    }, ignoreInit = TRUE )
 
   })
 }

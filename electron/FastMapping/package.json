@@ -34,13 +34,13 @@
     "pree2e": "webpack --config=build/webpack.app.config.js --env=test && webpack --config=build/webpack.e2e.config.js --env=test",
     "e2e": "mocha temp/e2e.js --require source-map-support/register",
     "test": "npm run unit && npm run e2e",
-    "start": "node build/start.js",
+    "start": "node --openssl-legacy-provider build/start.js",
     "release": "npm test && webpack --config=build/webpack.app.config.js --env=production && electron-builder"
   },
   "dependencies": {
-    "fs-jetpack": "4.1.0",
     "electron-log": "4.3.1",
-    "execa": "5.0.0"
+    "execa": "5.0.0",
+    "fs-jetpack": "4.1.0"
   },
   "devDependencies": {
     "@babel/core": "7.12.10",
@@ -55,11 +55,11 @@
     "friendly-errors-webpack-plugin": "1.7.0",
     "mocha": "8.2.1",
     "source-map-support": "0.5.19",
-    "webpack": "5.11.1",
     "spectron": "13.0.0",
+    "style-loader": "2.0.0",
+    "webpack": "5.11.1",
     "webpack-cli": "4.3.1",
     "webpack-merge": "5.7.3",
-    "style-loader": "2.0.0",
     "webpack-node-externals": "2.5.2"
   }
 }
