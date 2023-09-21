@@ -26,7 +26,6 @@ app_server <- function(input, output, session) {
   
   observeEvent(myVariables$tgtvariable(), {
     tgtVarlgth <- length(myVariables$tgtvariable())
-    
     if (tgtVarlgth >= 1) {
       shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
       shinyjs::show(selector = '#navbar li a[data-value="navallparam"]')

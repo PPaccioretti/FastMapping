@@ -14,7 +14,7 @@ app_ui <- function(request) {
       title = "FastMapping",
       id = "navbar",
       theme = bslib::bs_theme(bootswatch = "united"),
-      bslib::nav(
+      bslib::nav_panel(
         title = "",
         icon = icon("house"),
         value = "navhome",
@@ -24,12 +24,12 @@ app_ui <- function(request) {
           )
       ),
       
-      bslib::nav(
+      bslib::nav_panel(
         title = "Data preparation",
         value = "navdataprep",
-        bslib::navs_pill(
+        bslib::navset_pill(
           id = "navdata",
-          bslib::nav(
+          bslib::nav_panel(
             title = "Dataset",
             value = "navdataset",
             sidebarLayout(
@@ -43,7 +43,7 @@ app_ui <- function(request) {
                 mod_visualize_spatial_data_ui("mymap")
               )
             )),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Boundary",
             value = "navboundary",
             sidebarLayout(
@@ -56,24 +56,24 @@ app_ui <- function(request) {
         )
       ),
 
-      bslib::nav(
+      bslib::nav_panel(
         title = "Parameters Specification",
         value = "navallparam",
         
-        bslib::navs_pill(
+        bslib::navset_pill(
           id = "navparam",
-          bslib::nav(
+          bslib::nav_panel(
             title = "Depuration Parameters",
             value = "navdepparam",
             mainPanel(mod_depuration_parameters_ui("depuration_param"), width = 12
                       )
           ),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Kriging Parameters",
             value = "navkrigparam",
             mainPanel(mod_kriging_parameters_ui("kriging_param"), width = 12)
           ),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Cluster Parameters",
             value = "navclustparam",
             mainPanel(mod_cluster_parameters_ui("cluster_param"), width = 12)
@@ -81,12 +81,12 @@ app_ui <- function(request) {
           
         )
       ),
-      bslib::nav(
+      bslib::nav_panel(
         title = "Analysis Results",
         value = "navanalyresults",
-        bslib::navs_pill( 
+        bslib::navset_pill( 
           id = "navresult",
-          bslib::nav(
+          bslib::nav_panel(
             title = "Depuration Results",
             value = "navdepresults",
             mainPanel(
@@ -95,7 +95,7 @@ app_ui <- function(request) {
               width = 12
               )
           ),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Kriging Results",
             value = "navkrigresults",
             mainPanel(
@@ -104,7 +104,7 @@ app_ui <- function(request) {
               width = 12
             )
           ),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Cluster Results",
             value = "navclustresults",
             mainPanel(#h5("Statistical Indices"),
@@ -116,7 +116,7 @@ app_ui <- function(request) {
           bslib::nav_menu(
             title = "Zone Validation",
             value = "navzoneval",
-            bslib::nav(
+            bslib::nav_panel(
               title = "Zone Compare Parameters",
               value = "navzonecompparam",
               mainPanel(mod_zoneCompare_parameters_ui("zone_param"),
@@ -127,7 +127,7 @@ app_ui <- function(request) {
                         ), width = 12)
             ),
             
-            bslib::nav(
+            bslib::nav_panel(
               title = "Zone Compare Results",
               value = "navzonecompresults",
               mainPanel(

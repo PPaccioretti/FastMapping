@@ -46,8 +46,8 @@ mod_concave_hull_server <- function(id, dataset){
     reactive({
       req(dataset())
       req(inherits(dataset(), "sf"))
-      # req(input$concavity)
-      # req(input$length_threshold)
+      req(input$concavity)
+      req(input$length_threshold)
       
     # try({
         myData <- sf::st_zm(dataset()) 

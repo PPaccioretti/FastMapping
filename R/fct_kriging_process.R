@@ -7,14 +7,20 @@
 #' @noRd
 
 removeSpatialDuplicated <- function(file, session = session) {
+  req(file)
+  req(inherits(file, "sf"))
   completefile <- file
   
-  if (inherits(file, "sf")) {
-    completefile <- sf::as_Spatial(completefile)
-  }
-  
-  removedfile <- sp::remove.duplicates(completefile)
-  
+  # if (inherits(file, "sf")) {
+    # completefile <- sf::as_Spatial(completefile)
+  # }
+  my_name <- attr(completefile, "sf_column")
+   
+  # removedfile <- sp::remove.duplicates(completefile)
+  removedfile <-
+    dplyr::distinct(completefile, 
+                    .data[[my_name]], 
+                    .keep_all = TRUE)
   if (nrow(completefile) > nrow(removedfile)) {
     difRow <- nrow(completefile) - nrow(removedfile)
     if (difRow == 1) {
@@ -40,9 +46,9 @@ removeSpatialDuplicated <- function(file, session = session) {
                      session = session)
   }
   
-  if (inherits(file, "sf")) {
-    removedfile <- sf::st_as_sf(removedfile)
-  }
+  # if (inherits(file, "sf")) {
+    # removedfile <- sf::st_as_sf(removedfile)
+  # }
   removedfile
 }
 

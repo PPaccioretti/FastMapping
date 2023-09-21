@@ -31,7 +31,6 @@ Imports:
     shinyBS,
     shinycssloaders,
     shinyjs,
-    sp,
     stars,
     waiter
 Encoding: UTF-8

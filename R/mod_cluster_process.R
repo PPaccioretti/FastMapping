@@ -92,7 +92,7 @@ mod_cluster_process_server <- function(id,
 
       clusterResults <- clusterResults()
       clusterResults <- clusterResults$cluster
-
+      req(nrow(dataset()) == nrow(clusterResults))
       cbind(dataset(), clusterResults)
     })
     

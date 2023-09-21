@@ -41,6 +41,19 @@ mod_upload_file_server <- function(id) {
                          duration = NULL,
                          closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
+      shinyjs::reset("navbar")
+
+      shinyjs::reset("navdata")
+      shinyjs::reset("navboundary")
+
+      shinyjs::reset("navparam")
+      shinyjs::reset("navdepparam")
+      shinyjs::reset("navkrigparam")
+
+      shinyjs::reset("navresult")
+      shinyjs::reset("navdepresults")
+      shinyjs::reset("navkrigresults")
+      
       myTable <- read_file_guessing(input$database_upload$datapath,
                                     input$database_upload$name)
       myTable
