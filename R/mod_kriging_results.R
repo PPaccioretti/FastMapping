@@ -255,7 +255,7 @@ mod_kriging_results_server <- function(id,
         paste('Map-', Sys.Date(), '.gpkg', sep = '')
       },
       content = function(con) {
-        Predicted_sf <- sf::as_sf(raster_Pred())
+        Predicted_sf <- sf::st_as_sf(raster_Pred())
         sf::write_sf(Predicted_sf, 
                      con)
       }
