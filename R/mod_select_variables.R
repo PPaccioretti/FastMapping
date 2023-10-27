@@ -51,7 +51,6 @@ mod_select_variables_server <-
            filter = is.numeric,
            onlyCoords = FALSE) {
     stopifnot(is.logical(onlyCoords))
-    # req(dataset, cancelOutput = TRUE)
     stopifnot(is.reactive(dataset))
     
     moduleServer(id, function(input, output, session) {
@@ -68,6 +67,7 @@ mod_select_variables_server <-
       shiny::observeEvent(dataset(), {
         # ### INITIAL STATE
         # ## reset if dataset changed
+        ## shinyjs::reset("variables_param", asis = TRUE)
         # shinyjs::hide("xDataset")
         # shinyjs::hide("yDataset")
         # shinyjs::hide("targetVariable")
@@ -76,7 +76,7 @@ mod_select_variables_server <-
         #   choices = NULL,
         #   selected = NULL,
         #   session = session
-        #   
+        # 
         # )
         # 
         # shiny::updateSelectInput(
@@ -84,7 +84,7 @@ mod_select_variables_server <-
         #   choices = NULL,
         #   selected = NULL,
         #   session = session
-        #   
+        # 
         # )
         # 
         # shiny::updateSelectInput(
@@ -96,6 +96,7 @@ mod_select_variables_server <-
         # ### END INITIAL STATE
         
         if (!onlyCoords) {
+          shinyjs::reset('targetVariable')
           shinyjs::show('targetVariable')
           possibleTargetVariables <-
             var_names()[!(var_names() %in% c(input$xDataset, input$yDataset))]
@@ -109,6 +110,8 @@ mod_select_variables_server <-
           
         }
         if (!inherits(dataset(), "sf")) {
+          # shinyjs::reset('xDataset')
+          # shinyjs::reset('yDataset')
           shinyjs::show('xDataset')
           shinyjs::show('yDataset')
           
@@ -152,6 +155,11 @@ mod_select_variables_server <-
           
          
           
+        } else {
+          shinyjs::reset('xDataset')
+          shinyjs::reset('yDataset')
+          shinyjs::hide('xDataset')
+          shinyjs::hide('yDataset')
         }
       })
       

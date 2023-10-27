@@ -128,8 +128,8 @@ mod_depuration_process_server <-
       originalDtasetWithCondition <- reactive({
         req(depurationResults())
         req( dataset())
-        cbind('condition' = depurationResults()$condition, 
-              dataset())
+        try({cbind('condition' = depurationResults()$condition, 
+              dataset())}, silent = TRUE)
       })
       
       list(

@@ -24,15 +24,28 @@ app_server <- function(input, output, session) {
        updateNavlistPanel(session, "navresult", selected = "navzonecompresults")
   }, ignoreInit = FALSE)
   
-  observeEvent(myVariables$tgtvariable(), {
+  
+  observeEvent(datasetTransf(), {
+    if (test_latlong(datasetTransf())) {
+      showNotification('Target CRS must be a Planar Coordinate System.' ,
+                       type = "warning",
+                       duration = 7,
+                       id = 'target_crs_planar',
+                       session = session)
+    }
+  })
+  
+  
+  observeEvent(myVariables$tgtvariable() == 1 & is.null(datasetTransf()), {
     tgtVarlgth <- length(myVariables$tgtvariable())
-    if (tgtVarlgth >= 1) {
+    data_is_not_latlong <-  !test_latlong(datasetTransf())
+    if (tgtVarlgth >= 1 & data_is_not_latlong) {
       shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
       shinyjs::show(selector = '#navbar li a[data-value="navallparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navanalyresults"]')
     }
     
-    if (tgtVarlgth == 1) {
+    if (tgtVarlgth == 1 & data_is_not_latlong) {
       shinyjs::show(selector = '#navbar li a[data-value="navdepparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navkrigparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navclustparam"]')
@@ -48,7 +61,7 @@ app_server <- function(input, output, session) {
       bslib::nav_show("navresult", "navkrigresults")
     }
     
-    if (tgtVarlgth > 1) {
+    if (tgtVarlgth > 1 & data_is_not_latlong) {
       shinyjs::hide(selector = '#navbar li a[data-value="navdepparam"]')
       shinyjs::hide(selector = '#navbar li a[data-value="navkrigparam"]')
       
@@ -90,11 +103,14 @@ app_server <- function(input, output, session) {
 
 
 
-  myDataset <- mod_upload_file_server("dataset")
-
+  myDataset <- mod_upload_file_server("dataset",
+                                      disable = TRUE
+                                      )
   mod_show_data_table_server("dataset_print",
                              myDataset)
-
+# observeEvent(myDataset(),{
+#   shinyjs::reset('variables_param')
+#   })
   myVariables <-
     mod_select_variables_server("dataset_cols",
                                 myDataset)

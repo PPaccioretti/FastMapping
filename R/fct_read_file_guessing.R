@@ -14,28 +14,41 @@ read_file_guessing <- function(datapath, name, session = session) {
   # datapath <- upload$datapath
   # name <- upload$name
   ext <- tolower(tools::file_ext(datapath))
+  if (is.function(session[['ns']])) {
+    ns <- session$ns
+  }
   
-  if (length(ext) > 1 &
-      !all(c("shp", "shx", "dbf") %in% ext)) {
-    if (!is.na(session)) {
-      ns <- session$ns
-    } 
-    
-    shiny::showNotification(
-      paste(
-        "Multiple files were uploaded,",
-        "this is only valid for shp files",
-        "with at least shp, dbf AND shx"
-      ),
-      type = 'error',
-      id = ns("multiple-files")
-    )
-    shiny::validate("Invalid files uploaded. Only one file is allowed but for shp files.")
-    
+  if (length(ext) > 1) {
+    if (!all(c("shp", "shx", "dbf") %in% ext)) {
+      shiny::showNotification(
+        paste(
+          "Multiple files were uploaded,",
+          "this is only valid for shp files",
+          "with at least shp, dbf AND shx"
+        ),
+        type = 'error',
+        id = ns("multiple-files")
+      )
+      shiny::validate("Invalid files uploaded. Only one file is allowed but for shp files, where at least 'shp', 'shx', 'dbf' files are needed.")
+      
+    }
+    if (all(c("shp", "shx", "dbf") %in% ext & !'prj' %in% ext)) {
+      shiny::showNotification(
+        paste(
+          "Multiple files were uploaded,",
+          "but non prj file is present.",
+          "You will have to add manually origin and target EPSG code."
+        ),
+        duration = 10,
+        type = 'warning',
+        id = ns("no-prj")
+      )
+    }
   }
   
   if (length(ext) == 1 &&
       ext %in% c("txt", "csv")) {
+
     myData <- tryCatch({
       data.table::fread(
         datapath,
@@ -53,6 +66,15 @@ read_file_guessing <- function(datapath, name, session = session) {
       )
     },
     error = function(e) {
+      data.table::fread(
+        datapath,
+        dec = ",",
+        data.table = FALSE,
+        check.names = TRUE,
+        encoding = 'Latin-1'
+      )
+    },
+    error = function(e) {
       shiny::showNotification(paste("Invalid file format, please check!"),
                               type = 'error',
                               id = ns("invalid-files"))
@@ -60,10 +82,18 @@ read_file_guessing <- function(datapath, name, session = session) {
     })
 
     if (is.null(myData)) {
+      
+      text_cvs <- ext %in% c("txt", "csv")
+      if (text_cvs) {
+        text_comma <- "Be careful with comma as decimal separator if csv was uploaded"
+      } else {
+        text_comma <- ''
+      }
       shiny::validate(
-        paste(
-          "Something went wrong while reaading file.\n",
-          "Invalid file format, please check!"
+        paste0(
+          "Something went wrong while reading file.\n",
+          "Invalid file format, please check!\n",
+          text_comma
         )
       )
     }

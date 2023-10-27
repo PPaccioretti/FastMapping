@@ -39,7 +39,7 @@ mod_spatial_transformation_ui <- function(id,
 mod_spatial_transformation_server <-
   function(id, dataset, coords, readyToShow = reactive(TRUE)) {
     stopifnot(is.reactive(dataset))
-    
+   
     moduleServer(id, function(input, output, session) {
       ns <- session$ns
       
@@ -53,9 +53,16 @@ mod_spatial_transformation_server <-
       })
       
       observeEvent(length(dataset()) == 1, {
-        shinyjs::hide("epsg_orig")
-        shinyjs::hide("epsg_tgt")
+        req(dataset())
         
+       
+        if (inherits(dataset(), "sf") && is.na(sf::st_crs(dataset()))) { 
+          shinyjs::show("epsg_orig")
+          shinyjs::show("epsg_tgt")
+        } else {
+          shinyjs::hide("epsg_orig")
+          shinyjs::hide("epsg_tgt")
+        }
         updateNumericInput(
           value = NULL,
           inputId = ns("epsg_orig"),
@@ -78,6 +85,9 @@ mod_spatial_transformation_server <-
                      length(coords()) == 2 |
                      length(readyToShow()) == 3,
                    {
+                     req(dataset())
+                     req(coords())
+                     req(readyToShow(), cancelOutput = TRUE)
                      ### INITIAL STATE
                      ## reset if dataset changed
                      shinyjs::hide("epsg_orig")
@@ -87,12 +97,14 @@ mod_spatial_transformation_server <-
                        req(!is.null(coords()))
                      }
                      # req(!is.null(coords()), cancelOutput = TRUE)
-                     req(readyToShow(), cancelOutput = TRUE)
-                     if (!inherits(dataset(), "sf")) {
+                     
+                    
+                     if (!inherits(dataset(), "sf") || is.na(sf::st_crs(dataset()))) {
                        shinyjs::delay(500, shinyjs::show('epsg_orig'))
                        shinyjs::delay(500, shinyjs::show('epsg_tgt'))
                      }
-                     
+                     req(readyToShow(), cancelOutput = TRUE)
+                     browser()
                      if (inherits(dataset(), "sf")) {
                        tst <- test_latlong(dataset())
                        
@@ -194,9 +206,12 @@ mod_spatial_transformation_server <-
       })
       
       myDataTransform <- reactive({
-        req(dataset(), cancelOutput = TRUE)
+        # req(dataset(), cancelOutput = TRUE)
+        req(dataset())
+        req(all(coords() != "") | inherits(dataset(), "sf"))
+        
         if (!inherits(dataset(), "sf")) {
-          req(coords(), cancelOutput = TRUE)
+          req(coords() != "", cancelOutput = TRUE)
           req((!(
             is.na(test_epsg_tgt()) &
               !isTRUE(test_epsg_tgt())
@@ -204,21 +219,30 @@ mod_spatial_transformation_server <-
           
         }
         
+        golem::print_dev('Spatial Transofrmation...')
         coords <- coords()
         dat <- dataset()
         myDat <- tryCatch({
-          spatial_transformation(
+         my_sf <- spatial_transformation(
             dat,
             coords = coords,
             orgn_epsg = input$epsg_orig,
             tgt_epsg = input$epsg_tgt
           )
-        }, error = function(e) {NULL})
+         if (all(sf::st_is_empty(my_sf))) {
+           my_sf <- NULL
+         }
+         my_sf
+        }, error = function(e) {
+          shiny::showNotification(
+            as.character(e),
+            type = 'error',
+            id = ns("sp_transf_coords")
+          )
+          NULL
+        })
        
-        if (all(sf::st_is_empty(myDat))) {
-          myDat <- NULL
-        }
-        
+        golem::print_dev('End Spatial Transofrmation...')
         return(myDat)
 
       })

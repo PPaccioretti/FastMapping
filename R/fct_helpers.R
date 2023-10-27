@@ -20,7 +20,6 @@ print_sf_as_df <-
     } else {
       df_data <- data.frame(sf::st_drop_geometry(sf_data))
     }
-    
     geometry <- sf::st_geometry(sf_data)
     
     list(data = df_data,
@@ -41,12 +40,14 @@ sf_to_point <- function(sf_data, session) {
         x
       }
     }
-    shiny::showNotification(
-      paste("Centroid of Polygons are shown as coordinates"),
-      type = 'warning',
-      id = ns("warning_centroid")
-    )
-    sf_data <- suppressWarnings(sf::st_centroid(sf_data))
+   if (has_sf_polygon(sf_data)) {
+     shiny::showNotification(
+       paste("Centroid of Polygons are shown as coordinates"),
+       type = 'warning',
+       id = ns("warning_centroid")
+     )
+     sf_data <- suppressWarnings(sf::st_centroid(sf_data))
+   }
     return(sf_data)
   }
   
@@ -56,6 +57,9 @@ select_sf_points <- function(sf_data) {
   sf_data[sf::st_geometry_type(sf_data) == "POINT",]
 }
 
+select_sf_multipoints <- function(sf_data) {
+  sf_data[sf::st_geometry_type(sf_data) == "MULTIPOINT",]
+}
 select_sf_polygon <- function(sf_data) {
   sf_data[sf::st_geometry_type(sf_data) == "POLYGON",]
 }
@@ -63,6 +67,11 @@ select_sf_polygon <- function(sf_data) {
 has_sf_points <- function(sf_data) {
  any(sf::st_geometry_type(sf_data) == "POINT")
 }
+
+has_sf_multipoints <- function(sf_data) {
+  any(sf::st_geometry_type(sf_data) == "MULTIPOINT")
+}
+
 
 has_sf_polygon <- function(sf_data) {
   any(sf::st_geometry_type(sf_data) == "POLYGON")

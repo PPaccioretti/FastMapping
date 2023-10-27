@@ -34,10 +34,13 @@ app_ui <- function(request) {
             value = "navdataset",
             sidebarLayout(
               sidebarPanel(
-                mod_upload_file_ui("dataset", label = h4("Dataset file:")),
+              mod_upload_file_ui("dataset", label = h4("Dataset file:")),
+              div(
+                id = "variables_param",
                 mod_select_variables_ui("dataset_cols"),
                 mod_spatial_transformation_ui("dataset_spatial_transf")
-              ),
+              )
+            ), 
               mainPanel(
                 mod_show_data_table_ui("dataset_print"),
                 mod_visualize_spatial_data_ui("mymap")

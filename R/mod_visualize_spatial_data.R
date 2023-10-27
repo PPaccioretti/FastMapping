@@ -43,7 +43,7 @@ mod_visualize_spatial_data_server <-
     
     observeEvent(dataset(), {
       ## INITIAL STATE
-      shinyjs::reset("varToPlot")
+      shinyjs::reset("varToPlot", asis = TRUE)
       shiny::updateSelectInput(
         'varToPlot',
         choices = NULL,
@@ -55,28 +55,30 @@ mod_visualize_spatial_data_server <-
 
     data <- reactive({
       req(inherits(dataset(), "sf"))
+      req(!is.na(sf::st_crs(dataset())))
       df_sf <- sf::st_transform(dataset(), 4326)
-      if (nrow(df_sf) > maxMarkerToShow() & not_null(maxMarkerToShow())) {
-            showNotification(
-              paste0(
-                'Data has ',
-                nrow(df_sf),
-                ' observations, but ',
-                maxMarkerToShow(),
-                ' will be plot'
-              ),
-              id = ns('maxRows'),
-              type = "message",
-              session = session
-            )
-            df_sf <- df_sf[sample(nrow(df_sf), maxMarkerToShow()), ]
-          }
-          df_sf
+      if (nrow(df_sf) > maxMarkerToShow() &
+          not_null(maxMarkerToShow())) {
+        showNotification(
+          paste0(
+            'Data has ',
+            nrow(df_sf),
+            ' observations, but ',
+            maxMarkerToShow(),
+            ' will be plot'
+          ),
+          id = ns('maxRows'),
+          type = "message",
+          session = session
+        )
+        df_sf <- df_sf[sample(nrow(df_sf), maxMarkerToShow()),]
+      }
+      golem::print_dev('Data for plot...')
+      df_sf
     })
-
+    
     myLeaflet <- reactive({
-      req(inherits(dataset(), "sf"))
-      
+      req(inherits(data(), "sf") & !is.na(sf::st_crs(data())))
       tryCatch({
       leaflet::leaflet() %>%
         leaflet::addTiles(group = "OSM") %>%
@@ -139,11 +141,15 @@ mod_visualize_spatial_data_server <-
 
 
     output$mylfltmap <- leaflet::renderLeaflet({
+      golem::print_dev('Rendering leaflet...')
        myLeaflet()
     })
 
     observeEvent(input$goDataset, {
       req(data())
+      
+      golem::print_dev('Going to dataset in leaflet...')
+      
       bbox <- req(as.vector(sf::st_bbox(data())))
       
       myMap <- leaflet::leafletProxy("mylfltmap", session)
@@ -192,7 +198,7 @@ mod_visualize_spatial_data_server <-
         MyMap <-
           MyMap %>%
           leaflet::clearControls()
-        
+
         if (has_sf_points(df_sf)) {
           MyMap <-
             MyMap %>%
@@ -211,6 +217,20 @@ mod_visualize_spatial_data_server <-
             MyMap %>%
             leaflet::addPolygons(
               data = select_sf_polygon(df_sf),
+              color = myCol,
+              label = myTgtVctrnd,
+              labelOptions = leaflet::labelOptions(direction = "top"),
+              group = i,
+              stroke = FALSE,
+              fillOpacity = 0.7
+            )
+        }
+        if (has_sf_multipoints(df_sf)) {
+          df_sf_p <- sf::st_cast(select_sf_multipoints(df_sf), 'POINT')
+          MyMap <-
+            MyMap %>%
+            leaflet::addCircleMarkers(
+              data = select_sf_points(df_sf_p),
               color = myCol,
               label = myTgtVctrnd,
               labelOptions = leaflet::labelOptions(direction = "top"),

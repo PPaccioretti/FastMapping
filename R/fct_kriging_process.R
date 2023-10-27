@@ -62,6 +62,9 @@ testMultipleModelsKrige <- function(formula,
                                     max_dist,
                                     cressie,
                                     session = session) {
+  autoKrige_cv_rep <- repeatable(automap::autoKrige.cv, seed = 169)
+  compare_cv_rep <- repeatable(automap::compare.cv, seed = 169)
+  
   withProgress(message = 'Cross validation:',
                detail = 'This may take a while...',
                value = 0,
@@ -89,7 +92,7 @@ testMultipleModelsKrige <- function(formula,
                    
                    
                    MyAK = tryCatch({
-                     automap::autoKrige.cv(
+                     autoKrige_cv_rep(
                        myformula,
                        myDataNoDup,
                        model = model,
@@ -137,7 +140,7 @@ testMultipleModelsKrige <- function(formula,
                  # el RMSE a mano y lo repite 11 vecces
                  ModList = lapply(MyMod, function(x) {
                    tryCatch({
-                     automap::compare.cv(x)},
+                     compare_cv_rep(x)},
                      error = function(e) {
                        cat("Calculating CV by hand\n")
                        
@@ -164,4 +167,37 @@ testMultipleModelsKrige <- function(formula,
                  # ValoresOutput$MiKrige <- modelsTested
                  return(modelsTested)
                })
+}
+
+
+
+
+
+check_fix_polygon_multi <- function(file) {
+  file <- sf::st_zm(file)
+  
+  if (has_sf_polygon(file)) {
+    showNotification(
+      "Centroids of polygons were used for interpolation",
+      duration = 10,
+      id = 'interpolationtoPoints',
+      type = 'warning',
+      closeButton = FALSE
+    )
+    
+    file <- sf::st_point_on_surface(file)
+  }
+  
+  if (has_sf_multipoints(file)) {
+    showNotification(
+      "File was casted from MULTIPOINT to POINT geometry",
+      duration = 10,
+      id = 'castToPoint',
+      type = 'warning',
+      closeButton = FALSE
+    )
+    
+    file <- sf::st_cast(file, 'POINT')
+  }
+  file
 }

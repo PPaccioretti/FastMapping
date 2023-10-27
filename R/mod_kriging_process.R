@@ -32,8 +32,8 @@ mod_kriging_process_server <- function(id,
       req(kriging_param())
 
       file <- dataset()
-      file <- sf::as_Spatial(file)
-      
+      # file <- sf::as_Spatial(file)
+      # file <- check_fix_polygon_multi(file)
       myParam <- kriging_param()
       myFormula <- myParam$formula
       ### Formula Refactoring
@@ -41,6 +41,9 @@ mod_kriging_process_server <- function(id,
       vars <- attr(terms(myParam$formula), which = "term.labels")
       
       if (length(vars) == 2) {
+        
+        
+        browser()
         vars[1] <- gsub('x', colnames(file@coords)[1], vars[1])
         vars[2] <- gsub('y', colnames(file@coords)[2], vars[2])
         # Get the response
@@ -69,13 +72,15 @@ mod_kriging_process_server <- function(id,
       on.exit(removeNotification(id), add = TRUE)
       
       file <- dataset()
-      file <- sf::st_zm(file)
+      
       
       if (nrow(file) > 20000) {
         file <- file[sample(nrow(file), 20000), ]
       }
       
-      file <- sf::as_Spatial(file)
+      file <- check_fix_polygon_multi(file)
+      
+      # file <- sf::as_Spatial(file)
       myParam <- kriging_param()
       krige_cv <- repeatable(testMultipleModelsKrige, 
                  seed = 169)
@@ -173,15 +178,16 @@ mod_kriging_process_server <- function(id,
       # req(MejorModelo())
 
       file <- dataset()
-      file <- sf::st_zm(file)
-      file <- sf::as_Spatial(file)
+      file <- check_fix_polygon_multi(file)
+      # file <- sf::as_Spatial(file)
       
-      
+      autofitVariogram_rep <- repeatable(automap::autofitVariogram, 
+                             seed = 169)
       
       myParam <- kriging_param()
       
       varioagramModel <- 
-        automap::autofitVariogram(
+        autofitVariogram_rep(
           myFormulaRefactored(),
           file,
           model = MejorModelo(),
@@ -199,7 +205,7 @@ mod_kriging_process_server <- function(id,
       req(boundary_poly())
 
       file <- dataset()
-      file <- sf::st_zm(file)
+      file <- check_fix_polygon_multi(file)
       myParam <- kriging_param()
       
       sf::st_bbox(boundary_poly()) %>%
@@ -220,7 +226,7 @@ mod_kriging_process_server <- function(id,
       on.exit(removeNotification(id), add = TRUE)
       
       file <- dataset()
-      file <- sf::st_zm(file)
+      file <- check_fix_polygon_multi(file)
       file <- removeSpatialDuplicated(file, session = session)
       coords <- sf::st_coordinates(file)
       colnames(coords) <- c('x', 'y')

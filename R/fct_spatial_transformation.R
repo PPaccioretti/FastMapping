@@ -18,8 +18,11 @@ spatial_transformation <-
       if (is.null(orgn_epsg)) {
         stop("Original CRS must be specified")
       }
-      dataset <-   sf::st_as_sf(dataset, coords = coords,
-                                crs = orgn_epsg)
+      if (any(coords == "") | any(is.na(coords))) {
+        stop("both coords must be specified")
+      }
+      dataset <- sf::st_as_sf(dataset, coords = coords,
+                              crs = orgn_epsg)
     } 
     # If its sf
     if (inherits(dataset, "sf")) {
@@ -30,7 +33,7 @@ spatial_transformation <-
       
       if (is.na(sf::st_crs(dataset))) {
         dataset <- sf::st_zm(dataset)
-        dataset <- sf::st_crs(dataset, orign_epsg)
+        dataset <- sf::st_set_crs(dataset, orgn_epsg)
       }
     }
     
