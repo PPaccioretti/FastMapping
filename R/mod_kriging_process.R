@@ -33,7 +33,7 @@ mod_kriging_process_server <- function(id,
 
       file <- dataset()
       # file <- sf::as_Spatial(file)
-      # file <- check_fix_polygon_multi(file)
+      file <- check_fix_polygon_multi(file)
       myParam <- kriging_param()
       myFormula <- myParam$formula
       ### Formula Refactoring
@@ -42,10 +42,10 @@ mod_kriging_process_server <- function(id,
       
       if (length(vars) == 2) {
         
+        coords <- colnames(sf::st_coordinates(file))
         
-        browser()
-        vars[1] <- gsub('x', colnames(file@coords)[1], vars[1])
-        vars[2] <- gsub('y', colnames(file@coords)[2], vars[2])
+        vars[1] <- coords[1]
+        vars[2] <- coords[2]
         # Get the response
         vv <- attr(terms(myParam$formula), which = "variables")
         rr <- as.character(vv[[2]]) # The response variable name

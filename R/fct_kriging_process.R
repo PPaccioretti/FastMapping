@@ -199,5 +199,5 @@ check_fix_polygon_multi <- function(file) {
     
     file <- sf::st_cast(file, 'POINT')
   }
-  file
+  cbind(sf::st_coordinates(file), file)
 }
