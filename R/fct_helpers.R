@@ -142,3 +142,13 @@ column_md <- function(width, ..., offset = 0)
   }
   div(class = colClass, ...)
 }
+
+
+
+# Inserts row at position r, with newrow data
+insertRow <- function(existingDF, newrow, r) {
+  existingDF <- rbind(existingDF, newrow)
+  existingDF <- existingDF[order(c(seq_len(nrow(existingDF) - 1), r - 0.5)), ]
+  row.names(existingDF) <- seq_len(nrow(existingDF))
+  existingDF
+}

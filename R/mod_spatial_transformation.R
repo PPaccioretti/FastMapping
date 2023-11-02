@@ -104,7 +104,7 @@ mod_spatial_transformation_server <-
                        shinyjs::delay(500, shinyjs::show('epsg_tgt'))
                      }
                      req(readyToShow(), cancelOutput = TRUE)
-                     browser()
+                     
                      if (inherits(dataset(), "sf")) {
                        tst <- test_latlong(dataset())
                        

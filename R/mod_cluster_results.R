@@ -86,7 +86,7 @@ mod_cluster_results_server <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
  
-    myEvent <- bindEvent( reactive({
+    myEvent <- bindEvent(reactive({
       clusterResults()
       variablesUsed()
       data_and_cluster()
@@ -112,6 +112,7 @@ mod_cluster_results_server <- function(id,
     output$GraficoIndicesConglo <- plotly::renderPlotly({
       myEvent()
       req(indices())
+      golem::print_dev('Start GraficoIndicesConglo')
       indicesClust <- indices()
       dataIndicConglWide <-
         data.frame(
@@ -139,7 +140,7 @@ mod_cluster_results_server <- function(id,
       dataIndicesConglomLong$isSummary <-
         as.numeric(dataIndicesConglomLong$Index == "Summary Index") + 1
       
-      
+
       ggplotCongl <-  
         ggplot2::ggplot(dataIndicesConglomLong,
                         ggplot2::aes(x = Cluster, y = Value, color = Index)) +
