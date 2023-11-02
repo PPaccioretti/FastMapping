@@ -58,7 +58,7 @@ guess_utm <- function(data) {
   # Adivina la zona UTM ----
   long <- sf::st_coordinates(data)[, 'X']
   ## Se calcula el quatile por si cae en dos zonas
-  zone <- quantile(floor((long + 180) / 6) + 1, 0.90)
+  zone <- stats::quantile(floor((long + 180) / 6) + 1, 0.90)
   
   long <- sf::st_coordinates(data)[, 'Y']
   hemisphere <- '7'

@@ -38,7 +38,7 @@ mod_kriging_process_server <- function(id,
       myFormula <- myParam$formula
       ### Formula Refactoring
       # Get the (predictor) variables
-      vars <- attr(terms(myParam$formula), which = "term.labels")
+      vars <- attr(stats::terms(myParam$formula), which = "term.labels")
       
       if (length(vars) == 2) {
         
@@ -47,7 +47,7 @@ mod_kriging_process_server <- function(id,
         vars[1] <- coords[1]
         vars[2] <- coords[2]
         # Get the response
-        vv <- attr(terms(myParam$formula), which = "variables")
+        vv <- attr(stats::terms(myParam$formula), which = "variables")
         rr <- as.character(vv[[2]]) # The response variable name
         # Now the predictors
         pp <- paste(vars, collapse = " + ")
@@ -56,7 +56,7 @@ mod_kriging_process_server <- function(id,
       }
       
       ###
-      as.formula(myFormula)
+      stats::as.formula(myFormula)
     })
     
     
