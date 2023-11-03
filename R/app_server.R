@@ -104,8 +104,7 @@ app_server <- function(input, output, session) {
 
 
   myDataset <- mod_upload_file_server("dataset",
-                                      disable = TRUE
-                                      )
+                                      disable = FALSE)
   mod_show_data_table_server("dataset_print",
                              myDataset)
 # observeEvent(myDataset(),{
