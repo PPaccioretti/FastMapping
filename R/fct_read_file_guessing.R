@@ -18,6 +18,20 @@ read_file_guessing <- function(datapath, name, session = session) {
     ns <- session$ns
   }
   
+  if (length(ext) == 1 && ext %in% c("shp", "shx", "dbf")) {
+    shiny::showNotification(
+      paste(
+        "Only a file with extension", ext, 
+        "was uploaded. This file is associated with",
+        "shp files, please upload all associated files.",
+        "(At LEAST shp, dbf, AND shx)"
+      ),
+      type = 'error',
+      id = ns("sigle-shp-file")
+    )
+    shiny::validate("Invalid file uploaded. For upload shp files, please select at least 'shp', 'shx' AND 'dbf' files.")
+  }
+  
   if (length(ext) > 1) {
     if (!all(c("shp", "shx", "dbf") %in% ext)) {
       shiny::showNotification(
