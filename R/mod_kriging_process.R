@@ -185,7 +185,7 @@ mod_kriging_process_server <- function(id,
                              seed = 169)
       
       myParam <- kriging_param()
-      
+      # Si no se quiere validacion cruzada 
       varioagramModel <- 
         autofitVariogram_rep(
           myFormulaRefactored(),

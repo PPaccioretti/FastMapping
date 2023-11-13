@@ -244,9 +244,8 @@ mod_kriging_results_server <- function(id,
       },
       content = function(con) {
         Predicted_Tiff <- raster_Pred()
-        stars::write_stars(Predicted_Tiff, 
-                           con, 
-                           layer = attributes(Predicted_Tiff)$names)
+        stars::write_stars(merge(Predicted_Tiff), 
+                           con)
       }
     )
     #Descarga del archivo vectorial gpkg

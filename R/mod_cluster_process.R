@@ -31,8 +31,8 @@ mod_cluster_process_server <- function(id,
     # })
     
     clusterResults <- eventReactive(button(), {
-      req(dataset())
-      req(cluster_param())
+      req(dataset(), cancelOutput = TRUE)
+      req(cluster_param(), cancelOutput = TRUE)
 
       
       id <-

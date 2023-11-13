@@ -35,6 +35,7 @@ mod_home_text_ui <- function(id) {
     ),
     br(),
     fluidRow(
+      class = "gap-3",
       div(
         id = 'contaccordion',
         shinyBS::bsButton(
@@ -43,7 +44,7 @@ mod_home_text_ui <- function(id) {
           block = TRUE,
           class = "accordion"
         ),
-        div(class = 'panel',
+        div(class = 'panel mt-3 mb-1',
             fluidRow(
               column_md(
                 width = 6,
@@ -107,7 +108,7 @@ mod_home_text_ui <- function(id) {
           class = "accordion"
         ),
         div(
-          class = 'panel',
+          class = 'panel mt-3 mb-1',
           p(
             'We are changing the User Interface and some other functionalities.',
             'If you detect some bug, please let us know!'
@@ -133,7 +134,7 @@ mod_home_text_ui <- function(id) {
           class = "accordion"
         ),
         div(
-          class = 'panel',
+          class = 'panel mt-3 mb-1',
           p(
             'If you have any question please write to fastmapping@agro.unc.edu.ar,',
             'brief tutorial is available in ',
