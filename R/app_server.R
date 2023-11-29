@@ -33,7 +33,7 @@ app_server <- function(input, output, session) {
                        id = 'target_crs_planar',
                        session = session)
     }
-  })
+  }, ignoreInit = TRUE)
   
   
   observeEvent(myVariables$tgtvariable() == 1 & is.null(datasetTransf()), {

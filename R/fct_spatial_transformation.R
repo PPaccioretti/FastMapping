@@ -49,7 +49,7 @@ spatial_transformation <-
 
 
 test_latlong <- function(epsg) {
-  suppressWarnings(sf::st_is_longlat(sf::st_crs(epsg)))
+  isTRUE(sf::st_is_longlat(sf::st_crs(epsg)))
 }
 
 

@@ -116,7 +116,7 @@ mod_select_variables_server <-
           shinyjs::show('yDataset')
           
           # Try guess lat Column ----
-          posible_lat <- grep('(?i)lat|Y(?-i).*',
+          posible_lat <- grep('(?i)lat.*|^Y(?i)$',
                               var_names(),
                               perl = TRUE)
           if (length(posible_lat) == 1) {
@@ -135,14 +135,13 @@ mod_select_variables_server <-
           )
           
           # Try guess long Column ----
-          posible_long <- grep('(?i)long|X(?-i).*',
+          posible_long <- grep('(?i)long.*|^X(?i)$',
                                var_names(),
                                perl = TRUE)
-          
-          if (length(posible_lat)  == 1) {
+          if (length(posible_lat) == 1) {
             long_selected <- var_names()[posible_long]
           } else {
-            long_selected <- var_names()[1]
+            long_selected <- NULL#var_names()[1]
           }
           
           shiny::updateSelectInput(

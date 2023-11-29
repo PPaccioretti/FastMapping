@@ -9,7 +9,7 @@
 #' @importFrom shiny NS tagList
 mod_show_data_table_ui <- function(id) {
   ns <- NS(id)
-  DT::dataTableOutput(ns("table"))
+  DT::DTOutput(ns("table"))
 }
 
 #' show_data_table Server Functions
@@ -29,7 +29,7 @@ mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
       myData
     })
     
-    output$table <- DT::renderDataTable({
+    output$table <- DT::renderDT({
       
       if (not_null(maxShow())) {
          showNotification(
