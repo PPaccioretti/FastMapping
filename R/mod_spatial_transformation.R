@@ -241,12 +241,23 @@ mod_spatial_transformation_server <-
           )
           NULL
         })
-       
+       myCoordsNA <- complete.cases(sf::st_coordinates(myDat))
+        if (any(myCoordsNA)) {
+          shiny::showNotification(
+            paste('Data has NA values in coordinates;',
+                  'these points will be removed.',
+                  'If you think is an error, please check EPSG code.'),
+            type = 'warning',
+            id = ns("sp_NA_coords")
+          )
+          myDat <- myDat[myCoordsNA,]
+        }
+        
+        
         golem::print_dev('End Spatial Transofrmation...')
         return(myDat)
 
       })
-      
       
     })
   }

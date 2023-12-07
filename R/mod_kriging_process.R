@@ -207,10 +207,22 @@ mod_kriging_process_server <- function(id,
       file <- dataset()
       file <- check_fix_polygon_multi(file)
       myParam <- kriging_param()
-      
-      sf::st_bbox(boundary_poly()) %>%
+
+      Mygr <- sf::st_bbox(boundary_poly()) %>%
         stars::st_as_stars(dx = myParam$cellsize) %>%
         sf::st_crop(boundary_poly())
+      ncels <- ncol(Mygr) * nrow(Mygr)
+      
+      if (ncels > 100000) {
+        showNotification(
+          paste('Prediction grid has', ncels , 'cels.',
+          'Please check cell size.'),
+          id = ns('ncels_high'),
+          type = "warning",
+          session = session
+        )
+      }
+      Mygr
     })
     
     

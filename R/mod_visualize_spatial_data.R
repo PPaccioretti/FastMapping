@@ -79,6 +79,7 @@ mod_visualize_spatial_data_server <-
     
     myLeaflet <- reactive({
       req(inherits(data(), "sf") & !is.na(sf::st_crs(data())))
+      golem::print_dev('myLeaflet...')
       tryCatch({
       leaflet::leaflet() %>%
         leaflet::addTiles(group = "OSM") %>%
@@ -129,7 +130,6 @@ mod_visualize_spatial_data_server <-
       req(vars())
 
       shinyjs::show("varToPlot")
-
       shiny::updateSelectInput(
         'varToPlot',
         choices = colnames(sf::st_drop_geometry(data())),
@@ -141,14 +141,12 @@ mod_visualize_spatial_data_server <-
 
 
     output$mylfltmap <- leaflet::renderLeaflet({
-      golem::print_dev('Rendering leaflet...')
+      req(data())
        myLeaflet()
     })
 
     observeEvent(input$goDataset, {
       req(data())
-      
-      golem::print_dev('Going to dataset in leaflet...')
       
       bbox <- req(as.vector(sf::st_bbox(data())))
       
@@ -170,7 +168,6 @@ mod_visualize_spatial_data_server <-
       # req(input$varToPlot, cancelOutput = TRUE)
       req(input$varToPlot)
       df_sf <- data()
-
       MyMap <- leaflet::leafletProxy("mylfltmap", session)
 
 
@@ -284,7 +281,8 @@ mod_visualize_spatial_data_server <-
       poly <- sf::st_zm(sf::st_transform(poly(), 4326))
       bbox <- as.vector(sf::st_bbox(poly))
       req(bbox)
-
+      golem::print_dev('Adding polygon to leaflet...')
+      
       leaflet::leafletProxy("mylfltmap", session) %>%
         leaflet::clearGroup("Boundary") %>%
         leaflet::addPolygons(

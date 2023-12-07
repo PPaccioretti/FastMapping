@@ -240,14 +240,13 @@ mod_kriging_results_server <- function(id,
     #Descarga del GeoTiff
     output$download_pred_tiff <- downloadHandler(
       filename = function() {
-        paste('Map-', Sys.Date(), '.tif', sep = '')
+        paste('Map-', Sys.Date(), '.nc', sep = '')
       },
       content = function(con) {
         Predicted_Tiff <- raster_Pred()
-        browser()
-        stars::write_stars((Predicted_Tiff), 
-                           con, 
-                           layer = attributes(Predicted_Tiff)$names)
+        stars::write_mdim(Predicted_Tiff, 
+                           con)
+        # ,layer = attributes(Predicted_Tiff)$names
       }
     )
     #Descarga del archivo vectorial gpkg
