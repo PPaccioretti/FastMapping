@@ -229,10 +229,24 @@ mod_spatial_transformation_server <-
             orgn_epsg = input$epsg_orig,
             tgt_epsg = input$epsg_tgt
           )
-         if (all(sf::st_is_empty(my_sf))) {
-           my_sf <- NULL
+         
+         myCoordsNA <- sf::st_is_empty(my_sf)
+         
+         if (all(myCoordsNA)) {
+           return(NULL)
+         }
+         if (any(myCoordsNA)) {
+           shiny::showNotification(
+             paste('Data has NA values in coordinates;',
+                   'these points will be removed.',
+                   'If you think is an error, please check EPSG code.'),
+             type = 'warning',
+             id = ns("sp_NA_coords")
+           )
+           my_sf <- my_sf[myCoordsNA,]
          }
          my_sf
+         
         }, error = function(e) {
           shiny::showNotification(
             as.character(e),
@@ -241,19 +255,7 @@ mod_spatial_transformation_server <-
           )
           NULL
         })
-       myCoordsNA <- complete.cases(sf::st_coordinates(myDat))
-        if (any(myCoordsNA)) {
-          shiny::showNotification(
-            paste('Data has NA values in coordinates;',
-                  'these points will be removed.',
-                  'If you think is an error, please check EPSG code.'),
-            type = 'warning',
-            id = ns("sp_NA_coords")
-          )
-          myDat <- myDat[myCoordsNA,]
-        }
-        
-        
+      
         golem::print_dev('End Spatial Transofrmation...')
         return(myDat)
 

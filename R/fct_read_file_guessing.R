@@ -156,5 +156,32 @@ read_file_guessing <- function(datapath, name, session = session) {
       shiny::validate("Invalid file type.")
     })
   }
+  
+  if (nrow(myData) == 0) {
+    
+    shiny::showNotification(
+      paste(
+        "Dataset has 0 rows."
+      ),
+      type = 'error',
+      id = ns("zero_rows_data")
+    )
+    shiny::validate("Dataset has 0 rows.")
+    return(NULL)
+  }
+  
+  if (ncol(myData) == 0) {
+    
+    shiny::showNotification(
+      paste(
+        "Dataset has 0 columns."
+      ),
+      type = 'error',
+      id = ns("zero_cols_data")
+    )
+    shiny::validate("Dataset has 0 columns.")
+    return(NULL)
+  }
+  
   myData
 }

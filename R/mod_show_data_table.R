@@ -23,6 +23,7 @@ mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
     data_print <- reactive({
       req(dataset())
       myData <- dataset()
+      
       if (inherits(myData, "sf")) {
         myData <- print_sf_as_df(myData)$data
       }
@@ -54,6 +55,7 @@ mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
       searching = FALSE,
       select = FALSE,
       pageLength = 5,
+      info = FALSE,
       scrollX = TRUE#,
       # lengthMenu = {
       #   req(dataset())

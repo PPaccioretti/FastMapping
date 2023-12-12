@@ -19,7 +19,10 @@ spatial_transformation <-
         stop("Original CRS must be specified")
       }
       if (any(coords == "") | any(is.na(coords))) {
-        stop("both coords must be specified")
+        stop("Both coords must be specified")
+      }
+      if (length(unique(coords)) == 1) {
+        stop("Coords must be different columns")
       }
       dataset <- sf::st_as_sf(dataset, coords = coords,
                               crs = orgn_epsg)

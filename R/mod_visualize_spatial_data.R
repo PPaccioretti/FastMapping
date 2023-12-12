@@ -55,7 +55,8 @@ mod_visualize_spatial_data_server <-
 
     data <- reactive({
       req(inherits(dataset(), "sf"))
-      req(!is.na(sf::st_crs(dataset())))
+      validate(need(!is.na(sf::st_crs(dataset())),
+                    message = "Select a correct Original EPSG code."))
       df_sf <- sf::st_transform(dataset(), 4326)
       if (nrow(df_sf) > maxMarkerToShow() &
           not_null(maxMarkerToShow())) {
@@ -125,18 +126,51 @@ mod_visualize_spatial_data_server <-
 
     })
 
-    observeEvent(vars() == 2 | is.data.frame(data()), {
+    observeEvent(is.list(vars()) | is.data.frame(data()), {
       req(data())
       req(vars())
-
       shinyjs::show("varToPlot")
-      shiny::updateSelectInput(
-        'varToPlot',
-        choices = colnames(sf::st_drop_geometry(data())),
-        selected = vars()[1],
-        session = session
-
-      )
+      myColNames <- colnames(sf::st_drop_geometry(data()))
+      
+      
+      
+      if (is.list(vars()) & "indices" %in% names(vars())) {
+        myClustResults <- vars()[['indices']]
+        
+        myClusters <- agrepl('Cluster_\\d{1,3}', 
+                             x = myColNames,
+                             fixed = FALSE)
+        myBestCluster <- myClustResults[which.min(myClustResults[['Summary Index']]), 'Num. Cluster']
+        selected_col <- paste0('Cluster_', myBestCluster)
+        if (all(!myClusters)) {
+          showNotification(
+            'There are not Cluster columns',
+            id = ns('no_cluister_colnames'),
+            type = "warning",
+            session = session
+          )
+          myClusters <- rep(TRUE, length(myColNames))
+          selected_col <- myColNames[1]
+        }
+        
+        
+        shiny::updateSelectInput(
+          'varToPlot',
+          choices = myColNames[myClusters],
+          selected = selected_col,
+          session = session
+          
+        )
+      } 
+      if (is.vector(vars()) & !is.list(vars())) {
+        shiny::updateSelectInput(
+          'varToPlot',
+          choices = myColNames,
+          selected = vars()[1],
+          session = session
+          
+        )
+      }
     })
 
 
@@ -170,12 +204,14 @@ mod_visualize_spatial_data_server <-
       df_sf <- data()
       MyMap <- leaflet::leafletProxy("mylfltmap", session)
 
-
       for (i in input$varToPlot) {
         myTgtVct <- df_sf[[i]]
         req(myTgtVct)
         if (i == "") break
         myCol <- NULL
+        if (length(unique(myTgtVct)) <= 15 & !is.null(myTgtVct)) {
+          myTgtVct <- as.factor(myTgtVct)
+        }
         if (is.numeric(myTgtVct) & !is.null(myTgtVct)) {
           myTgtVctrnd <- formatC(myTgtVct, format = "f")
           myPal <-

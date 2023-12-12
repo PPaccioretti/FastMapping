@@ -9,62 +9,44 @@
 #' @importFrom shiny NS tagList
 #' @importFrom magrittr %>%
 mod_cluster_results_ui <- function(id) {
+  
   ns <- NS(id)
   tagList(div(id = ns("noClustered"),
               p("No cluster process was made.")),
           shinyjs::hidden(div(
             id = ns("yesClustered"),
-            tagList(
+            shinycssloaders::withSpinner(tagList(
               fluidRow(
                 h5("Statistical Indices"),
-                column(
-                  width = 8,
-                  shinycssloaders::withSpinner(plotly::plotlyOutput(ns(
-                    "GraficoIndicesConglo"
-                  )))
-                )#,
-                # column(width = 4,
-                #        shinycssloaders::withSpinner(plotOutput(
-                #          ns("corrPlotClasif")
-                #        )))
+                column_md(width = 5,
+                          plotly::plotlyOutput(ns(
+                            "GraficoIndicesConglo"
+                          ))),
+                column_md(width = 7,
+                          DT::dataTableOutput(ns(
+                            "TablaIndicesConglo"
+                          )),
+                          
+                          div(class = "text-center py-5",
+                                 downloadButton(
+                                   ns("downloadClasification"), "Download Clasification"
+                                 ))
+                          )
               ),
-              fluidRow(column(width = 8,
-                              DT::dataTableOutput(
-                                ns("TablaIndicesConglo")
-                              ))),
-              fluidRow(column(
-                width = 4,
-                downloadButton(ns("downloadClasification"), "Download Clasification")
-              ))#,
+              hr(style = "border-top: 1px solid #000000;"),
+              fluidRow(
+                # column_md(
+                  # width = 12,
+                class = "m-md-5",
+                  mod_visualize_spatial_data_ui(ns("plotclusters"),
+                                                lblToPlot = "Cluster to plot")
+                # ),
+                
+                
+                
+              )
               
-              
-              # fluidPage(fluidRow(
-              #   column(width = 12 / 4,
-              #          selectInput(ns('NumClust'),
-              #                      'Clusters',
-              #                      choices = NULL,
-              #                      selected = NULL)#SelectBestCluster()
-              #          # ListaChoices <-
-              #            # colnames(Clasificacion()$DatosConCongl)[!colnames(Clasificacion()$DatosConCongl) %in% c(input$xmapa, input$ymapa)]
-              #      ),
-              #   column(width = 12 - 12 / 4,
-              #          fluidPage(
-              #            shinycssloaders::withSpinner(plotly::plotlyOutput(ns(
-              #              'ClasificationPlot'
-              #            ),
-              #            height = "600px"))
-              #          ))
-              # ),
-              # fluidRow(column(
-              #   width = 12,
-              #   fluidPage(shinycssloaders::withSpinner(plotOutput(
-              #     ns('ClasifMatrCorr')
-              #   )))
-              # )))
-              
-              # ,shinycssloaders::withSpinner(uiOutput(ns("clustervalidationTables")))
-              
-            )
+            ))
           )))
 }
 
@@ -73,9 +55,6 @@ mod_cluster_results_ui <- function(id) {
 #' @noRd 
 mod_cluster_results_server <- function(id,
                                        clusterResults = reactive(NULL),
-                                       
-                                       
-                                       
                                        variablesUsed = reactive(NULL),
                                        data_and_cluster = reactive(NULL)) {
   moduleServer( id, function(input, output, session){
@@ -143,51 +122,22 @@ mod_cluster_results_server <- function(id,
       dataIndicesConglomLong$isSummary <-
         as.numeric(dataIndicesConglomLong$Index == "Summary Index") + 1
       
-
       ggplotCongl <-  
         ggplot2::ggplot(dataIndicesConglomLong,
                         ggplot2::aes(x = Cluster, y = Value, color = Index)) +
         ggplot2::geom_point() +
         ggplot2::geom_line(linetype = dataIndicesConglomLong$isSummary) +
-        ggplot2::labs(y = "Standardized value")
+        ggplot2::labs(y = "Standardized value") 
       
       plotly::ggplotly(ggplotCongl) %>%
         plotly::layout(autosize = TRUE)
       
     })
     
-    
-    # output$corrPlotClasif <- renderPlot({
-    #   if (length(Clasificacion()$VariablesUsedForCluster) == 1) {
-    #     plotClasifVar <-
-    #       ggplot(Clasificacion()$DatosConCongl, aes_string(Clasificacion()$VariablesUsedForCluster)) +
-    #       geom_density()
-    #   } else {
-    #     
-    #     if (length(Clasificacion()$VariablesUsedForCluster) < 10) {
-    #       plotClasifVar <- ggpairs(Clasificacion()$DatosConCongl,
-    #                                columns = Clasificacion()$VariablesUsedForCluster,
-    #                                progress = FALSE)
-    #       
-    #     } else {
-    #       plotClasifVar <- ggpairs(
-    #         Clasificacion()$DatosConCongl,
-    #         columns = Clasificacion()$VariablesUsedForCluster,
-    #         lower = "blank",
-    #         progress = TRUE
-    #       )
-    #       
-    #     }
-    #     
-    #   }
-    #   ValoresOutput$corrVariables <- plotClasifVar
-    #   
-    #   print(plotClasifVar)
-    # })
-    
-    
-    
-    
+    mod_visualize_spatial_data_server("plotclusters",
+                                      dataset = data_and_cluster,
+                                      vars = clusterResults
+    )
     
     output$downloadClasification <- downloadHandler(
       filename = function() {
@@ -214,51 +164,15 @@ mod_cluster_results_server <- function(id,
     output$TablaIndicesConglo <- DT::renderDataTable({
       req(indices())
       indicesClust <- indices()
-      
       DT::datatable(
         indicesClust,
         rownames = FALSE,
         options = list(searching = FALSE,
-                       paging = FALSE)
-      )
+                       paging = FALSE,
+                       info = FALSE)
+      ) %>% 
+        DT::formatSignif(-1, 4)
     })
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # output$clustervalidationTables <- renderUI({
-    #   req(clusterDiff())
-    #   LL <- vector("list", length(clusterDiff()$Diferencias))
-    #   for (i in seq_len(length(clusterDiff()$Diferencias))) {
-    #     LL[[i]] <-
-    #       fluidRow(
-    #         column(width = 12 / 3,
-    #                h3(names(
-    #                  clusterDiff()$Diferencias
-    #                )[i]),
-    #                DT::dataTableOutput(ns(paste0("dt_", i)))),
-    #         column(width = 12 / 4,
-    #                br(),
-    #                br(),
-    #                plotOutput(
-    #                  ns(paste0("plot_", i)), height = "190px"
-    #                )),
-    #         br(),
-    #         br()
-    #         
-    #       )
-    #   }
-    #   return(LL)
-    #   
-    # })
-    
-    
     
     
     
