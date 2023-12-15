@@ -79,7 +79,8 @@ mod_zoneCompare_results_server <- function(id,
             rownames = FALSE,
             selection = 'none'
             
-          )
+          )  %>% 
+            DT::formatSignif(2, 4)
         )
         
         output[[paste0("plot_", i)]] <-

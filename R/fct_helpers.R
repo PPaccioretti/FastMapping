@@ -103,12 +103,30 @@ modelsVariogram <- function() {
 
 makePlotClusterValid <- function(data) {
   myNames <- colnames(data)
+  data[,1] <- as.character(data[,1])
+  
   ggplot2::ggplot(data,
-                  ggplot2::aes(x = .data[[myNames[1]]], y = .data[[myNames[2]]])) +
+                  ggplot2::aes(x = .data[[myNames[1]]],
+                               y = .data[[myNames[2]]])) +
     ggplot2::geom_col(width = 0.25) +
-    ggplot2::geom_text(ggplot2::aes(label = .data[[myNames[4]]],  vjust = -0.5))
+    ggplot2::geom_text(ggplot2::aes(label = .data[[myNames[4]]], 
+                                    vjust = -0.5)) +
+    ggplot2::theme(plot.margin = ggplot2::margin(t = 10, unit = "pt")) + ## pad "t"op region of the plot
+    ggplot2::coord_cartesian(clip = "off")
   
   
+}
+
+
+makePlotCluster <- function(data, colorCol) {
+  myTgtVct <- data[[colorCol]]
+  if (length(unique(myTgtVct)) <= 15 & !is.null(myTgtVct)) {
+    data[[colorCol]] <- as.factor(data[[colorCol]])
+  }
+  
+  ggplot2::ggplot(data) +
+    ggplot2::geom_sf(ggplot2::aes(fill = .data[[colorCol]],
+                                  color = .data[[colorCol]]))
 }
 
 

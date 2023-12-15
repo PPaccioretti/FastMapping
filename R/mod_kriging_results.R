@@ -9,49 +9,58 @@
 #' @importFrom shiny NS tagList
 mod_kriging_results_ui <- function(id) {
   ns <- NS(id)
-  tagList(div(id = ns("noInterpolated"),
-              p("No interpolation process was made.")),
-          div(
-            id = ns("yesInterpolated"),
-            shinycssloaders::withSpinner(tagList(
-              fluidRow(
-                column(
-                  12 / 3,
-                  # fluidRow(
-                  h4("Variogram Plot"),
-                  shinycssloaders::withSpinner(plotOutput(ns("VariogramPlot"))),
-                  btn_dwnd_centered(ns("download_variogram_plot"), "Download Plot")
-                  # )
-                ),
-                
-                column(
-                  12 / 3,
-                  h4("Predicted values"),
-                  shinycssloaders::withSpinner(plotOutput(ns("KrigingPlot"))),
-                  btn_dwnd_centered(ns("download_predicted_plot"), "Download Predicted Plot")
-                  
-                  # downloadButton(ns("download_pred_tiff"), "Download Tif")
-                ),
-                column(
-                  12 / 3,
-                  h4("Predicted variance values"),
-                  shinycssloaders::withSpinner(plotOutput(ns("VarKrigingPlot"))),
-                  btn_dwnd_centered(ns("download_variance_plot"), "Download Variance Plot")
-                ),
-                fluidRow(column(
-                  12,
-                  br(),
-                  btn_dwnd_centered(ns("download_pred_tiff"),
-                                    "Download Tif",
-                                    style = 'text-align: center; font-size:100%;'),
-                  br(),
-                  btn_dwnd_centered(ns("download_pred_gpkg"),
-                                    "Download vector data",
-                                    style = 'text-align: center; font-size:100%;')
-                ))
-              )
-            ))
-          ))
+  tagList(div(
+    id = ns("noInterpolated"),
+    p("No interpolation process was made.")
+  ),
+  div(id = ns("yesInterpolated"),
+      shinyjs::hidden(tagList(
+        bslib::layout_columns(
+          col_widths = c(4, 4, 4, -4, 8),
+          row_heights = c(2, 0.5),
+          {
+            tagList(
+              h4("Variogram Plot"),
+              shinycssloaders::withSpinner(plotOutput(ns(
+                "VariogramPlot"
+              ))),
+              btn_dwnd_centered(ns("download_variogram_plot"),
+                                "Download Plot")
+            )
+            
+            
+          },
+          {
+            tagList(
+              h4("Predicted values"),
+              shinycssloaders::withSpinner(plotOutput(ns("KrigingPlot"))),
+              btn_dwnd_centered(ns("download_predicted_plot"),
+                                "Download Predicted Plot")
+            )
+          },
+          {
+            tagList(
+              h4("Predicted variance values"),
+              shinycssloaders::withSpinner(plotOutput(ns(
+                "VarKrigingPlot"
+              ))),
+              btn_dwnd_centered(ns("download_variance_plot"),
+                                "Download Variance Plot")
+            )
+            
+          },
+          {
+            tagList(
+              btn_dwnd_centered(ns("download_pred_tiff"),
+                                "Download Tif",
+                                style = 'text-align: center; font-size:100%;'),
+              btn_dwnd_centered(ns("download_pred_gpkg"),
+                                "Download vector data",
+                                style = 'text-align: center; font-size:100%;')
+            )
+          }
+        )
+      ))))
 }
 
 #' kriging_results Server Functions
