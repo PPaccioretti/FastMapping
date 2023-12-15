@@ -10,54 +10,46 @@
 #' @importFrom magrittr %>%
 mod_depuration_results_ui <- function(id) {
   ns <- NS(id)
-  tagList(
-    div(id = ns("noDepurated"),
-        p("No depuration process was made.")
-    ),
-    div(
-      id = ns("yesDepurated"),
-      shinycssloaders::withSpinner(
-        tagList(
-          splitLayout(
-            div(style = "width: 400px; margin: auto;",
-                DT::dataTableOutput(ns("summaryResults"))
-            ),
-            shinyjs::hidden(
-              div(style = "width: 90%; margin: auto;",
-                  id = ns("download_btns"),
-                  tagList(
-                    downloadButton(
-                      ns("downloadDepurated_dep"), 
-                      "Download depurated data"
-                    ),
-                    br(),
-                    br(),
-                    downloadButton(
-                      ns("downloadDepurated_cond"), 
-                      "Download data with finally condition"
+  tagList(div(id = ns("noDepurated"),
+              p("No depuration process was made.")),
+          shinyjs::hidden(div(
+            id = ns("yesDepurated"),
+            shinycssloaders::withSpinner(
+              tagList(
+                splitLayout(
+                  div(style = "width: 400px; margin: auto;",
+                      DT::dataTableOutput(ns("summaryResults"))),
+                  shinyjs::hidden(div(
+                    style = "width: 90%; margin: auto;",
+                    id = ns("download_btns"),
+                    tagList(
+                      downloadButton(ns("downloadDepurated_dep"),
+                                     "Download depurated data"),
+                      br(),
+                      br(),
+                      downloadButton(
+                        ns("downloadDepurated_cond"),
+                        "Download data with finally condition"
+                      )
                     )
+                  ))
+                ),
+                shinyjs::hidden(
+                  selectInput(
+                    ns('colorplot'),
+                    "Color by",
+                    choices = NULL,
+                    selected = NULL,
+                    multiple = FALSE
                   )
+                ),
+                
+                plotly::plotlyOutput(ns("DepuratedPlot"),
+                                     width = "90%",
+                                     height = "500px")
               )
             )
-          ),
-          shinyjs::hidden(
-          selectInput(
-            ns('colorplot'),
-            "Color by",
-            choices = NULL,
-            selected = NULL,
-            multiple = FALSE
-          )
-          ),
-          
-          plotly::plotlyOutput(
-            ns("DepuratedPlot"),
-            width = "90%",
-            height = "500px")
-        )
-      )
-    )
-  )
+          )))
 }
 
 #' depuration_results Server Functions

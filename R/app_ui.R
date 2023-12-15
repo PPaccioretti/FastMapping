@@ -10,7 +10,6 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     bslib::page_navbar(
-      # navbarPage(
       title = "FastMapping",
       id = "navbar",
       theme = bslib::bs_theme(bootswatch = "united"),
@@ -101,19 +100,19 @@ app_ui <- function(request) {
           bslib::nav_panel(
             title = "Kriging Results",
             value = "navkrigresults",
-            mainPanel(
+            bslib::page_fillable(
               mod_kriging_process_ui("kriging_process"),
-              mod_kriging_results_ui("kriging_results"), 
-              width = 12
+              mod_kriging_results_ui("kriging_results")#,
+              # width = 12
             )
           ),
           bslib::nav_panel(
             title = "Cluster Results",
             value = "navclustresults",
-            mainPanel(#h5("Statistical Indices"),
-                      mod_cluster_process_ui("cluster_precess"),
-                      mod_cluster_results_ui("cluster_results"), 
-                      width = 12
+            mainPanel(
+              mod_cluster_process_ui("cluster_precess"),
+              mod_cluster_results_ui("cluster_results"), 
+              width = 12
             )
           ),
           bslib::nav_menu(
@@ -167,7 +166,6 @@ golem_add_external_resources <- function() {
     ),
     # use_waiter(),
     shinyjs::useShinyjs(),
-    waiter::useWaitress(),
     shiny::tags$script(
       src = "https://www.googletagmanager.com/gtag/js?id=G-2XNDM9NJ7P",
       async = ""

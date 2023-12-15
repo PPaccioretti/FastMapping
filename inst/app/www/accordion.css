@@ -1,4 +1,4 @@
-#contaccordion .action-button {
+/*#contaccordion .action-button {
     background-color: rgba(41,119,77, 0.3);
     color: black;
     font-size: 1.2em;
@@ -41,7 +41,7 @@
 
 #contaccordion .active:after {
   content: "\2212";
-}
+} 
 
 .panel {
   padding: 0 18px;
@@ -49,4 +49,4 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.2s ease-out;
-} 
+} */

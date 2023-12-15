@@ -86,9 +86,13 @@ mod_zoneCompare_parameters_server <- function(id,
     })
     
     
-    observeEvent(dataset(), {
+    observeEvent(is.data.frame(dataset()) || is.vector(input$clusterToTest), {
       req(dataset())
       possibleTargetVariables <- find_vars(dataset(), filterCluster)
+      filterNoSameVariable <- !(possibleTargetVariables %in% input$clusterToTest)
+      
+      possibleTargetVariables <- possibleTargetVariables[filterNoSameVariable]
+      
       shiny::updateSelectInput(
         'clusterToTest',
         choices = possibleTargetVariables,
@@ -101,7 +105,6 @@ mod_zoneCompare_parameters_server <- function(id,
       req(myData())
       if (input$hasfile) { 
         shinyjs::show('targetVariable')
-        
         }
     }, ignoreInit = FALSE)
     
@@ -152,19 +155,19 @@ mod_zoneCompare_parameters_server <- function(id,
         myVars
       })
     
-   
-      list(
-        'btnStart' = reactive(input$strtZoning),
-        'zoneCompare_param' = reactive({
-          list(
-            data = dataset(),
-            variable = variableToUse(),
-            zonesCol = input$clusterToTest,
-            alpha = input$alpha
-          )
-        }),
-        'has_newData' = reactive({input$hasfile})
-      )
+    
+    list(
+      'btnStart' = reactive(input$strtZoning),
+      'zoneCompare_param' = reactive({
+        list(
+          data = dataset(),
+          variable = variableToUse(),
+          zonesCol = input$clusterToTest,
+          alpha = input$alpha
+        )
+      }),
+      'has_newData' = reactive({input$hasfile})
+    )
     
   })
 }

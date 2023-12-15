@@ -36,13 +36,17 @@ mod_cluster_results_ui <- function(id) {
               hr(style = "border-top: 1px solid #000000;"),
               fluidRow(
                 # column_md(
-                  # width = 12,
+                  # width = 4,
                 class = "m-md-5",
-                  mod_visualize_spatial_data_ui(ns("plotclusters"),
-                                                lblToPlot = "Cluster to plot")
+                  # mod_visualize_spatial_data_ui(ns("plotclusters"),
+                                                # lblToPlot = "Cluster to plot")
                 # ),
-                
-                
+                # column_md(
+                  # width = 8,
+                  # 
+                  mod_mod_ggplot_sf_variable_ui(ns('cluster_plot'))
+                # )
+            # )
                 
               )
               
@@ -63,6 +67,7 @@ mod_cluster_results_server <- function(id,
     
     observeEvent(is.null(variablesUsed()) , {
       shinyjs::show("noClustered")
+      # shinyjs::disable("navzoneval")
       shinyjs::hide("yesClustered") 
     },ignoreNULL = FALSE,
       ignoreInit = TRUE)
@@ -72,11 +77,13 @@ mod_cluster_results_server <- function(id,
                  {
                    myRes <- try(clusterResults(), silent = T)
                    shinyjs::hide("yesClustered")
-                   if (inherits(myRes, "try-error")) {
+                   if (inherits(myRes, "try-error") || is.null(myRes)) {
                      shinyjs::show("noClustered")
+                     # shinyjs::disable("navzoneval")
                      shinyjs::hide("yesClustered")
                    } else {
                      shinyjs::hide("noClustered")
+                     # shinyjs::enable("navzoneval")
                      shinyjs::show("yesClustered")
                    }
                  },ignoreNULL = FALSE,
@@ -134,10 +141,15 @@ mod_cluster_results_server <- function(id,
       
     })
     
-    mod_visualize_spatial_data_server("plotclusters",
-                                      dataset = data_and_cluster,
-                                      vars = clusterResults
+    mod_mod_ggplot_sf_variable_server("cluster_plot",
+      dataset = data_and_cluster
     )
+    
+    # mod_visualize_spatial_data_server("plotclusters",
+    #                                   dataset = data_and_cluster,
+    #                                   vars = clusterResults,
+    #                                   maxMarkerToShow = reactive(1000000)
+    # )
     
     output$downloadClasification <- downloadHandler(
       filename = function() {

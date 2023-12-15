@@ -39,7 +39,7 @@ mod_depuration_process_server <-
                            duration = NULL,
                            closeButton = FALSE)
         on.exit(removeNotification(id), add = TRUE)
-        
+
         myParam <- dep_param()
         myBoundary <- sf::st_zm(myBoundary())
         dataset <- dataset()
