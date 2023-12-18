@@ -96,9 +96,10 @@ mod_cluster_process_server <- function(id,
     dataPlusCluster <- reactive({
       req(clusterResults())
       req(dataset())
-
       clusterResults <- clusterResults()
       clusterResults <- clusterResults$cluster
+      
+      req(nrow(dataset()) >= nrow(clusterResults))
       
       if (nrow(dataset()) > nrow(clusterResults)) {
         myNArows <- which(apply(dataset(), 1, function(x) {

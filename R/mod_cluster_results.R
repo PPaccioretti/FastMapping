@@ -15,42 +15,28 @@ mod_cluster_results_ui <- function(id) {
               p("No cluster process was made.")),
           shinyjs::hidden(div(
             id = ns("yesClustered"),
-            shinycssloaders::withSpinner(tagList(
-              fluidRow(
-                h5("Statistical Indices"),
-                column_md(width = 5,
-                          plotly::plotlyOutput(ns(
-                            "GraficoIndicesConglo"
-                          ))),
-                column_md(width = 7,
-                          DT::dataTableOutput(ns(
-                            "TablaIndicesConglo"
-                          )),
-                          
-                          div(class = "text-center py-5",
-                                 downloadButton(
-                                   ns("downloadClasification"), "Download Clasification"
-                                 ))
-                          )
-              ),
-              hr(style = "border-top: 1px solid #000000;"),
-              fluidRow(
-                # column_md(
-                  # width = 4,
-                class = "m-md-5",
-                  # mod_visualize_spatial_data_ui(ns("plotclusters"),
-                                                # lblToPlot = "Cluster to plot")
-                # ),
-                # column_md(
-                  # width = 8,
-                  # 
-                  mod_mod_ggplot_sf_variable_ui(ns('cluster_plot'))
-                # )
-            # )
+            shinycssloaders::withSpinner(tagList(fluidRow(
+              bslib::card(
+                full_screen = TRUE,
+                bslib::card_header("Statistical Indices"),
+                bslib::card_body(
+                  min_height = 200,
+                  class = "gap-2 container",
+                  bslib::layout_columns(
+                    col_widths = c(6, 6),
+                    row_heights = c(1, 1),
+                    plotly::plotlyOutput(ns("GraficoIndicesConglo")),
+                    bslib::layout_columns(
+                      col_widths = c(12, -3, 6, -3),
+                      row_heights = c(0.7, 0.3),
+                      DT::dataTableOutput(ns("TablaIndicesConglo")),
+                      downloadButton(ns("downloadClasification"), "Download Clasification")
+                    )
+                  )
+                )),
                 
-              )
-              
-            ))
+                mod_mod_ggplot_sf_variable_ui(ns('cluster_plot'))
+            )))
           )))
 }
 
@@ -142,7 +128,8 @@ mod_cluster_results_server <- function(id,
     })
     
     mod_mod_ggplot_sf_variable_server("cluster_plot",
-      dataset = data_and_cluster
+      dataset = data_and_cluster,
+      indices = indices
     )
     
     # mod_visualize_spatial_data_server("plotclusters",
