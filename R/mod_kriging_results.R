@@ -9,58 +9,101 @@
 #' @importFrom shiny NS tagList
 mod_kriging_results_ui <- function(id) {
   ns <- NS(id)
-  tagList(div(
+  tagList(
+    div(
     id = ns("noInterpolated"),
     p("No interpolation process was made.")
   ),
-  div(id = ns("yesInterpolated"),
-      shinyjs::hidden(tagList(
-        bslib::layout_columns(
-          col_widths = c(4, 4, 4, -4, 8),
-          row_heights = c(2, 0.5),
-          {
-            tagList(
-              h4("Variogram Plot"),
+ shinyjs::hidden(div(
+    id = ns("yesInterpolated"),
+    tagList(
+      bslib::layout_columns(
+        col_widths = c(4, 4, 4, -4, 8),
+        row_heights = c(2, 0.5),
+        {
+          
+          bslib::card(
+            full_screen = TRUE,
+            bslib::card_header(
+              "Variogram Plot"
+            ),
+            bslib::card_body(
               shinycssloaders::withSpinner(plotOutput(ns(
                 "VariogramPlot"
-              ))),
+              )))
+            ),
+            bslib::card_footer(
               btn_dwnd_centered(ns("download_variogram_plot"),
                                 "Download Plot")
             )
-            
-            
-          },
-          {
-            tagList(
-              h4("Predicted values"),
-              shinycssloaders::withSpinner(plotOutput(ns("KrigingPlot"))),
+          )
+          
+          
+        },
+        {
+          
+          bslib::card(
+            full_screen = TRUE,
+            bslib::card_header(
+              "Predicted values"
+            ),
+            bslib::card_body(
+              shinycssloaders::withSpinner(plotOutput(ns(
+                "KrigingPlot"
+              )))
+            ),
+            bslib::card_footer(
               btn_dwnd_centered(ns("download_predicted_plot"),
-                                "Download Predicted Plot")
+                                "Download Plot")
             )
-          },
-          {
-            tagList(
-              h4("Predicted variance values"),
+          )
+          
+        },
+        {
+          bslib::card(
+            full_screen = TRUE,
+            bslib::card_header(
+              "Predicted variance values"
+            ),
+            bslib::card_body(
               shinycssloaders::withSpinner(plotOutput(ns(
                 "VarKrigingPlot"
-              ))),
+              )))
+            ),
+            bslib::card_footer(
               btn_dwnd_centered(ns("download_variance_plot"),
-                                "Download Variance Plot")
+                                "Download Plot")
             )
-            
-          },
-          {
-            tagList(
+          )
+          
+        },
+        {
+          
+          bslib::card(
+            full_screen = FALSE,
+            bslib::card_header(
+              "Download datasets"
+            ),
+            bslib::card_body(
+              
+              bslib::layout_columns(
+                col_widths = c(-2, 4, 4, -2),
               btn_dwnd_centered(ns("download_pred_tiff"),
                                 "Download Tif",
                                 style = 'text-align: center; font-size:100%;'),
               btn_dwnd_centered(ns("download_pred_gpkg"),
                                 "Download vector data",
                                 style = 'text-align: center; font-size:100%;')
+              )
             )
-          }
-        )
-      ))))
+          )
+          
+        }
+      )
+    )
+  )
+  )
+  )
 }
 
 #' kriging_results Server Functions
@@ -80,14 +123,32 @@ mod_kriging_results_server <- function(id,
       kriging_plot()
       variogram()
       }), {
+
       myRes <- try(kriging(), silent = T)
-      if (inherits(myRes, "try-error")) {
+      if (inherits(myRes, "try-error") || is.null(myRes)) {
         shinyjs::show("noInterpolated")
         shinyjs::hide("yesInterpolated")
       } else {
         shinyjs::hide("noInterpolated")
+
       }
     }, ignoreNULL = FALSE)
+    
+    
+    observeEvent(is.data.frame(kriging()) || is.null(variogram()), {
+      
+      shinyjs::show("yesInterpolated")
+      myRes <- try(kriging(), silent = T)
+      if (inherits(myRes, "try-error") || is.null(myRes)) {
+        shinyjs::show("noInterpolated")
+        shinyjs::hide("yesInterpolated")
+      } else {
+        shinyjs::hide("noInterpolated")
+        shinyjs::show("yesInterpolated")
+      }
+      
+    })
+    
     
     
     raster_Pred <- reactive({ 
@@ -100,6 +161,7 @@ mod_kriging_results_server <- function(id,
       myEvent()
       req(variablesForVariogramPlot())
       mydata <- variablesForVariogramPlot()
+
       variogg <- ggplot2::ggplot(data = mydata$variogramline) +
         ggplot2::geom_point(data = mydata$variogramPoint,
                             ggplot2::aes(x = dist, y = gamma),
@@ -130,7 +192,6 @@ mod_kriging_results_server <- function(id,
       myEvent()
       req(kriging())
       req(kriging_plot())
-      
       krigin_plot <- kriging_plot()
       
       zmin <- krigin_plot$min

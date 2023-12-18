@@ -39,7 +39,7 @@ mod_kriging_process_server <- function(id,
       ### Formula Refactoring
       # Get the (predictor) variables
       vars <- attr(stats::terms(myParam$formula), which = "term.labels")
-      
+
       if (length(vars) == 2) {
         
         coords <- colnames(sf::st_coordinates(file))
@@ -96,7 +96,6 @@ mod_kriging_process_server <- function(id,
     })
     
     MejorModelo <- eventReactive(button(), {
-
       ValidationTable = MiKrige()
       tryCatch({
         MyBestModels = names(which.min(apply(ValidationTable[8,], 2, as.numeric)))
@@ -141,7 +140,7 @@ mod_kriging_process_server <- function(id,
       row.names(Modelo) = NULL
       RMSE = myKrige[8, myBestModel][[1]]
       RMSEp = RMSE / mean(dataset()[[myParam$myTgtVar]], na.rm = TRUE) * 100
-      
+ 
       
       Modelo = data.frame(
         Modelo,
@@ -176,7 +175,7 @@ mod_kriging_process_server <- function(id,
       # req(dataset())
       # req(kriging_param())
       # req(MejorModelo())
-
+ 
       file <- dataset()
       file <- check_fix_polygon_multi(file)
       # file <- sf::as_Spatial(file)
@@ -203,7 +202,7 @@ mod_kriging_process_server <- function(id,
       req(dataset())
       req(kriging_param())
       req(boundary_poly())
-
+ 
       file <- dataset()
       file <- check_fix_polygon_multi(file)
       myParam <- kriging_param()

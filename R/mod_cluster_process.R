@@ -99,7 +99,7 @@ mod_cluster_process_server <- function(id,
       clusterResults <- clusterResults()
       clusterResults <- clusterResults$cluster
       
-      req(nrow(dataset()) >= nrow(clusterResults))
+      # req(nrow(dataset()) >= nrow(clusterResults))
       
       if (nrow(dataset()) > nrow(clusterResults)) {
         myNArows <- which(apply(dataset(), 1, function(x) {
@@ -109,7 +109,10 @@ mod_cluster_process_server <- function(id,
         clusterResults <- insertRow(clusterResults, NA, myNArows)
       }
 
-      cbind(dataset(), clusterResults)
+      tryCatch(cbind(dataset(), clusterResults),
+               error = function(e) {
+                 NULL
+               })
     })
     
     variables <- reactive({
