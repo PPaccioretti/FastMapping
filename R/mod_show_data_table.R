@@ -9,7 +9,7 @@
 #' @importFrom shiny NS tagList
 mod_show_data_table_ui <- function(id) {
   ns <- NS(id)
-  DT::dataTableOutput(ns("table"))
+  DT::DTOutput(ns("table"))
 }
 
 #' show_data_table Server Functions
@@ -23,13 +23,14 @@ mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
     data_print <- reactive({
       req(dataset())
       myData <- dataset()
+      
       if (inherits(myData, "sf")) {
         myData <- print_sf_as_df(myData)$data
       }
       myData
     })
     
-    output$table <- DT::renderDataTable({
+    output$table <- DT::renderDT({
       
       if (not_null(maxShow())) {
          showNotification(
@@ -54,6 +55,7 @@ mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
       searching = FALSE,
       select = FALSE,
       pageLength = 5,
+      info = FALSE,
       scrollX = TRUE#,
       # lengthMenu = {
       #   req(dataset())

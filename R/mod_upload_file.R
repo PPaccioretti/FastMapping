@@ -32,7 +32,7 @@ mod_upload_file_ui <-
 #' @noRd
 #' @keywords internal
 
-mod_upload_file_server <- function(id) {
+mod_upload_file_server <- function(id, disable = FALSE) {
   moduleServer(id, function(input, output, session) {
     myDf <- reactive({
       req(input$database_upload)
@@ -40,9 +40,19 @@ mod_upload_file_server <- function(id) {
         showNotification(loadingText("Reading data..."),
                          duration = NULL,
                          closeButton = FALSE)
-      on.exit(removeNotification(id), add = TRUE)
-      myTable <- read_file_guessing(input$database_upload$datapath,
-                                    input$database_upload$name)
+      on.exit({
+        removeNotification(id)
+        if (disable) {shinyjs::disable('database_upload')}
+      }, add = TRUE)
+      
+      
+      golem::print_dev('Reading file...')
+
+      myTable <- read_file_guessing(datapath = input$database_upload$datapath,
+                                    name = input$database_upload$name,
+                                    session = session)
+      golem::print_dev('End Reading file...')
+      
       myTable
     })
   })

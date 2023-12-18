@@ -13,30 +13,56 @@ read_file_guessing <- function(datapath, name, session = session) {
   
   # datapath <- upload$datapath
   # name <- upload$name
-  
   ext <- tolower(tools::file_ext(datapath))
+  if (is.function(session[['ns']])) {
+    ns <- session$ns
+  }
   
-  if (length(ext) > 1 &
-      !all(c("shp", "shx", "dbf") %in% ext)) {
-    if (!is.na(session)) {
-      ns <- session$ns
-    } 
-    
+  if (length(ext) == 1 && ext %in% c("shp", "shx", "dbf")) {
     shiny::showNotification(
       paste(
-        "Multiple files were uploaded,",
-        "this is only valid for shp files",
-        "with at least shp, dbf AND shx"
+        "Only a file with extension", ext, 
+        "was uploaded. This file is associated with",
+        "shp files, please upload all associated files.",
+        "(At LEAST shp, dbf, AND shx)"
       ),
       type = 'error',
-      id = ns("multiple-files")
+      id = ns("sigle-shp-file")
     )
-    shiny::validate("Invalid files uploaded. Only one file is allowed but for shp files.")
-    
+    shiny::validate("Invalid file uploaded. For upload shp files, please select at least 'shp', 'shx' AND 'dbf' files.")
+  }
+  
+  if (length(ext) > 1) {
+    if (!all(c("shp", "shx", "dbf") %in% ext)) {
+      shiny::showNotification(
+        paste(
+          "Multiple files were uploaded,",
+          "this is only valid for shp files",
+          "with at least shp, dbf AND shx"
+        ),
+        type = 'error',
+        id = ns("multiple-files")
+      )
+      shiny::validate("Invalid files uploaded. Only one file is allowed but for shp files, where at least 'shp', 'shx', 'dbf' files are needed.")
+      
+    }
+    if (all(c("shp", "shx", "dbf") %in% ext & !'prj' %in% ext)) {
+      shiny::showNotification(
+        paste(
+          "Multiple files were uploaded,",
+          "but non prj file is present.",
+          "You will have to add manually origin and target EPSG code."
+        ),
+        duration = 10,
+        type = 'warning',
+        id = ns("no-prj")
+      )
+    }
   }
   
   if (length(ext) == 1 &&
       ext %in% c("txt", "csv")) {
+
     myData <- tryCatch({
       data.table::fread(
         datapath,
@@ -54,6 +80,15 @@ read_file_guessing <- function(datapath, name, session = session) {
       )
     },
     error = function(e) {
+      data.table::fread(
+        datapath,
+        dec = ",",
+        data.table = FALSE,
+        check.names = TRUE,
+        encoding = 'Latin-1'
+      )
+    },
+    error = function(e) {
       shiny::showNotification(paste("Invalid file format, please check!"),
                               type = 'error',
                               id = ns("invalid-files"))
@@ -61,10 +96,18 @@ read_file_guessing <- function(datapath, name, session = session) {
     })
 
     if (is.null(myData)) {
+      
+      text_cvs <- ext %in% c("txt", "csv")
+      if (text_cvs) {
+        text_comma <- "Be careful with comma as decimal separator if csv was uploaded"
+      } else {
+        text_comma <- ''
+      }
       shiny::validate(
-        paste(
-          "Something went wrong while reaading file.\n",
-          "Invalid file format, please check!"
+        paste0(
+          "Something went wrong while reading file.\n",
+          "Invalid file format, please check!\n",
+          text_comma
         )
       )
     }
@@ -84,13 +127,18 @@ read_file_guessing <- function(datapath, name, session = session) {
       if (length(ext) > 1) {
         suppressWarnings(from <- normalizePath(datapath))
         to <- file.path(dirname(from), basename(name))
-        to <- normalizePath(to)
+        suppressWarnings(to <- normalizePath(to))
         file.rename(from, to)
-        sf::read_sf(unique(dirname(from)), 
-                    as_tibble = FALSE)
+        myData_sf <- sf::read_sf(unique(dirname(from)), 
+                                 as_tibble = FALSE)
+        myData_sf <- sf::st_zm(myData_sf)
+        myData_sf
       } else {
-        sf::read_sf(datapath, 
-                    as_tibble = FALSE)
+        myData_sf <- sf::read_sf(datapath, 
+                                 as_tibble = FALSE)
+        
+        myData_sf <- sf::st_zm(myData_sf)
+        myData_sf
       }
     },
     error = function(e) {
@@ -108,5 +156,32 @@ read_file_guessing <- function(datapath, name, session = session) {
       shiny::validate("Invalid file type.")
     })
   }
+  
+  if (nrow(myData) == 0) {
+    
+    shiny::showNotification(
+      paste(
+        "Dataset has 0 rows."
+      ),
+      type = 'error',
+      id = ns("zero_rows_data")
+    )
+    shiny::validate("Dataset has 0 rows.")
+    return(NULL)
+  }
+  
+  if (ncol(myData) == 0) {
+    
+    shiny::showNotification(
+      paste(
+        "Dataset has 0 columns."
+      ),
+      type = 'error',
+      id = ns("zero_cols_data")
+    )
+    shiny::validate("Dataset has 0 columns.")
+    return(NULL)
+  }
+  
   myData
 }

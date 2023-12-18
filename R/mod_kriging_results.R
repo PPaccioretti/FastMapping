@@ -6,27 +6,104 @@
 #'
 #' @noRd 
 #'
-#' @importFrom shiny NS tagList 
+#' @importFrom shiny NS tagList
 mod_kriging_results_ui <- function(id) {
   ns <- NS(id)
-  tagList(fluidRow(
-    column(
-      12 / 3,
-      h4("Variogram Plot"),
-      shinycssloaders::withSpinner(plotOutput(ns("VariogramPlot")))
-    ),
-    column(
-      12 / 3,
-      h4("Predicted values"),
-      shinycssloaders::withSpinner(plotOutput(ns("KrigingPlot"))),
-      downloadButton(ns("download_pred_tiff"), "Download Tif")
-    ),
-    column(
-      12 / 3,
-      h4("Predicted variance values"),
-      shinycssloaders::withSpinner(plotOutput(ns("varKrigingPlot")))
+  tagList(
+    div(
+    id = ns("noInterpolated"),
+    p("No interpolation process was made.")
+  ),
+ shinyjs::hidden(div(
+    id = ns("yesInterpolated"),
+    tagList(
+      bslib::layout_columns(
+        col_widths = c(4, 4, 4, -4, 8),
+        row_heights = c(2, 0.5),
+        {
+          
+          bslib::card(
+            full_screen = TRUE,
+            bslib::card_header(
+              "Variogram Plot"
+            ),
+            bslib::card_body(
+              shinycssloaders::withSpinner(plotOutput(ns(
+                "VariogramPlot"
+              )))
+            ),
+            bslib::card_footer(
+              btn_dwnd_centered(ns("download_variogram_plot"),
+                                "Download Plot")
+            )
+          )
+          
+          
+        },
+        {
+          
+          bslib::card(
+            full_screen = TRUE,
+            bslib::card_header(
+              "Predicted values"
+            ),
+            bslib::card_body(
+              shinycssloaders::withSpinner(plotOutput(ns(
+                "KrigingPlot"
+              )))
+            ),
+            bslib::card_footer(
+              btn_dwnd_centered(ns("download_predicted_plot"),
+                                "Download Plot")
+            )
+          )
+          
+        },
+        {
+          bslib::card(
+            full_screen = TRUE,
+            bslib::card_header(
+              "Predicted variance values"
+            ),
+            bslib::card_body(
+              shinycssloaders::withSpinner(plotOutput(ns(
+                "VarKrigingPlot"
+              )))
+            ),
+            bslib::card_footer(
+              btn_dwnd_centered(ns("download_variance_plot"),
+                                "Download Plot")
+            )
+          )
+          
+        },
+        {
+          
+          bslib::card(
+            full_screen = FALSE,
+            bslib::card_header(
+              "Download datasets"
+            ),
+            bslib::card_body(
+              
+              bslib::layout_columns(
+                col_widths = c(-2, 4, 4, -2),
+              btn_dwnd_centered(ns("download_pred_tiff"),
+                                "Download Tif",
+                                style = 'text-align: center; font-size:100%;'),
+              btn_dwnd_centered(ns("download_pred_gpkg"),
+                                "Download vector data",
+                                style = 'text-align: center; font-size:100%;')
+              )
+            )
+          )
+          
+        }
+      )
     )
-  ))
+  )
+  )
+  )
 }
 
 #' kriging_results Server Functions
@@ -40,13 +117,51 @@ mod_kriging_results_server <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    myEvent <- bindEvent( reactive({
+      variablesForVariogramPlot()
+      kriging()
+      kriging_plot()
+      variogram()
+      }), {
+
+      myRes <- try(kriging(), silent = T)
+      if (inherits(myRes, "try-error") || is.null(myRes)) {
+        shinyjs::show("noInterpolated")
+        shinyjs::hide("yesInterpolated")
+      } else {
+        shinyjs::hide("noInterpolated")
+
+      }
+    }, ignoreNULL = FALSE)
+    
+    
+    observeEvent(is.data.frame(kriging()) || is.null(variogram()), {
+      
+      shinyjs::show("yesInterpolated")
+      myRes <- try(kriging(), silent = T)
+      if (inherits(myRes, "try-error") || is.null(myRes)) {
+        shinyjs::show("noInterpolated")
+        shinyjs::hide("yesInterpolated")
+      } else {
+        shinyjs::hide("noInterpolated")
+        shinyjs::show("yesInterpolated")
+      }
+      
+    })
+    
+    
+    
     raster_Pred <- reactive({ 
       stars::st_as_stars(kriging())
     })
     
-    output$VariogramPlot <- renderPlot({
+    
+    
+    variogramPlot <- reactive({
+      myEvent()
       req(variablesForVariogramPlot())
       mydata <- variablesForVariogramPlot()
+
       variogg <- ggplot2::ggplot(data = mydata$variogramline) +
         ggplot2::geom_point(data = mydata$variogramPoint,
                             ggplot2::aes(x = dist, y = gamma),
@@ -61,7 +176,7 @@ mod_kriging_results_server <- function(id,
           y = -Inf,
           hjust = 1,
           vjust = -0.1,
-          size = 3
+          size = 4
         ) +
         ggplot2::scale_y_continuous(limits = c(0, NA)) +
         ggplot2::ggtitle("Experimental variogram and fitted variogram model")
@@ -69,35 +184,91 @@ mod_kriging_results_server <- function(id,
       variogg
     })
     
-    output$KrigingPlot <- renderPlot({
+    output$VariogramPlot <- renderPlot({
+      variogramPlot()
+    })
+    
+    krigingPlot <- reactive({
+      myEvent()
       req(kriging())
       req(kriging_plot())
-      
       krigin_plot <- kriging_plot()
       
       zmin <- krigin_plot$min
       zmax <- krigin_plot$max
       
       # if (is.na(zmin)) {
-        zmin <- min(kriging()$var1.pred, na.rm = T)
+      zmin <- min(kriging()$var1.pred, na.rm = T)
       # }
       # if (is.na(zmax)) {
-        zmax <- max(kriging()$var1.pred, na.rm = T)
+      zmax <- max(kriging()$var1.pred, na.rm = T)
       # }
-        ggplot2::ggplot() + 
-          stars::geom_stars(data = kriging(), 
-                            ggplot2::aes(fill = var1.pred, x = x, y = y)) +
-          ggplot2::scale_fill_gradientn(colours = grDevices::terrain.colors(20)) +
-          ggplot2::theme(legend.position = "bottom") +
-          ggplot2::guides(fill = ggplot2::guide_colourbar(
-            barwidth = 20, 
-            label.position = "bottom")) +
-          ggplot2::coord_equal()
-        
+      krigingPlot <- 
+      ggplot2::ggplot() + 
+        stars::geom_stars(data = kriging(), 
+                          ggplot2::aes(fill = var1.pred, x = x, y = y)) +
+        ggplot2::scale_fill_gradientn(colours = grDevices::terrain.colors(20),
+                                      na.value = "transparent") +
+        ggplot2::theme(legend.position = "bottom") +
+        ggplot2::guides(fill = ggplot2::guide_colourbar(
+          barwidth = 17, 
+          label.position = "bottom")) +
+        ggplot2::coord_equal()
+      krigingPlot
+      
     })
     
     
-    output$varKrigingPlot <- renderPlot({
+    output$KrigingPlot <- renderPlot({
+      req(krigingPlot())
+      krigingPlot()
+        
+    })
+    
+    #VariogramPlot download
+    output$download_variogram_plot <- downloadHandler(
+      filename = function() {
+        paste('VariogramPlot-', Sys.Date(), '.png', sep = '')
+      },
+      content = function(con) {
+        req(variogramPlot())
+        ggplot2::ggsave(con, plot = variogramPlot(), device = 'png')
+      }
+    )
+    #KrigingmPlot download
+    output$download_predicted_plot <- downloadHandler(
+      filename = function() {
+        paste('KrigingPlot-predicted-', Sys.Date(), '.png', sep = '')
+      },
+      content = function(con) {
+        req(krigingPlot())
+        ggplot2::ggsave(con, 
+                        plot = krigingPlot(), 
+                        width = 15,
+                        height = 15,
+                        units = "cm",
+                        device = 'png')
+      }
+    )
+    output$download_variance_plot <- downloadHandler(
+      filename = function() {
+        paste('KrigingPlot-variance-', Sys.Date(), '.png', sep = '')
+      },
+      content = function(con) {
+        req(varkrigingPlot())
+        ggplot2::ggsave(con, 
+                        plot = varkrigingPlot(), 
+                        width = 15,
+                        height = 15,
+                        units = "cm",
+                        device = 'png')
+      }
+    )
+    
+    
+    
+    varkrigingPlot <- reactive({
+      
       req(kriging())
       req(kriging_plot())
       
@@ -116,39 +287,49 @@ mod_kriging_results_server <- function(id,
       # # if (is.na(zmax_var)) {
       #   zmax_var <- max(kriging()$var1.var, na.rm = T)
       # }
-        ggplot2::ggplot() + 
-          stars::geom_stars(data = kriging(), 
-                            ggplot2::aes(fill = var1.var, x = x, y = y)) +
-          ggplot2::scale_fill_gradientn(colours = grDevices::cm.colors(20)) +
-          ggplot2::theme(legend.position = "bottom") +
-          ggplot2::guides(fill = ggplot2::guide_colourbar(
-            barwidth = 20, 
-            label.position = "bottom")) +
-          ggplot2::coord_equal()
-
+      ggplot2::ggplot() + 
+        stars::geom_stars(data = kriging(), 
+                          ggplot2::aes(fill = var1.var, x = x, y = y)) +
+        ggplot2::scale_fill_gradientn(colours = grDevices::cm.colors(20),
+                                      na.value = "transparent") +
+        ggplot2::theme(legend.position = "bottom") +
+        ggplot2::guides(fill = ggplot2::guide_colourbar(
+          barwidth = 17, 
+          label.position = "bottom")) +
+        ggplot2::coord_equal()
+      
+      
     })
     
-    # output$TiffPlot1 <- renderPlot({
-    #   validate(need(input$file, 'Check input file!'))
-    #   plot(raster_Pred(), col = terrain.colors(100))
-    #   
-    # }, width = 600, height = 600, res = 100)
-    # 
+    output$VarKrigingPlot <- renderPlot({
+      req(varkrigingPlot())
+      varkrigingPlot()
+    })
+    
     
     #Descarga del GeoTiff
     output$download_pred_tiff <- downloadHandler(
       filename = function() {
-        paste('Map-', Sys.Date(), '.tif', sep = '')
+        paste('Map-', Sys.Date(), '.nc', sep = '')
       },
       content = function(con) {
         Predicted_Tiff <- raster_Pred()
-        stars::write_stars(Predicted_Tiff, 
-                           con, 
-                           layer = attributes(Predicted_Tiff)$names)
+        stars::write_mdim(Predicted_Tiff, 
+                           con)
+        # ,layer = attributes(Predicted_Tiff)$names
       }
     )
-    
-    
+    #Descarga del archivo vectorial gpkg
+    output$download_pred_gpkg <- downloadHandler(
+      filename = function() {
+        paste('Map-', Sys.Date(), '.gpkg', sep = '')
+      },
+      content = function(con) {
+        Predicted_sf <- sf::st_as_sf(raster_Pred())
+        sf::write_sf(Predicted_sf, 
+                     con)
+      }
+    )
     
   })
 }

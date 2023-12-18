@@ -7,7 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-#'
+#' @importFrom magrittr %>%
 mod_visualize_spatial_data_ui <-
   function(id,
            lblToPlot = "Variable to plot",
@@ -43,7 +43,7 @@ mod_visualize_spatial_data_server <-
     
     observeEvent(dataset(), {
       ## INITIAL STATE
-      shinyjs::reset("varToPlot")
+      shinyjs::reset("varToPlot", asis = TRUE)
       shiny::updateSelectInput(
         'varToPlot',
         choices = NULL,
@@ -55,29 +55,32 @@ mod_visualize_spatial_data_server <-
 
     data <- reactive({
       req(inherits(dataset(), "sf"))
+      validate(need(!is.na(sf::st_crs(dataset())),
+                    message = "Select a correct Original EPSG code."))
       df_sf <- sf::st_transform(dataset(), 4326)
-
-      if (nrow(df_sf) > maxMarkerToShow() & not_null(maxMarkerToShow())) {
-            showNotification(
-              paste0(
-                'Data has ',
-                nrow(df_sf),
-                ' observations, but ',
-                maxMarkerToShow(),
-                ' will be plot'
-              ),
-              id = ns('maxRows'),
-              type = "message",
-              session = session
-            )
-            df_sf <- df_sf[sample(nrow(df_sf), maxMarkerToShow()), ]
-          }
-          df_sf
+      if (nrow(df_sf) > maxMarkerToShow() &
+          not_null(maxMarkerToShow())) {
+        showNotification(
+          paste0(
+            'Data has ',
+            nrow(df_sf),
+            ' observations, but ',
+            maxMarkerToShow(),
+            ' will be plot'
+          ),
+          id = ns('maxRows'),
+          type = "message",
+          session = session
+        )
+        df_sf <- df_sf[sample(nrow(df_sf), maxMarkerToShow()),]
+      }
+      golem::print_dev('Data for plot...')
+      df_sf
     })
-
+    
     myLeaflet <- reactive({
-      req(inherits(dataset(), "sf"))
-      
+      req(inherits(data(), "sf") & !is.na(sf::st_crs(data())))
+      golem::print_dev('myLeaflet...')
       tryCatch({
       leaflet::leaflet() %>%
         leaflet::addTiles(group = "OSM") %>%
@@ -123,37 +126,72 @@ mod_visualize_spatial_data_server <-
 
     })
 
-    observeEvent(vars() == 2 | is.data.frame(data()), {
+    observeEvent(is.list(vars()) | is.data.frame(data()), {
       req(data())
       req(vars())
-
       shinyjs::show("varToPlot")
-
-      shiny::updateSelectInput(
-        'varToPlot',
-        choices = colnames(sf::st_drop_geometry(data())),
-        selected = vars()[1],
-        session = session
-
-      )
+      myColNames <- colnames(sf::st_drop_geometry(data()))
+      
+      
+      
+      if (is.list(vars()) & "indices" %in% names(vars())) {
+        myClustResults <- vars()[['indices']]
+        
+        myClusters <- agrepl('Cluster_\\d{1,3}', 
+                             x = myColNames,
+                             fixed = FALSE)
+        myBestCluster <- myClustResults[which.min(myClustResults[['Summary Index']]), 'Num. Cluster']
+        selected_col <- paste0('Cluster_', myBestCluster)
+        if (all(!myClusters)) {
+          showNotification(
+            'There are not Cluster columns',
+            id = ns('no_cluister_colnames'),
+            type = "warning",
+            session = session
+          )
+          myClusters <- rep(TRUE, length(myColNames))
+          selected_col <- myColNames[1]
+        }
+        
+        
+        shiny::updateSelectInput(
+          'varToPlot',
+          choices = myColNames[myClusters],
+          selected = selected_col,
+          session = session
+          
+        )
+      } 
+      if (is.vector(vars()) & !is.list(vars())) {
+        shiny::updateSelectInput(
+          'varToPlot',
+          choices = myColNames,
+          selected = vars()[1],
+          session = session
+          
+        )
+      }
     })
 
 
     output$mylfltmap <- leaflet::renderLeaflet({
+      req(data())
        myLeaflet()
     })
 
     observeEvent(input$goDataset, {
+      req(data())
+      
       bbox <- req(as.vector(sf::st_bbox(data())))
       
       myMap <- leaflet::leafletProxy("mylfltmap", session)
-      if (nrow(data()) < 3000) {
+      # if (nrow(data()) < 3000) {
         myMap %>% 
-          leaflet::flyToBounds(bbox[1], bbox[2],bbox[3],bbox[4])
-      } else {
-        myMap %>% 
-        leaflet::fitBounds(bbox[1], bbox[2],bbox[3],bbox[4])
-      }
+          leaflet::flyToBounds(bbox[1], bbox[2], bbox[3], bbox[4])
+      # } else {
+      #   myMap %>% 
+      #   leaflet::fitBounds(bbox[1], bbox[2],bbox[3],bbox[4])
+      # }
      
       
        
@@ -161,22 +199,27 @@ mod_visualize_spatial_data_server <-
     # 
     observeEvent(input$varToPlot, {
       req(data())
-      req(input$varToPlot, cancelOutput = TRUE)
+      # req(input$varToPlot, cancelOutput = TRUE)
+      req(input$varToPlot)
       df_sf <- data()
-
       MyMap <- leaflet::leafletProxy("mylfltmap", session)
-
 
       for (i in input$varToPlot) {
         myTgtVct <- df_sf[[i]]
-
-        if (is.numeric(myTgtVct)) {
+        req(myTgtVct)
+        if (i == "") break
+        myCol <- NULL
+        if (length(unique(myTgtVct)) <= 15 & !is.null(myTgtVct)) {
+          myTgtVct <- as.factor(myTgtVct)
+        }
+        if (is.numeric(myTgtVct) & !is.null(myTgtVct)) {
           myTgtVctrnd <- formatC(myTgtVct, format = "f")
           myPal <-
             sample(c("viridis", "magma", "inferno", "plasma"), 1)
           pal <- leaflet::colorNumeric(myPal, myTgtVct)
           myCol <- pal(myTgtVct)
-        } else {
+        } 
+        if (!is.numeric(myTgtVct) & !is.null(myTgtVct)) {
           myTgtVctrnd <- myTgtVct
           myPal <- sample(c("RdYlBu", "Blues"), 1)
           pal <- leaflet::colorFactor(myPal, myTgtVct)
@@ -187,24 +230,59 @@ mod_visualize_spatial_data_server <-
 
         MyMap <-
           MyMap %>%
+          leaflet::clearControls()
+
+        if (has_sf_points(df_sf)) {
+          MyMap <-
+            MyMap %>%
+            leaflet::addCircleMarkers(
+              data = select_sf_points(df_sf),
+              color = myCol,
+              label = myTgtVctrnd,
+              labelOptions = leaflet::labelOptions(direction = "top"),
+              group = i,
+              stroke = FALSE,
+              fillOpacity = 0.7
+            )
+        }
+        if (has_sf_polygon(df_sf)) {
+          MyMap <-
+            MyMap %>%
+            leaflet::addPolygons(
+              data = select_sf_polygon(df_sf),
+              color = myCol,
+              label = myTgtVctrnd,
+              labelOptions = leaflet::labelOptions(direction = "top"),
+              group = i,
+              stroke = FALSE,
+              fillOpacity = 0.7
+            )
+        }
+        if (has_sf_multipoints(df_sf)) {
+          df_sf_p <- sf::st_cast(select_sf_multipoints(df_sf), 'POINT')
+          MyMap <-
+            MyMap %>%
+            leaflet::addCircleMarkers(
+              data = select_sf_points(df_sf_p),
+              color = myCol,
+              label = myTgtVctrnd,
+              labelOptions = leaflet::labelOptions(direction = "top"),
+              group = i,
+              stroke = FALSE,
+              fillOpacity = 0.7
+            )
+        }
+        MyMap <-
+          MyMap %>%
           leaflet::clearControls() %>%
-          leaflet::addCircleMarkers(
-            data = df_sf,
-            color = myCol,
-            label = myTgtVctrnd,
-            labelOptions = leaflet::labelOptions(direction = "top"),
-            group = i,
-            stroke = FALSE,
-            fillOpacity = 0.7
-          ) %>%
           leaflet::addLegend(
             pal = pal,
             values = myTgtVct,
             title = i,
             opacity = 1.0
           )
+        
       }
-      #
       tryCatch({
         MyMap %>%
           leaflet::addLayersControl(
@@ -230,15 +308,17 @@ mod_visualize_spatial_data_server <-
         )
         return()
       })
-
     })
 
     observeEvent(poly(), {
-      req(poly())
+      req(poly(), cancelOutput = TRUE)
       req(inherits(poly(), "sf"))
-      poly <- sf::st_transform(poly(), 4326)
+      
+      poly <- sf::st_zm(sf::st_transform(poly(), 4326))
       bbox <- as.vector(sf::st_bbox(poly))
-
+      req(bbox)
+      golem::print_dev('Adding polygon to leaflet...')
+      
       leaflet::leafletProxy("mylfltmap", session) %>%
         leaflet::clearGroup("Boundary") %>%
         leaflet::addPolygons(
@@ -248,7 +328,8 @@ mod_visualize_spatial_data_server <-
           weight = 4,
           smoothFactor = 0.5,
           opacity = 1.0,
-          fillOpacity = 0
+          fillOpacity = 0,
+          options = leaflet::pathOptions()
         ) %>%
         leaflet::addLayersControl(
           baseGroups = c("OSM", "Satellite", "Topographic Map"),
@@ -257,8 +338,7 @@ mod_visualize_spatial_data_server <-
           position = "topleft"
         ) %>%
         leaflet::flyToBounds(bbox[1], bbox[2],bbox[3],bbox[4])
-
-    })
+    }, ignoreInit = TRUE )
 
   })
 }

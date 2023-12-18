@@ -19,14 +19,12 @@ test_that(" return value", {
     # write.table(df, path_tsv_comma, sep = "\t", dec = ",", row.names = FALSE)
     openxlsx::write.xlsx(df, path_xlsx)
     
-    expect_equal(read_file_guessing(path_csv), df)
-    expect_equal(read_file_guessing(path_xlsx), df)
-    expect_equal(read_file_guessing(path_sf), df_sf)
-    expect_s3_class(read_file_guessing(path_sf), "sf")
-    expect_error(read_file_guessing("asd"), "Invalid file")
+    expect_equal(read_file_guessing(path_csv, session = session), df)
+    expect_equal(read_file_guessing(path_xlsx, session = session), df)
+    expect_equal(read_file_guessing(path_sf, session = session), df_sf)
+    expect_s3_class(read_file_guessing(path_sf, session = session), "sf")
+    expect_error(read_file_guessing("asd", session = session), "Invalid file")
     
   })
     
-    
-  expect_equal(2 * 2, 4)
 })

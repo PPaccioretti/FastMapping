@@ -67,7 +67,7 @@ mod_depuration_parameters_ui <- function(id){
                   inputId = ns("ylimitmax"),
                   label =
                     "Max",
-                  value = NA,
+                  value = NULL,
                   width = "100%"
                 )
               ),
@@ -203,7 +203,7 @@ mod_depuration_parameters_server <- function(id){
       
       updateNumericInput(
         inputId = "ylimitmax", 
-        value = NA,
+        value = NULL,
         session = session
       )
       
@@ -264,7 +264,7 @@ mod_depuration_parameters_server <- function(id){
 
         updateNumericInput(
           inputId = "ylimitmax", 
-          value = NA_real_,
+          value = NULL,
           session = session
         )
         
@@ -342,6 +342,11 @@ mod_depuration_parameters_server <- function(id){
       myMax <- reactive({
 
         if ("automatic" %in% input$automatic_dep) {
+          updateNumericInput(
+            inputId = "ylimitmax", 
+            value = NULL,
+            session = session
+          )
           return(Inf)
         } else {
           input$ylimitmax

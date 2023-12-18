@@ -7,6 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
+#' @importFrom magrittr %>%
 mod_kriging_process_ui <- function(id){
   ns <- NS(id)
   tagList(
@@ -25,13 +26,45 @@ mod_kriging_process_server <- function(id,
   
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
+    
+    myFormulaRefactored <- reactive({
+      req(dataset())
+      req(kriging_param())
 
+      file <- dataset()
+      # file <- sf::as_Spatial(file)
+      file <- check_fix_polygon_multi(file)
+      myParam <- kriging_param()
+      myFormula <- myParam$formula
+      ### Formula Refactoring
+      # Get the (predictor) variables
+      vars <- attr(stats::terms(myParam$formula), which = "term.labels")
+
+      if (length(vars) == 2) {
+        
+        coords <- colnames(sf::st_coordinates(file))
+        
+        vars[1] <- coords[1]
+        vars[2] <- coords[2]
+        # Get the response
+        vv <- attr(stats::terms(myParam$formula), which = "variables")
+        rr <- as.character(vv[[2]]) # The response variable name
+        # Now the predictors
+        pp <- paste(vars, collapse = " + ")
+        # Build a formula
+        myFormula <- paste(rr, " ~ ", pp)
+      }
+      
+      ###
+      stats::as.formula(myFormula)
+    })
+    
+    
     
     MiKrige <- eventReactive(button(), {
       req(dataset())
       req(kriging_param())
 
-      
       id <-
         showNotification(loadingText("Searching for the best model..."),
                          duration = NULL,
@@ -40,26 +73,29 @@ mod_kriging_process_server <- function(id,
       
       file <- dataset()
       
+      
       if (nrow(file) > 20000) {
         file <- file[sample(nrow(file), 20000), ]
       }
       
-      file <- sf::as_Spatial(file)
-      myParam <- kriging_param()
+      file <- check_fix_polygon_multi(file)
       
-      testMultipleModelsKrige(myParam$formula,
-                              file,
-                              myParam$selectedModels,
-                              myParam$nmax, 
-                              myParam$nmin, 
-                              myParam$max_dist,
-                              myParam$cressie,
-                              session = session)
+      # file <- sf::as_Spatial(file)
+      myParam <- kriging_param()
+      krige_cv <- repeatable(testMultipleModelsKrige, 
+                 seed = 169)
+      krige_cv(myFormulaRefactored(),
+               file,
+               myParam$selectedModels,
+               myParam$nmax, 
+               myParam$nmin, 
+               myParam$max_dist,
+               myParam$cressie,
+               session = session)
       
     })
     
     MejorModelo <- eventReactive(button(), {
-
       ValidationTable = MiKrige()
       tryCatch({
         MyBestModels = names(which.min(apply(ValidationTable[8,], 2, as.numeric)))
@@ -104,7 +140,7 @@ mod_kriging_process_server <- function(id,
       row.names(Modelo) = NULL
       RMSE = myKrige[8, myBestModel][[1]]
       RMSEp = RMSE / mean(dataset()[[myParam$myTgtVar]], na.rm = TRUE) * 100
-      
+ 
       
       Modelo = data.frame(
         Modelo,
@@ -139,14 +175,19 @@ mod_kriging_process_server <- function(id,
       # req(dataset())
       # req(kriging_param())
       # req(MejorModelo())
-
+ 
       file <- dataset()
-      file <- sf::as_Spatial(file)
+      file <- check_fix_polygon_multi(file)
+      # file <- sf::as_Spatial(file)
+      
+      autofitVariogram_rep <- repeatable(automap::autofitVariogram, 
+                             seed = 169)
       
       myParam <- kriging_param()
+      # Si no se quiere validacion cruzada 
       varioagramModel <- 
-        automap::autofitVariogram(
-          myParam$formula,
+        autofitVariogram_rep(
+          myFormulaRefactored(),
           file,
           model = MejorModelo(),
           cutoff = 10000,
@@ -161,12 +202,26 @@ mod_kriging_process_server <- function(id,
       req(dataset())
       req(kriging_param())
       req(boundary_poly())
-
+ 
       file <- dataset()
+      file <- check_fix_polygon_multi(file)
       myParam <- kriging_param()
-      sf::st_bbox(boundary_poly()) %>%
+
+      Mygr <- sf::st_bbox(boundary_poly()) %>%
         stars::st_as_stars(dx = myParam$cellsize) %>%
         sf::st_crop(boundary_poly())
+      ncels <- ncol(Mygr) * nrow(Mygr)
+      
+      if (ncels > 100000) {
+        showNotification(
+          paste('Prediction grid has', ncels , 'cels.',
+          'Please check cell size.'),
+          id = ns('ncels_high'),
+          type = "warning",
+          session = session
+        )
+      }
+      Mygr
     })
     
     
@@ -174,7 +229,6 @@ mod_kriging_process_server <- function(id,
       req(dataset())
       req(kriging_param())
       req(Mygr())
-      
 
       id <-
         showNotification(loadingText("Interpolating..."),
@@ -183,12 +237,17 @@ mod_kriging_process_server <- function(id,
       on.exit(removeNotification(id), add = TRUE)
       
       file <- dataset()
+      file <- check_fix_polygon_multi(file)
+      file <- removeSpatialDuplicated(file, session = session)
+      coords <- sf::st_coordinates(file)
+      colnames(coords) <- c('x', 'y')
+      file <- cbind(file, coords)
       myParam <- kriging_param()
       Mygr <- Mygr()
       Modelo <- MejorModelo()
-      
+
       gstat::krige(
-        formula = myParam$formula,
+        formula = myParam$formula, #myParam$formula, #myFormulaRefactored(),
         locations = file,
         newdata = Mygr,
         variogram()$var_model,
