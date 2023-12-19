@@ -17,18 +17,20 @@ app_server <- function(input, output, session) {
   
   observeEvent(myStartBtn(), {
     shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
-    bslib::nav_select("navbar", 
-                      selected = "navdataprep", 
-                      session = session)
+    bslib::nav_select("navbar", selected = "navdataprep", session)
   }, ignoreInit = TRUE)
   
+  #FIXIT: This Does not work. Uncomment  actionButton("zoneResults",----
   observeEvent(input$zoneResults, {
+    bslib::nav_select(id = "navbar",
+                      selected = "navanalyresults", 
+                      session = session)
     bslib::nav_select(id = "navresult",
                       selected = "navzonecompresults",
                       session = session)
-    shiny::updateNavlistPanel()
-  }, ignoreInit = FALSE)
-  
+    
+    }, ignoreInit = FALSE)
+  #End This Does not work ----
   
   observeEvent(datasetTransf(), {
     shinyjs::enable(selector = '#navbar li a[data-value="navallparam"]')

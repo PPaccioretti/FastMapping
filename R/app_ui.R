@@ -121,11 +121,11 @@ app_ui <- function(request) {
             bslib::nav_panel(
               title = "Zone Compare Parameters",
               value = "navzonecompparam",
-              mainPanel(mod_zoneCompare_parameters_ui("zone_param"),
-                        div(style = "float: right;", 
-                            actionButton("zoneResults", 
-                                         label = "Go to results tab", 
-                                         class = "btn-secondary")
+              mainPanel(mod_zoneCompare_parameters_ui("zone_param")#,
+                        # div(style = "float: right;", 
+                        #     actionButton("zoneResults", 
+                        #                  label = "Go to results tab", 
+                        #                  class = "btn-secondary")
                         ), width = 12)
             ),
             
