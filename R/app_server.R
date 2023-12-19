@@ -21,15 +21,15 @@ app_server <- function(input, output, session) {
   }, ignoreInit = TRUE)
   
   #FIXIT: This Does not work. Uncomment  actionButton("zoneResults",----
-  observeEvent(input$zoneResults, {
-    bslib::nav_select(id = "navbar",
-                      selected = "navanalyresults", 
-                      session = session)
-    bslib::nav_select(id = "navresult",
-                      selected = "navzonecompresults",
-                      session = session)
-    
-    }, ignoreInit = FALSE)
+  # observeEvent(input$zoneResults, {
+  #   bslib::nav_select(id = "navbar",
+  #                     selected = "navanalyresults", 
+  #                     session = session)
+  #   bslib::nav_select(id = "navresult",
+  #                     selected = "navzonecompresults",
+  #                     session = session)
+  #   
+  #   }, ignoreInit = FALSE)
   #End This Does not work ----
   
   observeEvent(datasetTransf(), {
