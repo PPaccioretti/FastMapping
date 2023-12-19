@@ -16,13 +16,16 @@ spatial_transformation <-
     # If is not sf
     if (!inherits(dataset, "sf")) {
       if (is.null(orgn_epsg)) {
-        stop("Original CRS must be specified")
+        stop("Original CRS must be specified", call. = FALSE)
       }
       if (any(coords == "") | any(is.na(coords))) {
-        stop("Both coords must be specified")
+        stop("Both coords must be specified", call. = FALSE)
       }
       if (length(unique(coords)) == 1) {
-        stop("Coords must be different columns")
+        stop("Coords must be different columns", call. = FALSE)
+      }
+      if (length(coords) != 2) {
+        stop("Please provide X and Y coordinate", call. = FALSE)
       }
       dataset <- sf::st_as_sf(dataset, coords = coords,
                               crs = orgn_epsg)

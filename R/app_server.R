@@ -17,16 +17,25 @@ app_server <- function(input, output, session) {
   
   observeEvent(myStartBtn(), {
     shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
-    updateTabsetPanel(session, "navbar", selected = "navdataprep")
+    bslib::nav_select("navbar", 
+                      selected = "navdataprep", 
+                      session = session)
   }, ignoreInit = TRUE)
   
   observeEvent(input$zoneResults, {
-       updateNavlistPanel(session, "navresult", selected = "navzonecompresults")
+    bslib::nav_select(id = "navresult",
+                      selected = "navzonecompresults",
+                      session = session)
+    shiny::updateNavlistPanel()
   }, ignoreInit = FALSE)
   
   
   observeEvent(datasetTransf(), {
+    shinyjs::enable(selector = '#navbar li a[data-value="navallparam"]')
+    shinyjs::enable(selector = '#navbar li a[data-value="navanalyresults"]')
     if (test_latlong(datasetTransf())) {
+      shinyjs::disable(selector = '#navbar li a[data-value="navallparam"]')
+      shinyjs::disable(selector = '#navbar li a[data-value="navanalyresults"]')
       showNotification('Target CRS must be a Planar Coordinate System.' ,
                        type = "warning",
                        duration = 7,
@@ -39,6 +48,9 @@ app_server <- function(input, output, session) {
   observeEvent(myVariables$tgtvariable() == 1 & is.null(datasetTransf()), {
     tgtVarlgth <- length(myVariables$tgtvariable())
     data_is_not_latlong <-  !test_latlong(datasetTransf())
+    
+    shinyjs::hide(selector = '#navbar li a[data-value="navallparam"]')
+    shinyjs::hide(selector = '#navbar li a[data-value="navanalyresults"]')
     if (tgtVarlgth >= 1 & data_is_not_latlong) {
       shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
       shinyjs::show(selector = '#navbar li a[data-value="navallparam"]')

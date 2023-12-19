@@ -27,7 +27,7 @@ mod_select_variables_ui <- function(id,
       ns('yDataset'),
       lbly,
       choices = "",
-      selected = ""
+      selected = NULL
     )),
     if (!onlyCoords) {
       shinyjs::hidden(shiny::selectInput(
@@ -116,14 +116,14 @@ mod_select_variables_server <-
           shinyjs::show('yDataset')
           
           # Try guess lat Column ----
-          posible_lat <- grep('(?i)lat.*|^Y(?i)$',
+          posible_lat <- grep('(?i)lat.*|^Y(?i)$|^ycoord(?i)$',
                               var_names(),
                               perl = TRUE)
           if (length(posible_lat) == 1) {
             lat_selected <- var_names()[posible_lat]
             
           } else {
-            lat_selected <- NULL
+            lat_selected <- var_names()[1]
           }
           
           shiny::updateSelectInput(
@@ -135,13 +135,13 @@ mod_select_variables_server <-
           )
           
           # Try guess long Column ----
-          posible_long <- grep('(?i)long.*|^X(?i)$',
+          posible_long <- grep('(?i)long.*|^X(?i)$|^xcoord(?i)$',
                                var_names(),
                                perl = TRUE)
           if (length(posible_lat) == 1) {
             long_selected <- var_names()[posible_long]
           } else {
-            long_selected <- NULL#var_names()[1]
+            long_selected <- var_names()[2]
           }
           
           shiny::updateSelectInput(
@@ -200,12 +200,12 @@ mod_select_variables_server <-
                        }
                        
                        if (isTRUE(input$yDataset == input$xDataset)) {
-                         shiny::showNotification(
-                           "Select different X and Y coordinates!",
-                           type = 'warning',
-                           id = ns("msg_dup")
-                         )
-                         
+                         # shiny::showNotification(
+                         #   "Select different X and Y coordinates!",
+                         #   type = 'error',
+                         #   id = ns("msg_dup")
+                         # )
+                         return(NULL)
                        }
                        
                      } else {
