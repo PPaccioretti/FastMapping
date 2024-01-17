@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_mod_ggplot_sf_variable_ui <- function(id,
+mod_ggplot_sf_variable_ui <- function(id,
                                           lbltgt = 'Select fill variable') {
   ns <- NS(id)
   tagList(bslib::card(
@@ -33,7 +33,7 @@ mod_mod_ggplot_sf_variable_ui <- function(id,
 #' mod_ggplot_sf_variable Server Functions
 #'
 #' @noRd 
-mod_mod_ggplot_sf_variable_server <- function(id,
+mod_ggplot_sf_variable_server <- function(id,
                                               dataset,
                                               indices
                                               ){
@@ -83,7 +83,7 @@ mod_mod_ggplot_sf_variable_server <- function(id,
 }
     
 ## To be copied in the UI
-# mod_mod_ggplot_sf_variable_ui("mod_ggplot_sf_variable_1")
+# mod_ggplot_sf_variable_ui("mod_ggplot_sf_variable_1")
     
 ## To be copied in the server
-# mod_mod_ggplot_sf_variable_server("mod_ggplot_sf_variable_1")
+# mod_ggplot_sf_variable_server("mod_ggplot_sf_variable_1")

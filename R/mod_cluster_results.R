@@ -35,7 +35,7 @@ mod_cluster_results_ui <- function(id) {
                   )
                 )),
                 
-                mod_mod_ggplot_sf_variable_ui(ns('cluster_plot'))
+                mod_ggplot_sf_variable_ui(ns('cluster_plot'))
             )))
           )))
 }
@@ -127,7 +127,7 @@ mod_cluster_results_server <- function(id,
       
     })
     
-    mod_mod_ggplot_sf_variable_server("cluster_plot",
+    mod_ggplot_sf_variable_server("cluster_plot",
       dataset = data_and_cluster,
       indices = indices
     )
