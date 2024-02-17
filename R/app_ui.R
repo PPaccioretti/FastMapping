@@ -114,10 +114,21 @@ app_ui <- function(request) {
               mod_cluster_results_ui("cluster_results"), 
               width = 12
             )
-          ),
-          bslib::nav_menu(
+          )
+          )
+        ),
+          
+          bslib::nav_panel(
             title = "Zone Validation",
-            value = "navzoneval",
+            value = "navzonevalid",
+            bslib::navset_pill( 
+              id = "navclust",
+              
+              
+              
+          # bslib::nav_menu(
+            # title = "Zone Validation",
+            # value = "navzoneval",
             bslib::nav_panel(
               title = "Zone Compare Parameters",
               value = "navzonecompparam",
@@ -126,8 +137,7 @@ app_ui <- function(request) {
                         #     actionButton("zoneResults", 
                         #                  label = "Go to results tab", 
                         #                  class = "btn-secondary")
-                        ), width = 12)
-            ),
+                        ), width = 12),
             
             bslib::nav_panel(
               title = "Zone Compare Results",
@@ -139,10 +149,10 @@ app_ui <- function(request) {
                 width = 12
               )
             )
+            )
           )
         )
       )
-    )
 }
 
 #' Add external Resources to the Application

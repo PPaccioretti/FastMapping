@@ -44,6 +44,7 @@ mod_depuration_process_server <-
         myBoundary <- sf::st_zm(myBoundary())
         dataset <- dataset()
         targetVar <- targetVar()
+        
         tryCatch({
           paar::depurate(
             x = dataset,
@@ -66,35 +67,61 @@ mod_depuration_process_server <-
             showNotification(
               paste(
                 "Something went wrong while depurating.",
-                "Try modifying Min or Max distance value"),
-                             duration = 10,
-                             closeButton = FALSE,
-                             type = "error")
+                "Try modifying Min or Max distance value"
+              ),
+              duration = 10,
+              closeButton = FALSE,
+              type = "error"
+            )
           }
-  
-          if (agrepl("'buffer' value (...) is higher than all polygons border lengths", e)) {
+          
+          if (agrepl("'buffer' value (...) is higher than all polygons border lengths",
+                     e)) {
             errorCatched <- TRUE
             showNotification(
               paste(
                 "Something went wrong while depurating.",
                 "Try modifying 'buffer' due to is smaller than all polygons border lengths.",
-                "Maybe select a 'buffer' value more closser to 0"),
+                "Maybe select a 'buffer' value more closser to 0"
+              ),
               duration = 10,
               closeButton = FALSE,
-              type = "error")
+              type = "error"
+            )
           }
-
-          if (agrepl("spdep::dnearneigh(x, ldist, udist) : Point geometries required", e)) {
+          
+          if (agrepl("spdep::dnearneigh(x, ldist, udist) : Point geometries required",
+                     e)) {
             errorCatched <- TRUE
             showNotification(
               paste(
                 "Something went wrong while depurating.",
                 "Point geometries required for depuration.",
-                "Try uploading a file with points and not polygons as geometries."),
+                "Try uploading a file with points and not polygons as geometries."
+              ),
               duration = 10,
               closeButton = FALSE,
-              type = "error")
+              type = "error"
+            )
           }
+          
+          if (agrepl(
+            'spdep::nb2listw(gri, style = "W", zero.policy = zero.policy) : Empty neighbour sets found',
+            e
+          )) {
+            errorCatched <- TRUE
+            showNotification(
+              paste(
+                "Something went wrong while depurating.",
+                "Empty neighbour sets found.",
+                "Try modifying Min or Max distance value."
+              ),
+              duration = 10,
+              closeButton = FALSE,
+              type = "error"
+            )
+          }
+          
           
           if (!errorCatched) {
             errorCatched <- FALSE
@@ -102,16 +129,18 @@ mod_depuration_process_server <-
               paste(
                 "Something went wrong while depurating.",
                 "Check data and parameters specified",
-                "The error was:", e),
+                "The error was:",
+                e
+              ),
               duration = 10,
               closeButton = FALSE,
-              type = "error")
+              type = "error"
+            )
           }
           
           NULL
         })
-       
-
+        
       
       })
       

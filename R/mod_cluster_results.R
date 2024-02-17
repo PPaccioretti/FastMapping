@@ -53,7 +53,7 @@ mod_cluster_results_server <- function(id,
     
     observeEvent(is.null(variablesUsed()) , {
       shinyjs::show("noClustered")
-      # shinyjs::disable("navzoneval")
+      shinyjs::disable("navzoneval")
       shinyjs::hide("yesClustered") 
     },ignoreNULL = FALSE,
       ignoreInit = TRUE)
@@ -65,11 +65,11 @@ mod_cluster_results_server <- function(id,
                    shinyjs::hide("yesClustered")
                    if (inherits(myRes, "try-error") || is.null(myRes)) {
                      shinyjs::show("noClustered")
-                     # shinyjs::disable("navzoneval")
+                     shinyjs::disable("navzoneval")
                      shinyjs::hide("yesClustered")
                    } else {
                      shinyjs::hide("noClustered")
-                     # shinyjs::enable("navzoneval")
+                     shinyjs::enable("navzoneval")
                      shinyjs::show("yesClustered")
                    }
                  },ignoreNULL = FALSE,

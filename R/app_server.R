@@ -12,6 +12,7 @@ app_server <- function(input, output, session) {
   shinyjs::hide(selector = '#navbar li a[data-value="navdataprep"]')
   shinyjs::hide(selector = '#navbar li a[data-value="navallparam"]')
   shinyjs::hide(selector = '#navbar li a[data-value="navanalyresults"]')
+  shinyjs::hide(selector = '#navbar li a[data-value="navzonevalid"]')
   
   myStartBtn <- mod_home_text_server("start_aplication")
   
@@ -23,21 +24,26 @@ app_server <- function(input, output, session) {
   #FIXIT: This Does not work. Uncomment  actionButton("zoneResults",----
   # observeEvent(input$zoneResults, {
   #   bslib::nav_select(id = "navbar",
-  #                     selected = "navanalyresults", 
+  #                     selected = "navanalyresults",
   #                     session = session)
   #   bslib::nav_select(id = "navresult",
   #                     selected = "navzonecompresults",
   #                     session = session)
-  #   
+  #   bslib::nav_select(id = "navresult",
+  #                     selected = "navzonecompparam",
+  #                     session = session)
+  # 
   #   }, ignoreInit = FALSE)
   #End This Does not work ----
   
   observeEvent(datasetTransf(), {
     shinyjs::enable(selector = '#navbar li a[data-value="navallparam"]')
     shinyjs::enable(selector = '#navbar li a[data-value="navanalyresults"]')
+    shinyjs::enable(selector = '#navbar li a[data-value="navzonevalid"]')
     if (test_latlong(datasetTransf())) {
       shinyjs::disable(selector = '#navbar li a[data-value="navallparam"]')
       shinyjs::disable(selector = '#navbar li a[data-value="navanalyresults"]')
+      shinyjs::disable(selector = '#navbar li a[data-value="navzonevalid"]')
       showNotification('Target CRS must be a Planar Coordinate System.' ,
                        type = "warning",
                        duration = 7,
@@ -53,10 +59,12 @@ app_server <- function(input, output, session) {
     
     shinyjs::hide(selector = '#navbar li a[data-value="navallparam"]')
     shinyjs::hide(selector = '#navbar li a[data-value="navanalyresults"]')
+    shinyjs::hide(selector = '#navbar li a[data-value="navzonevalid"]')
     if (tgtVarlgth >= 1 & data_is_not_latlong) {
       shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
       shinyjs::show(selector = '#navbar li a[data-value="navallparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navanalyresults"]')
+      shinyjs::show(selector = '#navbar li a[data-value="navzonevalid"]')
     }
     
     if (tgtVarlgth == 1 & data_is_not_latlong) {
