@@ -86,11 +86,15 @@ read_file_guessing <- function(datapath, name, session = session) {
         to <- file.path(dirname(from), basename(name))
         to <- normalizePath(to)
         file.rename(from, to)
-        sf::read_sf(unique(dirname(from)), 
-                    as_tibble = FALSE)
+        sf_data <- sf::read_sf(unique(dirname(from)), 
+                               as_tibble = FALSE)
+        sf_data <- sf::st_zm(sf_data)
+        sf_data
       } else {
-        sf::read_sf(datapath, 
+        sf_data <- sf::read_sf(datapath, 
                     as_tibble = FALSE)
+        sf_data <- sf::st_zm(sf_data)
+        sf_data
       }
     },
     error = function(e) {

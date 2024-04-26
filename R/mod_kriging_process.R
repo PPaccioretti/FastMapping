@@ -44,9 +44,9 @@ mod_kriging_process_server <- function(id,
         file <- file[sample(nrow(file), 20000), ]
       }
       
-      file <- sf::as_Spatial(file)
+      # file <- sf::as_Spatial(file)
       myParam <- kriging_param()
-      
+
       testMultipleModelsKrige(myParam$formula,
                               file,
                               myParam$selectedModels,
@@ -183,10 +183,15 @@ mod_kriging_process_server <- function(id,
       on.exit(removeNotification(id), add = TRUE)
       
       file <- dataset()
+      
+      file <- removeSpatialDuplicated(file, 
+                                      process = 'interpolation',
+                                      session = session)
+      
       myParam <- kriging_param()
       Mygr <- Mygr()
       Modelo <- MejorModelo()
-      
+
       gstat::krige(
         formula = myParam$formula,
         locations = file,

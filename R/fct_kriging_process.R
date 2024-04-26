@@ -6,25 +6,32 @@
 #'
 #' @noRd
 
-removeSpatialDuplicated <- function(file, session = session) {
+removeSpatialDuplicated <- function(file, 
+                                    process = 'cross-validation',
+                                    session = session) {
   completefile <- file
-  removedfile <- sp::remove.duplicates(file)
-  
+
+  if(inherits(file, "sf")) {
+    removedfile <- sf:::distinct.sf(completefile, 
+                                    geometry,
+                                    .keep_all = TRUE)
+  } else {removedfile <- sp::remove.duplicates(file)}
+
   if (nrow(completefile) > nrow(removedfile)) {
     difRow <- nrow(completefile) - nrow(removedfile)
     if (difRow == 1) {
       mensajeElim <-
-        paste(
-          "To perform cross-validation,",
+        paste0(
+          "To perform ", process, ',',
           difRow,
-          "point pair with equal spatial coordinate was removed"
+          " point pair with equal spatial coordinate was removed"
         )
     } else {
       mensajeElim <-
-        paste(
-          "To perform cross-validation,",
+        paste0(
+          "To perform ", process, ',',
           difRow,
-          "point pairs with equal spatial coordinates were removed"
+          " point pairs with equal spatial coordinates were removed"
         )
     }
     
