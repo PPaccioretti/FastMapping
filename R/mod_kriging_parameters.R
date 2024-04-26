@@ -15,7 +15,7 @@ mod_kriging_parameters_ui <- function(id,
     column(
       width = 3,
       h4("Select spatial model(s) to fit"),
-      checkboxInput(ns('automatic'), 'Automatic', value = T),
+      checkboxInput(ns('automatic'), 'Automatic', value = TRUE),
       checkboxGroupInput(ns("ModelosA"), label = NULL, choices = possibleModels),
       checkboxInput(ns('cressie'), 'Robust variogram estimate', value =
                       FALSE)
@@ -29,10 +29,11 @@ mod_kriging_parameters_ui <- function(id,
         h4("Select kriging method for spatial interpolation"),
         choices = list(
           "Ordinary" = 1,
-          "Universal Kriging (First Order)" = 2,
-          "Universal Kriging (Second Order)" = 3
+          "Universal Kriging" = 2
+          # "Universal Kriging (First Order)" = 2#,
+          # "Universal Kriging (Second Order)" = 3
         ),
-        inline = F
+        inline = FALSE
       ),
       h4("Kriging options:"),
       helpText(
@@ -67,7 +68,7 @@ mod_kriging_parameters_ui <- function(id,
             inputId = ns("distmax"),
             label =
               "Max. Dist.",
-            value =  NA,
+            value =  NULL,
             width = "80%"
           )
         )

@@ -20,7 +20,6 @@ print_sf_as_df <-
     } else {
       df_data <- data.frame(sf::st_drop_geometry(sf_data))
     }
-    
     geometry <- sf::st_geometry(sf_data)
     
     list(data = df_data,
@@ -41,12 +40,14 @@ sf_to_point <- function(sf_data, session) {
         x
       }
     }
-    shiny::showNotification(
-      paste("Centroid of Polygons are shown as coordinates"),
-      type = 'warning',
-      id = ns("warning_centroid")
-    )
-    sf_data <- suppressWarnings(sf::st_centroid(sf_data))
+   if (has_sf_polygon(sf_data)) {
+     shiny::showNotification(
+       paste("Centroid of Polygons are shown as coordinates"),
+       type = 'warning',
+       id = ns("warning_centroid")
+     )
+     sf_data <- suppressWarnings(sf::st_centroid(sf_data))
+   }
     return(sf_data)
   }
   
@@ -56,6 +57,9 @@ select_sf_points <- function(sf_data) {
   sf_data[sf::st_geometry_type(sf_data) == "POINT",]
 }
 
+select_sf_multipoints <- function(sf_data) {
+  sf_data[sf::st_geometry_type(sf_data) == "MULTIPOINT",]
+}
 select_sf_polygon <- function(sf_data) {
   sf_data[sf::st_geometry_type(sf_data) == "POLYGON",]
 }
@@ -63,6 +67,11 @@ select_sf_polygon <- function(sf_data) {
 has_sf_points <- function(sf_data) {
  any(sf::st_geometry_type(sf_data) == "POINT")
 }
+
+has_sf_multipoints <- function(sf_data) {
+  any(sf::st_geometry_type(sf_data) == "MULTIPOINT")
+}
+
 
 has_sf_polygon <- function(sf_data) {
   any(sf::st_geometry_type(sf_data) == "POLYGON")
@@ -94,12 +103,30 @@ modelsVariogram <- function() {
 
 makePlotClusterValid <- function(data) {
   myNames <- colnames(data)
+  data[,1] <- as.character(data[,1])
+  
   ggplot2::ggplot(data,
-                  ggplot2::aes(x = .data[[myNames[1]]], y = .data[[myNames[2]]])) +
+                  ggplot2::aes(x = .data[[myNames[1]]],
+                               y = .data[[myNames[2]]])) +
     ggplot2::geom_col(width = 0.25) +
-    ggplot2::geom_text(ggplot2::aes(label = .data[[myNames[4]]],  vjust = -0.5))
+    ggplot2::geom_text(ggplot2::aes(label = .data[[myNames[4]]], 
+                                    vjust = -0.5)) +
+    ggplot2::theme(plot.margin = ggplot2::margin(t = 10, unit = "pt")) + ## pad "t"op region of the plot
+    ggplot2::coord_cartesian(clip = "off")
   
   
+}
+
+
+makePlotCluster <- function(data, colorCol) {
+  myTgtVct <- data[[colorCol]]
+  if (length(unique(myTgtVct)) <= 15 & !is.null(myTgtVct)) {
+    data[[colorCol]] <- as.factor(data[[colorCol]])
+  }
+  
+  ggplot2::ggplot(data) +
+    ggplot2::geom_sf(ggplot2::aes(fill = .data[[colorCol]],
+                                  color = .data[[colorCol]]))
 }
 
 
@@ -120,3 +147,26 @@ loadingText <- function(text) {
   
 }
 
+
+
+column_md <- function(width, ..., offset = 0) 
+{
+  if (!is.numeric(width) || (width < 1) || (width > 12)) 
+    stop("column width must be between 1 and 12")
+  colClass <- paste0("col-md-", width)
+  if (offset > 0) {
+    colClass <- paste0(colClass, " offset-md-", offset, " col-sm-offset-", 
+                       offset)
+  }
+  div(class = colClass, ...)
+}
+
+
+
+# Inserts row at position r, with newrow data
+insertRow <- function(existingDF, newrow, r) {
+  existingDF <- rbind(existingDF, newrow)
+  existingDF <- existingDF[order(c(seq_len(nrow(existingDF) - 1), r - 0.5)), ]
+  row.names(existingDF) <- seq_len(nrow(existingDF))
+  existingDF
+}

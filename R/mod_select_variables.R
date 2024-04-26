@@ -27,7 +27,7 @@ mod_select_variables_ui <- function(id,
       ns('yDataset'),
       lbly,
       choices = "",
-      selected = ""
+      selected = NULL
     )),
     if (!onlyCoords) {
       shinyjs::hidden(shiny::selectInput(
@@ -51,7 +51,6 @@ mod_select_variables_server <-
            filter = is.numeric,
            onlyCoords = FALSE) {
     stopifnot(is.logical(onlyCoords))
-    # req(dataset, cancelOutput = TRUE)
     stopifnot(is.reactive(dataset))
     
     moduleServer(id, function(input, output, session) {
@@ -68,6 +67,7 @@ mod_select_variables_server <-
       shiny::observeEvent(dataset(), {
         # ### INITIAL STATE
         # ## reset if dataset changed
+        ## shinyjs::reset("variables_param", asis = TRUE)
         # shinyjs::hide("xDataset")
         # shinyjs::hide("yDataset")
         # shinyjs::hide("targetVariable")
@@ -76,7 +76,7 @@ mod_select_variables_server <-
         #   choices = NULL,
         #   selected = NULL,
         #   session = session
-        #   
+        # 
         # )
         # 
         # shiny::updateSelectInput(
@@ -84,7 +84,7 @@ mod_select_variables_server <-
         #   choices = NULL,
         #   selected = NULL,
         #   session = session
-        #   
+        # 
         # )
         # 
         # shiny::updateSelectInput(
@@ -95,8 +95,8 @@ mod_select_variables_server <-
         # )
         # ### END INITIAL STATE
         
-        
         if (!onlyCoords) {
+          shinyjs::reset('targetVariable')
           shinyjs::show('targetVariable')
           possibleTargetVariables <-
             var_names()[!(var_names() %in% c(input$xDataset, input$yDataset))]
@@ -110,25 +110,55 @@ mod_select_variables_server <-
           
         }
         if (!inherits(dataset(), "sf")) {
+          # shinyjs::reset('xDataset')
+          # shinyjs::reset('yDataset')
           shinyjs::show('xDataset')
           shinyjs::show('yDataset')
           
-          shiny::updateSelectInput(
-            'xDataset',
-            choices = var_names(),
-            selected = var_names()[1],
-            session = session
+          # Try guess lat Column ----
+          posible_lat <- grep('(?i)lat.*|^Y(?i)$|^ycoord(?i)$',
+                              var_names(),
+                              perl = TRUE)
+          if (length(posible_lat) == 1) {
+            lat_selected <- var_names()[posible_lat]
             
-          )
+          } else {
+            lat_selected <- var_names()[1]
+          }
           
           shiny::updateSelectInput(
             'yDataset',
             choices = var_names(),
-            selected = var_names()[2],
+            selected = lat_selected,
             session = session
             
           )
           
+          # Try guess long Column ----
+          posible_long <- grep('(?i)long.*|^X(?i)$|^xcoord(?i)$',
+                               var_names(),
+                               perl = TRUE)
+          if (length(posible_lat) == 1) {
+            long_selected <- var_names()[posible_long]
+          } else {
+            long_selected <- var_names()[2]
+          }
+          
+          shiny::updateSelectInput(
+            'xDataset',
+            choices = var_names(),
+            selected = long_selected,
+            session = session
+            
+          )
+          
+         
+          
+        } else {
+          shinyjs::reset('xDataset')
+          shinyjs::reset('yDataset')
+          shinyjs::hide('xDataset')
+          shinyjs::hide('yDataset')
         }
       })
       
@@ -136,7 +166,7 @@ mod_select_variables_server <-
                      input$yDataset != 0 |
                      inherits(dataset(), "sf"),
                    {
-                     !inherits(dataset(), "sf")
+                     # !inherits(dataset(), "sf")
                      # is/are null x and/or y
                      # and is not sf
                      #or x and y are the same and
@@ -170,12 +200,12 @@ mod_select_variables_server <-
                        }
                        
                        if (isTRUE(input$yDataset == input$xDataset)) {
-                         shiny::showNotification(
-                           "Select different X and Y coordinates!",
-                           type = 'warning',
-                           id = ns("msg_dup")
-                         )
-                         
+                         # shiny::showNotification(
+                         #   "Select different X and Y coordinates!",
+                         #   type = 'error',
+                         #   id = ns("msg_dup")
+                         # )
+                         return(NULL)
                        }
                        
                      } else {

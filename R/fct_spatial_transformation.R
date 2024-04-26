@@ -16,10 +16,19 @@ spatial_transformation <-
     # If is not sf
     if (!inherits(dataset, "sf")) {
       if (is.null(orgn_epsg)) {
-        stop("Original CRS must be specified")
+        stop("Original CRS must be specified", call. = FALSE)
       }
-      dataset <-   sf::st_as_sf(dataset, coords = coords,
-                                crs = orgn_epsg)
+      if (any(coords == "") | any(is.na(coords))) {
+        stop("Both coords must be specified", call. = FALSE)
+      }
+      if (length(unique(coords)) == 1) {
+        stop("Coords must be different columns", call. = FALSE)
+      }
+      if (length(coords) != 2) {
+        stop("Please provide X and Y coordinate", call. = FALSE)
+      }
+      dataset <- sf::st_as_sf(dataset, coords = coords,
+                              crs = orgn_epsg)
     } 
     # If its sf
     if (inherits(dataset, "sf")) {
@@ -29,7 +38,8 @@ spatial_transformation <-
       }
       
       if (is.na(sf::st_crs(dataset))) {
-        dataset <- sf::st_crs(dataset, orign_epsg)
+        dataset <- sf::st_zm(dataset)
+        dataset <- sf::st_set_crs(dataset, orgn_epsg)
       }
     }
     
@@ -45,5 +55,23 @@ spatial_transformation <-
 
 
 test_latlong <- function(epsg) {
-  suppressWarnings(sf::st_is_longlat(sf::st_crs(epsg)))
-}    
+  isTRUE(sf::st_is_longlat(sf::st_crs(epsg)))
+}
+
+
+
+guess_utm <- function(data) {
+  # Adivina la zona UTM ----
+  long <- sf::st_coordinates(data)[, 'X']
+  ## Se calcula el quatile por si cae en dos zonas
+  zone <- stats::quantile(floor((long + 180) / 6) + 1, 0.90)
+  
+  long <- sf::st_coordinates(data)[, 'Y']
+  hemisphere <- '7'
+  if (all(long > 0)) {
+    hemisphere <- '6'
+  }
+  
+  epsg <- as.numeric(paste0("32", hemisphere, zone))
+  epsg
+}

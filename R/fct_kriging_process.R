@@ -7,9 +7,20 @@
 #' @noRd
 
 removeSpatialDuplicated <- function(file, session = session) {
+  req(file)
+  req(inherits(file, "sf"))
   completefile <- file
-  removedfile <- sp::remove.duplicates(file)
   
+  # if (inherits(file, "sf")) {
+    # completefile <- sf::as_Spatial(completefile)
+  # }
+  my_name <- attr(completefile, "sf_column")
+   
+  # removedfile <- sp::remove.duplicates(completefile)
+  removedfile <-
+    dplyr::distinct(completefile, 
+                    .data[[my_name]], 
+                    .keep_all = TRUE)
   if (nrow(completefile) > nrow(removedfile)) {
     difRow <- nrow(completefile) - nrow(removedfile)
     if (difRow == 1) {
@@ -31,8 +42,13 @@ removeSpatialDuplicated <- function(file, session = session) {
     showNotification(mensajeElim ,
                      type = "default",
                      duration = 3,
+                     id = 'Notification_duplicated',
                      session = session)
   }
+  
+  # if (inherits(file, "sf")) {
+    # removedfile <- sf::st_as_sf(removedfile)
+  # }
   removedfile
 }
 
@@ -46,12 +62,14 @@ testMultipleModelsKrige <- function(formula,
                                     max_dist,
                                     cressie,
                                     session = session) {
+  autoKrige_cv_rep <- repeatable(automap::autoKrige.cv, seed = 169)
+  compare_cv_rep <- repeatable(automap::compare.cv, seed = 169)
+  
   withProgress(message = 'Cross validation:',
                detail = 'This may take a while...',
                value = 0,
                session = session,
                {
-                 
                  myformula <- stats::as.formula(formula)
                  myDataNoDup <- removeSpatialDuplicated(file, 
                                                         session = session)
@@ -74,7 +92,7 @@ testMultipleModelsKrige <- function(formula,
                    
                    
                    MyAK = tryCatch({
-                     automap::autoKrige.cv(
+                     autoKrige_cv_rep(
                        myformula,
                        myDataNoDup,
                        model = model,
@@ -85,8 +103,28 @@ testMultipleModelsKrige <- function(formula,
                        miscFitOptions = list(cressie = cressie)
                      )
                    },
-                   error = function(e)
-                     print(e))
+                   error = function(e) {
+                     if (agrepl("attempt to select less than one element in get1index",
+                            e$message)) {
+                       error_msg <- paste0('Error during cross validation in model ',
+                                          model, '. To fix this, You can try ',
+                                          'depurating your data befor doing interpolation, ',
+                                          'or you can remove this model.'
+                                          )
+                       
+                       showNotification(error_msg ,
+                                        type = "error",
+                                        duration = 15,
+                                        id = 'Notification_error',
+                                        session = session)
+                       
+                       NULL
+                     }
+                     
+                     
+                     
+                     })
+                  
                    
                    MyMod[[model]] = MyAK
                    incProgress(1 / length(modelsSelected),
@@ -102,7 +140,7 @@ testMultipleModelsKrige <- function(formula,
                  # el RMSE a mano y lo repite 11 vecces
                  ModList = lapply(MyMod, function(x) {
                    tryCatch({
-                     automap::compare.cv(x)},
+                     compare_cv_rep(x)},
                      error = function(e) {
                        cat("Calculating CV by hand\n")
                        
@@ -125,8 +163,41 @@ testMultipleModelsKrige <- function(formula,
                      }
                    )})
                  modelsTested = do.call("cbind", ModList)
-                 colnames(modelsTested) = modelsSelected
+                 colnames(modelsTested) = names(ModList)
                  # ValoresOutput$MiKrige <- modelsTested
                  return(modelsTested)
                })
+}
+
+
+
+
+
+check_fix_polygon_multi <- function(file) {
+  file <- sf::st_zm(file)
+  
+  if (has_sf_polygon(file)) {
+    showNotification(
+      "Centroids of polygons were used for interpolation",
+      duration = 10,
+      id = 'interpolationtoPoints',
+      type = 'warning',
+      closeButton = FALSE
+    )
+    
+    file <- sf::st_point_on_surface(file)
+  }
+  
+  if (has_sf_multipoints(file)) {
+    showNotification(
+      "File was casted from MULTIPOINT to POINT geometry",
+      duration = 10,
+      id = 'castToPoint',
+      type = 'warning',
+      closeButton = FALSE
+    )
+    
+    file <- sf::st_cast(file, 'POINT')
+  }
+  cbind(sf::st_coordinates(file), file)
 }

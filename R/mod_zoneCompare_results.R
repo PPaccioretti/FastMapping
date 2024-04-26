@@ -7,13 +7,13 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_zoneCompare_results_ui <- function(id){
+mod_zoneCompare_results_ui <- function(id) {
   ns <- NS(id)
-  tagList(
-    uiOutput(
-      ns("clustervalidationTables")
-    )
-  )
+  tagList(bslib::layout_column_wrap(width = 1 / 2,
+                                    uiOutput(ns(
+                                      "clustervalidationTables"
+                                    ))))
+  
 }
     
 #' zoneZompare_results Server Functions
@@ -34,24 +34,43 @@ mod_zoneCompare_results_server <- function(id,
       
       for (i in seq_len(length(mydiff))) {
         LL[[i]] <-
-          fluidRow(
-            column(width = 12 / 3,
-                   h3(names(mydiff)[i]),
-                   DT::dataTableOutput(ns(
-                     paste0("dt_", i)
-                   ))),
-            column(
-              width = 12 / 4,
-              br(),
-              br(),
-              shinycssloaders::withSpinner(plotOutput(ns(
-                paste0("plot_", i)
-              ), height = "190px"))
-            ),
-            br(),
-            br()
-            
+          bslib::card(
+            class = "border border-info",
+            bslib::card_header(class = "bg-info",
+                               names(mydiff)[i]),
+            bslib::card_body(
+              bslib::layout_column_wrap(
+                width = 1 / 2,
+                heights_equal = "row",
+                fillable = TRUE,
+                DT::dataTableOutput(ns(
+                  paste0("dt_", i)
+                )),
+                shinycssloaders::withSpinner(plotOutput(ns(
+                  paste0("plot_", i)
+                )))#, height = "100px"))
+              )
+            )
           )
+        
+          # fluidRow(
+          #   column(width = 12 / 3,
+          #          h3(names(mydiff)[i]),
+          #          DT::dataTableOutput(ns(
+          #            paste0("dt_", i)
+          #          ))),
+          #   column(
+          #     width = 12 / 4,
+          #     br(),
+          #     br(),
+          #     shinycssloaders::withSpinner(plotOutput(ns(
+          #       paste0("plot_", i)
+          #     ), height = "190px"))
+          #   ),
+          #   br(),
+          #   br()
+          #   
+          # )
         
         
       }
@@ -77,9 +96,11 @@ mod_zoneCompare_results_server <- function(id,
               info = FALSE
             ),
             rownames = FALSE,
+            fillContainer = TRUE,
             selection = 'none'
             
-          )
+          )  %>% 
+            DT::formatSignif(2, 4)
         )
         
         output[[paste0("plot_", i)]] <-

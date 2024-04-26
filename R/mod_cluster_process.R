@@ -31,8 +31,8 @@ mod_cluster_process_server <- function(id,
     # })
     
     clusterResults <- eventReactive(button(), {
-      req(dataset())
-      req(cluster_param())
+      req(dataset(), cancelOutput = TRUE)
+      req(cluster_param(), cancelOutput = TRUE)
 
       
       id <-
@@ -51,30 +51,68 @@ mod_cluster_process_server <- function(id,
           myParam$distance, 
           cancelOutput = TRUE
           )
-
-      paar::kmspc(
-        dataset(),
-        variables = myParam$variables,
-        number_cluster =  myParam$number_cluster,
-        explainedVariance =  myParam$explainedVariance,
-        ldist = myParam$ldist,
-        udist = myParam$udist,
-        center = myParam$center,
-        fuzzyness = myParam$fuzzyness,
-        distance = myParam$distance,
-        zero.policy = myParam$zeroPolicy
-      )
+      
+      kmspc_rep <- repeatable(paar::kmspc, seed = 169)
+      
+      golem::print_dev("Start zonification...")
+      myResult <- tryCatch({
+        myResult <- kmspc_rep(
+          dataset(),
+          variables = myParam$variables,
+          number_cluster =  myParam$number_cluster,
+          explainedVariance =  myParam$explainedVariance,
+          ldist = myParam$ldist,
+          udist = myParam$udist,
+          center = myParam$center,
+          fuzzyness = myParam$fuzzyness,
+          distance = myParam$distance,
+          zero.policy = myParam$zeroPolicy
+        )
+        
+        golem::print_dev("End zonification...")
+        myResult
+      }, error = function(e) {
+        golem::print_dev("Error in zonification...")
+        if (grepl('Empty neighbour sets found', e)) {
+          message <- paste('Empty neighbour sets found,',
+                           'try with a bigger maximum value in',
+                           'Distance between neighbors')
+        } else {
+          message <- e
+        }
+        shiny::showNotification(message,
+                                duration = 15,
+                                closeButton = FALSE,
+                                type = 'error',
+                                session = session,
+                                id = 'errorKmsPC')
+        NULL
+       
+      })
+      myResult
     })
     
     
     dataPlusCluster <- reactive({
       req(clusterResults())
       req(dataset())
-
       clusterResults <- clusterResults()
       clusterResults <- clusterResults$cluster
+      
+      # req(nrow(dataset()) >= nrow(clusterResults))
+      
+      if (nrow(dataset()) > nrow(clusterResults)) {
+        myNArows <- which(apply(dataset(), 1, function(x) {
+          any(is.na(x))
+        }))
+        
+        clusterResults <- insertRow(clusterResults, NA, myNArows)
+      }
 
-      cbind(dataset(), clusterResults)
+      tryCatch(cbind(dataset(), clusterResults),
+               error = function(e) {
+                 NULL
+               })
     })
     
     variables <- reactive({

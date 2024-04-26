@@ -10,13 +10,12 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic
     bslib::page_navbar(
-      # navbarPage(
       title = "FastMapping",
       id = "navbar",
       theme = bslib::bs_theme(bootswatch = "united"),
-      bslib::nav(
+      bslib::nav_panel(
         title = "",
-        icon = icon("home"),
+        icon = icon("house"),
         value = "navhome",
         mainPanel(
           style = "margin: 0 auto",
@@ -24,26 +23,29 @@ app_ui <- function(request) {
           )
       ),
       
-      bslib::nav(
+      bslib::nav_panel(
         title = "Data preparation",
         value = "navdataprep",
-        bslib::navs_pill(
+        bslib::navset_pill(
           id = "navdata",
-          bslib::nav(
+          bslib::nav_panel(
             title = "Dataset",
             value = "navdataset",
             sidebarLayout(
               sidebarPanel(
-                mod_upload_file_ui("dataset", label = h4("Dataset file:")),
+              mod_upload_file_ui("dataset", label = h4("Dataset file:")),
+              div(
+                id = "variables_param",
                 mod_select_variables_ui("dataset_cols"),
                 mod_spatial_transformation_ui("dataset_spatial_transf")
-              ),
+              )
+            ), 
               mainPanel(
                 mod_show_data_table_ui("dataset_print"),
                 mod_visualize_spatial_data_ui("mymap")
               )
             )),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Boundary",
             value = "navboundary",
             sidebarLayout(
@@ -56,24 +58,24 @@ app_ui <- function(request) {
         )
       ),
 
-      bslib::nav(
+      bslib::nav_panel(
         title = "Parameters Specification",
         value = "navallparam",
         
-        bslib::navs_pill(
+        bslib::navset_pill(
           id = "navparam",
-          bslib::nav(
+          bslib::nav_panel(
             title = "Depuration Parameters",
             value = "navdepparam",
             mainPanel(mod_depuration_parameters_ui("depuration_param"), width = 12
                       )
           ),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Kriging Parameters",
             value = "navkrigparam",
             mainPanel(mod_kriging_parameters_ui("kriging_param"), width = 12)
           ),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Cluster Parameters",
             value = "navclustparam",
             mainPanel(mod_cluster_parameters_ui("cluster_param"), width = 12)
@@ -81,12 +83,12 @@ app_ui <- function(request) {
           
         )
       ),
-      bslib::nav(
+      bslib::nav_panel(
         title = "Analysis Results",
         value = "navanalyresults",
-        bslib::navs_pill( 
+        bslib::navset_pill( 
           id = "navresult",
-          bslib::nav(
+          bslib::nav_panel(
             title = "Depuration Results",
             value = "navdepresults",
             mainPanel(
@@ -95,39 +97,49 @@ app_ui <- function(request) {
               width = 12
               )
           ),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Kriging Results",
             value = "navkrigresults",
-            mainPanel(
+            bslib::page_fillable(
               mod_kriging_process_ui("kriging_process"),
-              mod_kriging_results_ui("kriging_results"), 
-              width = 12
+              mod_kriging_results_ui("kriging_results")#,
+              # width = 12
             )
           ),
-          bslib::nav(
+          bslib::nav_panel(
             title = "Cluster Results",
             value = "navclustresults",
-            mainPanel(h5("Statistical Indices"),
-                      mod_cluster_process_ui("cluster_precess"),
-                      mod_cluster_results_ui("cluster_results"), 
-                      width = 12
+            mainPanel(
+              mod_cluster_process_ui("cluster_precess"),
+              mod_cluster_results_ui("cluster_results"), 
+              width = 12
             )
-          ),
-          bslib::nav_menu(
+          )
+          )
+        ),
+          
+          bslib::nav_panel(
             title = "Zone Validation",
-            value = "navzoneval",
-            bslib::nav(
+            value = "navzonevalid",
+            bslib::navset_pill( 
+              id = "navclust",
+              
+              
+              
+          # bslib::nav_menu(
+            # title = "Zone Validation",
+            # value = "navzoneval",
+            bslib::nav_panel(
               title = "Zone Compare Parameters",
               value = "navzonecompparam",
-              mainPanel(mod_zoneCompare_parameters_ui("zone_param"),
-                        div(style = "float: right;", 
-                            actionButton("zoneResults", 
-                                         label = "Go to results tab", 
-                                         class = "btn-secondary")
-                        ), width = 12)
-            ),
+              mainPanel(mod_zoneCompare_parameters_ui("zone_param")#,
+                        # div(style = "float: right;", 
+                        #     actionButton("zoneResults", 
+                        #                  label = "Go to results tab", 
+                        #                  class = "btn-secondary")
+                        ), width = 12),
             
-            bslib::nav(
+            bslib::nav_panel(
               title = "Zone Compare Results",
               value = "navzonecompresults",
               mainPanel(
@@ -137,11 +149,10 @@ app_ui <- function(request) {
                 width = 12
               )
             )
+            )
           )
         )
       )
-    )
-  )
 }
 
 #' Add external Resources to the Application
@@ -164,8 +175,10 @@ golem_add_external_resources <- function() {
     ),
     # use_waiter(),
     shinyjs::useShinyjs(),
-    waiter::useWaitress(),
-    tags$link(rel = "stylesheet", type = "text/css", href = "www/mycssstyles.css")
+    shiny::tags$script(
+      src = "https://www.googletagmanager.com/gtag/js?id=G-2XNDM9NJ7P",
+      async = ""
+    )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
     

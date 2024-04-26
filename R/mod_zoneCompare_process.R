@@ -27,6 +27,23 @@ mod_zoneCompare_process_server <- function(id,
       eventReactive(button(), {
       req(zoneCompare_param())
       
+      zoneCompare_param <- zoneCompare_param()
+      req(zoneCompare_param$zonesCol)
+      req(zoneCompare_param$variable)
+      
+      
+      myClusterVector <- 
+        zoneCompare_param$data[[zoneCompare_param$zonesCol]]
+      
+      if (length(unique(myClusterVector)) > 20) {
+        showNotification(
+          "Number of clusters must be less than 20",
+          type = "error",
+          duration = 10,
+          closeButton = FALSE
+        )
+        return(NULL)
+      }
       
       id <-
         showNotification(loadingText("Comparing zones means..."),
@@ -34,16 +51,20 @@ mod_zoneCompare_process_server <- function(id,
                          closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
       
-      zoneCompare_param <- zoneCompare_param()
-      req(zoneCompare_param$zonesCol)
-      req(zoneCompare_param$variable)
-
-      paar::compare_zone(
-        data = sf::st_centroid(zoneCompare_param$data),
-        variable = zoneCompare_param$variable,
-        zonesCol = zoneCompare_param$zonesCol,
-        alpha = zoneCompare_param$alpha
-      )
+      tryCatch({
+        paar::compare_zone(
+          data = sf::st_centroid(zoneCompare_param$data),
+          variable = zoneCompare_param$variable,
+          zonesCol = zoneCompare_param$zonesCol,
+          alpha = zoneCompare_param$alpha
+        )
+      }, error = function(e) {
+        showNotification(as.character(e),
+                         duration = NULL,
+                         closeButton = FALSE)
+        NULL
+      })
+      
 
     })
     
