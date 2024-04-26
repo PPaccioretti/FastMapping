@@ -19,7 +19,11 @@ mod_kriging_results_ui <- function(id) {
     tagList(
       bslib::layout_columns(
         col_widths = c(4, 4, 4, -4, 8),
-        row_heights = c(2, 0.5),
+        row_heights =  bslib::breakpoints(
+          sm = c('2fr', '2fr', '2fr', '0.75fr'),
+          md = c('2fr','0.80fr'),
+          lg = c('2fr','0.5fr')
+        ),
         {
           
           bslib::card(
