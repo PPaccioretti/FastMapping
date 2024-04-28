@@ -129,7 +129,7 @@ mod_home_text_ui <- function(id) {
             p(
               'If you have any question please write to fastmapping@agro.unc.edu.ar,',
               'brief tutorial is available in ',
-              a("this link",
+              a("this link.",
                 href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",
                 target = "_blank")
             ),
@@ -137,18 +137,18 @@ mod_home_text_ui <- function(id) {
               'You can create an issue or a bug report at',
               a('github.',
                 href = ' https://github.com/PPaccioretti/FastMapping/issues',
-                target = "_blank"), '.',
+                target = "_blank"),
               'Also, you can send us an email.'),
             helpText(paste(
               'Package version:',
               utils::packageVersion('FastMapping'),
               ifelse(!getOption("golem.app.prod"), 'in dev mode.', '')
             )),
-            ifelse(Sys.getenv('INSTALLER_VERSION') != '',
-                   helpText(paste(
+            helpText(ifelse(Sys.getenv('INSTALLER_VERSION') != '',
+                   paste(
                      'Installer version:',
                      Sys.getenv('INSTALLER_VERSION')
-                   )), '')
+                   ), ''))
           )
         )
       )
