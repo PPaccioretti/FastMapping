@@ -137,7 +137,8 @@ mod_home_text_ui <- function(id) {
               'Also, you can send us an email.'),
             helpText(paste(
               'Package version:',
-              utils::packageVersion('FastMapping')
+              utils::packageVersion('FastMapping'),
+              ifelse(!getOption("golem.app.prod"), 'in dev mode.', '')
             ))
             
           )
