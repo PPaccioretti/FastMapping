@@ -123,10 +123,8 @@ app_ui <- function(request) {
             value = "navzonevalid",
             bslib::navset_pill( 
               id = "navclust",
-              
-              
-              
-          # bslib::nav_menu(
+
+              # bslib::nav_menu(
             # title = "Zone Validation",
             # value = "navzoneval",
             bslib::nav_panel(

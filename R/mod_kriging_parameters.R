@@ -135,7 +135,9 @@ mod_kriging_parameters_ui <- function(id,
     )
   ),
   div(style = "float: right;", 
-      actionButton(ns("strtKrig"), label = "Start interpolation!", class = "btn-warning")
+      actionButton(ns("strtKrig"), 
+                   label = "Start interpolation!",
+                   class = "btn-warning")
   )
   )
 }
@@ -179,7 +181,7 @@ mod_kriging_parameters_server <-
       myForm <- reactive({
         req(tgtVariable())
         req(length(tgtVariable()) == 1)
-
+        
         MiZ <- tgtVariable()
         MiX <- "x"
         MiY <- "y"
@@ -190,46 +192,129 @@ mod_kriging_parameters_server <-
         if (input$tKriging == 2) {
           return(stats::as.formula(paste0(MiZ, "~", MiX, "+", MiY)))
         }
-      if (input$tKriging == 3) {
-        return(stats::as.formula(
-          paste0(
-            MiZ, "~", MiX, "+", MiY,
-            "+I(", MiX, "^2)",
-            "+I(", MiY, "^2)",
-            "+I(", MiX, "*", MiY, ")"
+        if (input$tKriging == 3) {
+          return(stats::as.formula(
+            paste0(
+              MiZ, "~", MiX, "+", MiY,
+              "+I(", MiX, "^2)",
+              "+I(", MiY, "^2)",
+              "+I(", MiX, "*", MiY, ")"
+            )
           )
-        )
-        )
-      }
+          )
+        }
+        
+      })
       
-    })
+      
+      observeEvent(input$nmin, {
+        if (is.na(input$nmin)) {
+          shinyjs::disable("strtKrig")
+        } else {
+          shinyjs::enable("strtKrig")
+        }
+        
+        if (isTRUE(input$nmin > input$nmax) & !is.na(input$nmin)) {
+          showNotification(
+            "Min. n must be less or equal than Max. n" ,
+            type = "default",
+            duration = 4,
+            id = 'Notification_min_n',
+            session = session
+          )
+          
+          updateNumericInput(inputId = "nmax",
+                             value = input$nmin,
+                             session = session)
+        }
+      })
+      
+      observeEvent(input$nmax, {
+        if (is.na(input$nmax)) {
+          shinyjs::disable("strtKrig")
+        } else {
+          shinyjs::enable("strtKrig")
+        }
+        
+        if ((isTRUE(input$nmin > input$nmax) & !is.na(input$nmax))) {
+          showNotification(
+            "Max. n must be greater or equal than Min. n" ,
+            type = "default",
+            duration = 4,
+            id = 'Notification_max_n',
+            session = session
+          )
+          
+          updateNumericInput(inputId = "nmin",
+                             value = input$nmax,
+                             session = session)
+        }
+      })
+      
+      observeEvent(input$dimGrilla, {
+        if (is.na(input$dimGrilla) | isTRUE(input$dimGrilla < 0)) {
+          shinyjs::disable("strtKrig")
+          
+          showNotification(
+            "Cellsize must be greater than 0",
+            type = "default",
+            duration = 4,
+            id = 'Notification_max_n',
+            session = session
+          )
+          
+        } else {
+          shinyjs::enable("strtKrig")
+        }
+        
+      })
+      
+      
+      observeEvent(input$block, {
+        if (is.na(input$block) | isTRUE(input$block < 0)) {
+          shinyjs::disable("strtKrig")
+          
+          showNotification(
+            "Block must be a number greater than 0",
+            type = "default",
+            duration = 4,
+            id = 'Notification_max_n',
+            session = session
+          )
+          
+        } else {
+          shinyjs::enable("strtKrig")
+        }
+        
+      })
       
       
       list(
         'btnStart' = reactive(input$strtKrig),
         'kriging_param' = reactive({
-        req(tgtVariable())
-        req(length(tgtVariable()) == 1)
-        list(
-          selectedModels = input$ModelosA,
-          cressie = input$cressie,
-          input$tKriging,
-          nmin = input$nmin,
-          nmax = input$nmax,
-          block = input$block,
-          cellsize = input$dimGrilla,
-          formula = myForm(),
-          max_dist = max_dist(),
-          myTgtVar = tgtVariable()
-        )
-      }),
-      'kriging_plot' =
-        reactive({
-          list(input$min,
-               input$max,
-               input$min_var,
-               input$max_var)
-        }))
+          req(tgtVariable())
+          req(length(tgtVariable()) == 1)
+          list(
+            selectedModels = input$ModelosA,
+            cressie = input$cressie,
+            input$tKriging,
+            nmin = input$nmin,
+            nmax = input$nmax,
+            block = input$block,
+            cellsize = input$dimGrilla,
+            formula = myForm(),
+            max_dist = max_dist(),
+            myTgtVar = tgtVariable()
+          )
+        }),
+        'kriging_plot' =
+          reactive({
+            list(input$min,
+                 input$max,
+                 input$min_var,
+                 input$max_var)
+          })
+      )
       
     })
 }

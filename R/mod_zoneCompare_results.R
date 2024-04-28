@@ -9,7 +9,8 @@
 #' @importFrom shiny NS tagList 
 mod_zoneCompare_results_ui <- function(id) {
   ns <- NS(id)
-  tagList(bslib::layout_column_wrap(width = 1 / 2,
+  tagList(
+        bslib::layout_column_wrap(width = 1 / 2,
                                     uiOutput(ns(
                                       "clustervalidationTables"
                                     ))))

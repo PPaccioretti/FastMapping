@@ -131,11 +131,10 @@ mod_home_text_ui <- function(id) {
             ),
             p(
               'You can create an issue or a bug report at',
-              a('github',
+              a('github.',
                 href = ' https://github.com/PPaccioretti/FastMapping/issues',
-                target = "_blank"),
-              'or you can send us an email.'
-            ),
+                target = "_blank"), '.',
+              'Also, you can send us an email.'),
             helpText(paste(
               'Package version:',
               utils::packageVersion('FastMapping')
