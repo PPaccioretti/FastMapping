@@ -51,7 +51,7 @@ mod_cluster_results_server <- function(id,
     ns <- session$ns
  
     
-    observeEvent(is.null(variablesUsed()) , {
+    observeEvent(is.null(variablesUsed()), {
       shinyjs::show("noClustered")
       shinyjs::disable("navzoneval")
       shinyjs::hide("yesClustered") 

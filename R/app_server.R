@@ -60,11 +60,15 @@ app_server <- function(input, output, session) {
     shinyjs::hide(selector = '#navbar li a[data-value="navallparam"]')
     shinyjs::hide(selector = '#navbar li a[data-value="navanalyresults"]')
     shinyjs::hide(selector = '#navbar li a[data-value="navzonevalid"]')
+    bslib::nav_hide('navbar', target = 'navzonevalid')
+    
     if (tgtVarlgth >= 1 & data_is_not_latlong) {
       shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
       shinyjs::show(selector = '#navbar li a[data-value="navallparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navanalyresults"]')
       shinyjs::show(selector = '#navbar li a[data-value="navzonevalid"]')
+      
+      
     }
     
     if (tgtVarlgth == 1 & data_is_not_latlong) {
@@ -72,7 +76,6 @@ app_server <- function(input, output, session) {
       shinyjs::show(selector = '#navbar li a[data-value="navkrigparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navclustparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navzonecompparam"]')
-      
       
       bslib::nav_show("navdata", "navboundary")
       
@@ -229,6 +232,14 @@ app_server <- function(input, output, session) {
                                cluster_param$params,
                                cluster_param$btnStart)
 
+  observeEvent(cluster_process$cluster(), {
+    myRes <- try(cluster_process$cluster(), silent = TRUE)
+    bslib::nav_show('navbar', target = 'navzonevalid')
+    if (inherits(myRes, "try-error") || is.null(myRes)) {
+      bslib::nav_hide('navbar', target = 'navzonevalid')
+    } 
+  })
+  
   mod_cluster_results_server(
     "cluster_results",
     clusterResults = cluster_process$cluster,
