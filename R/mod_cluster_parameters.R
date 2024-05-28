@@ -141,6 +141,7 @@ mod_cluster_parameters_server <- function(id,
     observeEvent(input$maxdistNeigh, {
       updateSliderInput(session,
                         "distanceNeighbors",
+                        value = c(0, max(c(35, input$maxdistNeigh))),
                         max = max(c(1000, input$maxdistNeigh)))
     }, ignoreInit = TRUE)
     
