@@ -144,7 +144,7 @@ mod_home_text_ui <- function(id) {
               utils::packageVersion('FastMapping'),
               ifelse(isTRUE(!getOption("golem.app.prod")), 'in dev mode.', '')
             )),
-            helpText(ifelse(Sys.getenv('INSTALLER_VERSION') != '',
+            helpText(ifelse(isTRUE(Sys.getenv('INSTALLER_VERSION') != ''),
                    paste(
                      'Installer version:',
                      Sys.getenv('INSTALLER_VERSION')
