@@ -23,12 +23,10 @@ mod_cluster_results_ui <- function(id) {
                   min_height = 200,
                   class = "gap-2 container",
                   bslib::layout_columns(
-                    col_widths = c(6, 6),
-                    row_heights = c(1, 1),
+                    col_widths = 6,
                     plotly::plotlyOutput(ns("GraficoIndicesConglo")),
                     bslib::layout_columns(
-                      col_widths = c(12, -3, 6, -3),
-                      row_heights = c(0.7, 0.3),
+                      col_widths = 12,
                       DT::dataTableOutput(ns("TablaIndicesConglo")),
                       downloadButton(ns("downloadClasification"), "Download Clasification")
                     )

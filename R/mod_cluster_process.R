@@ -53,21 +53,33 @@ mod_cluster_process_server <- function(id,
           )
       
       kmspc_rep <- repeatable(paar::kmspc, seed = 169)
-      
+      fuzzy_k_means_rep <- repeatable(paar::fuzzy_k_means, seed = 169)
+      # browser()
       golem::print_dev("Start zonification...")
       myResult <- tryCatch({
-        myResult <- kmspc_rep(
-          dataset(),
-          variables = myParam$variables,
-          number_cluster =  myParam$number_cluster,
-          explainedVariance =  myParam$explainedVariance,
-          ldist = myParam$ldist,
-          udist = myParam$udist,
-          center = myParam$center,
-          fuzzyness = myParam$fuzzyness,
-          distance = myParam$distance,
-          zero.policy = myParam$zeroPolicy
-        )
+        if (length(myParam$variables) > 1) {
+          myResult <- kmspc_rep(
+            data = dataset(),
+            variables = myParam$variables,
+            number_cluster =  myParam$number_cluster,
+            explainedVariance =  myParam$explainedVariance,
+            ldist = myParam$ldist,
+            udist = myParam$udist,
+            center = myParam$center,
+            fuzzyness = myParam$fuzzyness,
+            distance = myParam$distance,
+            zero.policy = myParam$zeroPolicy
+          )
+        } 
+        if (length(myParam$variables) == 1) {
+          myResult <- paar::fuzzy_k_means(
+            data = dataset(),
+            variables = myParam$variables,
+            number_cluster =  myParam$number_cluster,
+            fuzzyness = myParam$fuzzyness,
+            distance = myParam$distance
+          )
+        } 
         
         golem::print_dev("End zonification...")
         myResult
@@ -80,7 +92,7 @@ mod_cluster_process_server <- function(id,
         } else {
           message <- e
         }
-        shiny::showNotification(message,
+        shiny::showNotification(as.character(message),
                                 duration = 15,
                                 closeButton = FALSE,
                                 type = 'error',
