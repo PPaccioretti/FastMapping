@@ -135,9 +135,9 @@ mod_kriging_parameters_ui <- function(id,
     )
   ),
   div(style = "float: right;", 
-      actionButton(ns("strtKrig"), 
-                   label = "Start interpolation!",
-                   class = "btn-warning")
+      bslib::input_task_button(ns("strtKrig"), 
+                               label = "Start interpolation!",
+                               class = "btn-warning")
   )
   )
 }

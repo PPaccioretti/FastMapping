@@ -162,9 +162,9 @@ mod_depuration_parameters_ui <- function(id){
         )
       ), 
     div(style = "float: right;", 
-        actionButton(ns("strtDep"), 
-                     label = "Start depuration!", 
-                     class = "btn-warning")
+        bslib::input_task_button(ns("strtDep"), 
+                                 label = "Start depuration!", 
+                                 class = "btn-warning")
     )
   )
 }

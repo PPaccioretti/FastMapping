@@ -103,9 +103,8 @@ mod_cluster_parameters_ui <- function(id){
         )
     )
   ),
-  div(style = "float: right;", 
-      actionButton(ns("strtClust"), label = "Start Process!", class = "btn-warning")
-  )
+  div(style = "float: right;",
+      bslib::input_task_button(ns("strtClust"), label = "Start Process!", class = "btn-warning"))
   )
 }
 
