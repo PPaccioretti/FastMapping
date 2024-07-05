@@ -139,7 +139,7 @@ mod_home_text_ui <- function(id) {
                 href = ' https://github.com/PPaccioretti/FastMapping/issues',
                 target = "_blank"),
               'Also, you can send us an email.'),
-            p(shiny::strong("Citation:")),
+            p(shiny::strong("Citation:"),
             'Paccioretti, P., Córdoba, M., & Balzarini, M. (2020). ',
             'FastMapping: Software to create field maps and identify management ',
             'zones in precision agriculture. ',
