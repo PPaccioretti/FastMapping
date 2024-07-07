@@ -48,15 +48,18 @@ mod_concave_hull_server <- function(id, dataset){
       req(inherits(dataset(), "sf"))
       req(input$concavity)
       req(input$length_threshold)
-      
-    # try({
+      req(sf::st_geometry_type(dataset()) == "POINT")
+    tryCatch({
         myData <- sf::st_zm(dataset()) 
     concaveman::concaveman(
       myData,
       concavity = input$concavity,
       length_threshold = input$length_threshold
     )
-    # }, silent = TRUE)
+    }, error = function(e) {
+      
+      NULL
+    })
 
     })
     

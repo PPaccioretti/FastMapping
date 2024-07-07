@@ -92,8 +92,21 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
     myBoundary_file <- reactive({
       req(dataset())
       # req(myData())
-      
-     
+
+      if (all(sf::st_geometry_type(dataset()) == "POINT") && 
+          nrow(dataset()) < 2) {
+        showNotification(
+          paste0('The uploaded dataset must be a POINT geometry with more than',
+          '3 points!'),
+          id = ns('error-geometry'),
+          type = "warning",
+          session = session
+        )
+        shinyjs::hide("concave_hull_content")
+        return(list(return_my_Hull = TRUE,
+                    dataset = reactive(NULL))
+        )
+      }
       if (isFALSE(input$hasfile)) {
         return(list(return_my_Hull = TRUE,
                     dataset = reactive(dataset())))
@@ -158,7 +171,7 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
         req(dataset())
         # req(myData())
         # req(is.logical(myBoundary_file()[['return_my_Hull']]))
-        
+
         if (myBoundary_file()[["return_my_Hull"]]) {
           
 

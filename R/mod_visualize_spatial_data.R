@@ -57,6 +57,8 @@ mod_visualize_spatial_data_server <-
       req(inherits(dataset(), "sf"))
       validate(need(!is.na(sf::st_crs(dataset())),
                     message = "Select a correct Original EPSG code."))
+      golem::print_dev('Data for plot...')
+      
       df_sf <- sf::st_transform(dataset(), 4326)
       if (nrow(df_sf) > maxMarkerToShow() &
           not_null(maxMarkerToShow())) {
@@ -74,13 +76,14 @@ mod_visualize_spatial_data_server <-
         )
         df_sf <- df_sf[sample(nrow(df_sf), maxMarkerToShow()),]
       }
-      golem::print_dev('Data for plot...')
+      golem::print_dev('End data for plot...')
       df_sf
     })
     
     myLeaflet <- reactive({
       req(inherits(data(), "sf") & !is.na(sf::st_crs(data())))
       golem::print_dev('myLeaflet...')
+
       tryCatch({
       leaflet::leaflet() %>%
         leaflet::addTiles(group = "OSM") %>%
@@ -132,8 +135,6 @@ mod_visualize_spatial_data_server <-
       shinyjs::show("varToPlot")
       myColNames <- colnames(sf::st_drop_geometry(data()))
       
-      
-      
       if (is.list(vars()) & "indices" %in% names(vars())) {
         myClustResults <- vars()[['indices']]
         
@@ -176,14 +177,14 @@ mod_visualize_spatial_data_server <-
 
     output$mylfltmap <- leaflet::renderLeaflet({
       req(data())
-       myLeaflet()
+      myLeaflet()
     })
 
     observeEvent(input$goDataset, {
       req(data())
       
       bbox <- req(as.vector(sf::st_bbox(data())))
-      
+
       myMap <- leaflet::leafletProxy("mylfltmap", session)
       # if (nrow(data()) < 3000) {
         myMap %>% 
@@ -201,6 +202,7 @@ mod_visualize_spatial_data_server <-
       req(data())
       # req(input$varToPlot, cancelOutput = TRUE)
       req(input$varToPlot)
+
       df_sf <- data()
       MyMap <- leaflet::leafletProxy("mylfltmap", session)
 

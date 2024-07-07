@@ -51,57 +51,58 @@ app_server <- function(input, output, session) {
                        session = session)
     }
   }, ignoreInit = TRUE)
-  
-  
+
+
   observeEvent(myVariables$tgtvariable() == 1 & is.null(datasetTransf()), {
     tgtVarlgth <- length(myVariables$tgtvariable())
     data_is_not_latlong <-  !test_latlong(datasetTransf())
-    
+    nrow_data <- nrow(datasetTransf())
+
     shinyjs::hide(selector = '#navbar li a[data-value="navallparam"]')
     shinyjs::hide(selector = '#navbar li a[data-value="navanalyresults"]')
     shinyjs::hide(selector = '#navbar li a[data-value="navzonevalid"]')
     bslib::nav_hide('navbar', target = 'navzonevalid')
-    
-    if (tgtVarlgth >= 1 & data_is_not_latlong) {
+
+    if (tgtVarlgth >= 1 & data_is_not_latlong & nrow_data > 1) {
       shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
       shinyjs::show(selector = '#navbar li a[data-value="navallparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navanalyresults"]')
       shinyjs::show(selector = '#navbar li a[data-value="navzonevalid"]')
-      
-      
+
+
     }
-    
-    if (tgtVarlgth == 1 & data_is_not_latlong) {
+
+    if (tgtVarlgth == 1 & data_is_not_latlong & nrow_data > 1) {
       shinyjs::show(selector = '#navbar li a[data-value="navdepparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navkrigparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navclustparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navzonecompparam"]')
-      
+
       bslib::nav_show("navdata", "navboundary")
-      
+
       bslib::nav_show("navparam", "navdepparam")
       bslib::nav_show("navparam", "navkrigparam")
-      
+
       bslib::nav_show("navresult", "navdepresults")
       bslib::nav_show("navresult", "navkrigresults")
     }
-    
-    if (tgtVarlgth > 1 & data_is_not_latlong) {
+
+    if (tgtVarlgth > 1 & data_is_not_latlong & nrow_data > 1) {
       shinyjs::hide(selector = '#navbar li a[data-value="navdepparam"]')
       shinyjs::hide(selector = '#navbar li a[data-value="navkrigparam"]')
-      
+
       bslib::nav_hide("navdata", "navboundary")
-      
+
       bslib::nav_hide("navparam", "navdepparam")
       bslib::nav_hide("navparam", "navkrigparam")
-      
+
       bslib::nav_hide("navresult", "navdepresults")
       bslib::nav_hide("navresult", "navkrigresults")
     }
-    
-    
+
+
   })
-  
+
   observeEvent(input$navbar, {
     req(myVariables$tgtvariable())
     tgtVarlgth <- length(myVariables$tgtvariable())
@@ -129,12 +130,11 @@ app_server <- function(input, output, session) {
 
 
   myDataset <- mod_upload_file_server("dataset",
-                                      disable = FALSE)
+                                      disable = FALSE,
+                                      n_check_nrow = 10)
   mod_show_data_table_server("dataset_print",
                              myDataset)
-# observeEvent(myDataset(),{
-#   shinyjs::reset('variables_param')
-#   })
+
   myVariables <-
     mod_select_variables_server("dataset_cols",
                                 myDataset)
@@ -151,8 +151,8 @@ app_server <- function(input, output, session) {
 
   field_boundary <- mod_make_boundary_server("make_boundary",
                                              datasetTransf)
-  
-  
+
+
   mod_visualize_spatial_data_server("boundaryMap",
                                     datasetTransf,
                                     reactive(NULL),
@@ -204,12 +204,12 @@ app_server <- function(input, output, session) {
   cluster_param <-
     mod_cluster_parameters_server("cluster_param",
                                   myVariables$tgtvariable)
-  
+
   dataSet_cluster <- reactive({
     req(datasetTransf())
     tryCatch({
       miDf <- kriging_process$kriging()
-      
+
       if (inherits(miDf, "stars")) {
         miDf <- sf::st_as_sf(miDf)
         colnames(miDf)[colnames(miDf) %in% "var1.pred"] <- myVariables$tgtvariable()
@@ -224,8 +224,8 @@ app_server <- function(input, output, session) {
       datasetTransf()
     })
   })
-  
-  
+
+
   cluster_process <-
     mod_cluster_process_server("cluster_precess",
                                dataSet_cluster,
@@ -237,9 +237,9 @@ app_server <- function(input, output, session) {
     bslib::nav_show('navbar', target = 'navzonevalid')
     if (inherits(myRes, "try-error") || is.null(myRes)) {
       bslib::nav_hide('navbar', target = 'navzonevalid')
-    } 
+    }
   })
-  
+
   mod_cluster_results_server(
     "cluster_results",
     clusterResults = cluster_process$cluster,

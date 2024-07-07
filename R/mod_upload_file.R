@@ -32,8 +32,10 @@ mod_upload_file_ui <-
 #' @noRd
 #' @keywords internal
 
-mod_upload_file_server <- function(id, disable = FALSE) {
+mod_upload_file_server <- function(id, disable = FALSE, n_check_nrow = 2) {
   moduleServer(id, function(input, output, session) {
+    ns <- session$ns
+    
     myDf <- reactive({
       req(input$database_upload)
       id <-
@@ -51,6 +53,16 @@ mod_upload_file_server <- function(id, disable = FALSE) {
       myTable <- read_file_guessing(datapath = input$database_upload$datapath,
                                     name = input$database_upload$name,
                                     session = session)
+      if (nrow(myTable) < n_check_nrow) {
+        shiny::showNotification(
+          paste0('Upload dataset has less than ',
+                 n_check_nrow, 
+                 ' rows. Are you sure this is the correct file?'),
+          type = 'error',
+          id = ns('msg_nrow_data')
+        )
+      }
+      
       golem::print_dev('End Reading file...')
       
       myTable

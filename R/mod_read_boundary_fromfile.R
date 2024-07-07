@@ -28,7 +28,8 @@ mod_read_boundary_fromfile_server  <- function(id,
     ns <- session$ns
     
     
-    myBoundary <- mod_upload_file_server("boundary")
+    myBoundary <- mod_upload_file_server("boundary",
+                                         n_check_nrow = 1)
 
     myBoundCoords <-
       mod_select_variables_server("boundary_coords",

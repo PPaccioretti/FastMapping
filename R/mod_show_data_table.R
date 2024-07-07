@@ -23,27 +23,29 @@ mod_show_data_table_server <- function(id, dataset, maxShow = reactive(20)) {
     data_print <- reactive({
       req(dataset())
       myData <- dataset()
-      
+      golem::print_dev('Printing data in show_data_table...')
       if (inherits(myData, "sf")) {
         myData <- print_sf_as_df(myData)$data
       }
+      
       myData
     })
     
     output$table <- DT::renderDT({
-      
-      if (not_null(maxShow())) {
-         showNotification(
-        paste0(
-          'Data has ',
-          nrow(data_print()),
-          ' observations, but first ', maxShow(), ' rows',
-          ' will be shown'
-        ),
-        id = ns('maxRows'),
-        type = "message",
-        session = session
-      )
+      golem::print_dev('Rendering data in show_data_table')
+      if (not_null(maxShow()) && nrow(data_print()) > maxShow()) {
+        showNotification(
+          paste0(
+            'Data has ',
+            nrow(data_print()),
+            ' observations, but first ', maxShow(), ' rows',
+            ' will be shown'
+          ),
+          id = ns('maxRows'),
+          type = "message",
+          session = session
+        )
+       
       utils::head(data_print(), maxShow())
       } else {data_print()}
      
