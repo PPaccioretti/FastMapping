@@ -111,18 +111,26 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
         myDataToRet <- dataset()
       }
       myPossibleBoundary <- try({
-        sf::st_as_sf(
-          sf::st_cast(
-            sf::st_combine(myData()), 
-            "POLYGON")
-        )
+        # If POOLYGON or MULTIPOLYGON don't do nothing to data else
+        # cast to POLYGON. 
+        if (unique(sf::st_geometry_type(myData())) %in% c('POLYGON', 'MULTIPOLYGON')) {
+          my_data <- myData()
+        } else {
+          my_data <- sf::st_as_sf(
+            sf::st_cast(
+              sf::st_combine(myData()), 
+              "POLYGON")
+          )
+        }
+        my_data
       }, silent = TRUE)
       
       if (inherits(myPossibleBoundary, 'try-error') || 
           !has_sf_polygon(myPossibleBoundary)) {
         
         showNotification(
-          'Please check EPSG codes!! Probably something is wrong!',
+          paste0('Probably something is wrong with the boundary!\n',
+          'Please check either, EPSG codes or boundary geometry type.'),
           id = ns('error-coordinates'),
           type = "warning",
           session = session

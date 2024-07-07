@@ -54,7 +54,7 @@ mod_cluster_process_server <- function(id,
       
       kmspc_rep <- repeatable(paar::kmspc, seed = 169)
       fuzzy_k_means_rep <- repeatable(paar::fuzzy_k_means, seed = 169)
-      # browser()
+
       golem::print_dev("Start zonification...")
       myResult <- tryCatch({
         if (length(myParam$variables) > 1) {

@@ -90,7 +90,6 @@ testMultipleModelsKrige <- function(formula,
                    # area 'block' you don't have a 'value' to compare 
                    # your estimation made by kriging
                    
-                   
                    MyAK = tryCatch({
                      autoKrige_cv_rep(
                        myformula,
@@ -108,8 +107,10 @@ testMultipleModelsKrige <- function(formula,
                             e$message)) {
                        error_msg <- paste0('Error during cross validation in model ',
                                           model, '. To fix this, You can try ',
-                                          'depurating your data befor doing interpolation, ',
-                                          'or you can remove this model.'
+                                          'depurating your data before interpolation, ',
+                                          'or you can remove this model.\n',
+                                          'The model may have either NULL or ',
+                                          'negative sill/range/nugget.'
                                           )
                        
                        showNotification(error_msg ,

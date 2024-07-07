@@ -74,7 +74,8 @@ has_sf_multipoints <- function(sf_data) {
 
 
 has_sf_polygon <- function(sf_data) {
-  any(sf::st_geometry_type(sf_data) == "POLYGON")
+  # any(sf::st_geometry_type(sf_data) == "POLYGON")
+  any(sf::st_geometry_type(sf_data) %in% c('POLYGON', 'MULTIPOLYGON'))
 }
 
 
