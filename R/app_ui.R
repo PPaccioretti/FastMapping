@@ -41,7 +41,6 @@ app_ui <- function(request) {
               )
             ), 
               mainPanel(
-                p('Data preview'),
                 mod_show_data_table_ui("dataset_print"),
                 mod_visualize_spatial_data_ui("mymap")
               )
