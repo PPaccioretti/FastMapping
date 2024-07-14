@@ -52,7 +52,7 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
       shinyjs::show("concave_hull_content")
     })
     
-    observeEvent(input$hasfile, {
+    observeEvent(input$hasfile || is.null(input$readboundary), {
       req(dataset())
       if (input$hasfile) {
         shinyjs::show("read_boundary_content")
@@ -112,7 +112,7 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
                     dataset = reactive(dataset())))
       } 
       shinyjs::hide("concave_hull_content")
-      if (isTRUE(input$hasfile)) {
+      if (isTRUE(input$hasfile) && !is.null(input$readboundary)) {
         
         if (inherits(try(myData(), silent = TRUE), "try-error")) {
           shinyjs::hide("concave_hull_content")
@@ -137,17 +137,19 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
         }
         my_data
       }, silent = TRUE)
-      
+
       if (inherits(myPossibleBoundary, 'try-error') || 
           !has_sf_polygon(myPossibleBoundary)) {
         
-        showNotification(
-          paste0('Probably something is wrong with the boundary!\n',
-          'Please check either, EPSG codes or boundary geometry type.'),
-          id = ns('error-coordinates'),
-          type = "warning",
-          session = session
-        )
+        if (!is.null(input$readboundary)) {
+          showNotification(
+            paste0('Probably something is wrong with the boundary!\n',
+                   'Please check either, EPSG codes or boundary geometry type.'),
+            id = ns('error-coordinates'),
+            type = "warning",
+            session = session
+          )
+        }
         
         if (!is.null(myData())) {
           shinyjs::show("concave_hull_content")
@@ -173,11 +175,9 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
         # req(is.logical(myBoundary_file()[['return_my_Hull']]))
 
         if (myBoundary_file()[["return_my_Hull"]]) {
-          
-
-          return(myHull())
+          # return(myHull())
+          my_poly <- myHull()
         } else {
-          
           #Check if boundary file has same crs than uploaded file
           myBoundary <- myBoundary_file()[['dataset']]()
           if (sf::st_crs(dataset()) != sf::st_crs(myBoundary)) {
@@ -191,10 +191,12 @@ mod_make_boundary_server <- function(id, dataset = reactive(NULL)) {
             myBoundary <- sf::st_transform(myBoundary, 
                                            sf::st_crs(dataset()))
           }
-          return(myBoundary)
+          # return(myBoundary)
+          my_poly <- myBoundary
         }
-
+        my_poly
       })
+    
     getBorders
   })
 }
