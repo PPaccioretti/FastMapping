@@ -340,7 +340,7 @@ mod_visualize_spatial_data_server <-
           position = "topleft"
         ) %>%
         leaflet::flyToBounds(bbox[1], bbox[2],bbox[3],bbox[4])
-    }, ignoreInit = TRUE )
+    }, ignoreInit = FALSE )
 
   })
 }
