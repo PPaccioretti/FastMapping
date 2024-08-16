@@ -129,14 +129,20 @@ read_file_guessing <- function(datapath, name, session = session) {
         to <- file.path(dirname(from), basename(name))
         suppressWarnings(to <- normalizePath(to))
         file.rename(from, to)
-        myData_sf <- sf::read_sf(unique(dirname(from)), 
-                                 as_tibble = FALSE)
+        myData_sf <- tryCatch({
+          sf::read_sf(unique(dirname(from)), as_tibble = FALSE)
+        }, error = function(e) {
+          sf::read_sf(unique(dirname(from)), as_tibble = FALSE, options = "ENCODING=WINDOWS-1252")
+        })
         myData_sf <- sf::st_zm(myData_sf)
         myData_sf
       } else {
-        myData_sf <- sf::read_sf(datapath, 
-                                 as_tibble = FALSE)
-        
+        myData_sf <-  tryCatch({
+          sf::read_sf(datapath, as_tibble = FALSE)
+        }, error = function(e) {
+          sf::read_sf(datapath, as_tibble = FALSE, options = "ENCODING=WINDOWS-1252")
+        }
+        )
         myData_sf <- sf::st_zm(myData_sf)
         myData_sf
       }

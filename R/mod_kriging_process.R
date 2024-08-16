@@ -72,7 +72,7 @@ mod_kriging_process_server <- function(id,
       on.exit(removeNotification(id), add = TRUE)
       
       file <- dataset()
-      
+      golem::print_dev('Searching for the model...')
       
       if (nrow(file) > 20000) {
         file <- file[sample(nrow(file), 20000), ]
@@ -84,6 +84,7 @@ mod_kriging_process_server <- function(id,
       myParam <- kriging_param()
       krige_cv <- repeatable(testMultipleModelsKrige, 
                  seed = 169)
+
       krige_cv(myFormulaRefactored(),
                file,
                myParam$selectedModels,
@@ -113,6 +114,7 @@ mod_kriging_process_server <- function(id,
       # req(MejorModelo())
       # req(variogram())
       # req(kriging_param())
+      golem::print_dev('Fitting the model...')
 
       id <-
         showNotification(loadingText("Fitting the best model..."),
