@@ -93,45 +93,6 @@ mod_kriging_parameters_ui <- function(id,
                  min = 0.5
                ))
       )
-    ),
-    column(
-      width = 4,
-      h4("Output graphical options"),
-      
-      h5("Key Scale of predicted values"),
-      fluidRow(
-        column(
-          width = 2,
-          numericInput(
-            inputId = ns("min"),
-            label = "Min.",
-            value = NULL,
-            width = "100%"
-          )
-        ),
-        column(
-          width = 2,
-          numericInput(
-            inputId = ns("max"),
-            label = "Max.",
-            value = NULL,
-            width = "100%"
-          )
-        )
-      ),
-      h5("Key Scale for prediction variance"),
-      fluidRow(
-        column(width = 2,
-               numericInput(
-                 ns("min_var"),
-                 "Min.",
-                 min = 0,
-                 NULL,
-                 width = "100%"
-               )),
-        column(width = 2,
-               numericInput(ns("max_var"), "Max.", NULL, width = "100%"))
-      )
     )
   ),
   div(style = "float: right;", 
@@ -306,14 +267,16 @@ mod_kriging_parameters_server <-
             max_dist = max_dist(),
             myTgtVar = tgtVariable()
           )
-        }),
-        'kriging_plot' =
-          reactive({
-            list(input$min,
-                 input$max,
-                 input$min_var,
-                 input$max_var)
-          })
+        })#,
+        # 'kriging_plot' =
+        #   reactive({
+        #     list(min = input$min,
+        #          max = input$max,
+        #          pallette = input$pallette,
+        #          rev_pallette = input$rev_pallette,
+        #          min_var = input$min_var,
+        #          max_var = input$max_var)
+        #   })
       )
       
     })

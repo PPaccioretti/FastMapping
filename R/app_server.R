@@ -198,7 +198,7 @@ app_server <- function(input, output, session) {
     "kriging_results",
     kriging_process$variablesForVariogramPlot,
     kriging_process$kriging,
-    krigParams$kriging_plot,
+    # krigParams$kriging_plot,
     kriging_process$variogram
   )
   cluster_param <-

@@ -134,7 +134,7 @@ mod_depuration_results_server <- function(id,
       if (all(is.na(myDataset[[input$colorplot]]))) {
         myDataset[input$colorplot] <- "No Outlier"
       }
-      
+      # browser()
       p <- ggplot2::ggplot(myDataset, 
                            ggplot2::aes(
                              color = .data[[input$colorplot]], 
@@ -147,7 +147,6 @@ mod_depuration_results_server <- function(id,
     output$DepuratedPlot <- plotly::renderPlotly({
       # build graph with ggplot syntax
 
-     
       makePlot() %>%
         plotly::layout(autosize = TRUE)
       
