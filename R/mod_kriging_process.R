@@ -122,7 +122,7 @@ mod_kriging_process_server <- function(id,
       
       myParam <- kriging_param()
       req(myParam$myTgtVar)
-      myKrige <- MiKrige()
+      # myKrige <- MiKrige()
       myBestModel <- MejorModelo()
       myVariogram <- variogram()
       
@@ -179,6 +179,8 @@ mod_kriging_process_server <- function(id,
       file <- dataset()
       file <- check_fix_polygon_multi(file)
       # file <- sf::as_Spatial(file)
+      
+      file <- removeSpatialDuplicated(file, session = session)
       
       autofitVariogram_rep <- repeatable(automap::autofitVariogram, 
                              seed = 169)
@@ -238,7 +240,9 @@ mod_kriging_process_server <- function(id,
       
       file <- dataset()
       file <- check_fix_polygon_multi(file)
-      file <- removeSpatialDuplicated(file, session = session)
+      file <- removeSpatialDuplicated(file, 
+                                      method = 'interpolation',
+                                      session = session)
       coords <- sf::st_coordinates(file)
       colnames(coords) <- c('x', 'y')
       file <- cbind(file, coords)
