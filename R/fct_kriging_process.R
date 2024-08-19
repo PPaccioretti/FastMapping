@@ -6,7 +6,9 @@
 #'
 #' @noRd
 
-removeSpatialDuplicated <- function(file, session = session) {
+removeSpatialDuplicated <- function(file, 
+                                    method = 'cross-validation',
+                                    session = session) {
   req(file)
   req(inherits(file, "sf"))
   completefile <- file
@@ -26,14 +28,14 @@ removeSpatialDuplicated <- function(file, session = session) {
     if (difRow == 1) {
       mensajeElim <-
         paste(
-          "To perform cross-validation,",
+          "To perform", method,
           difRow,
           "point pair with equal spatial coordinate was removed"
         )
     } else {
       mensajeElim <-
         paste(
-          "To perform cross-validation,",
+          "To perform", method,
           difRow,
           "point pairs with equal spatial coordinates were removed"
         )

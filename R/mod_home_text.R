@@ -99,7 +99,7 @@ mod_home_text_ui <- function(id) {
           div(
             class = 'mt-3 mb-1',
             p(
-              'The User Interface and some other functionalities was changed.',
+              'The User Interface and some other functionalities were changed.',
               paste(
                 'If you detect something strange while using the software,',
                 'please let us know at fastmapping@agro.unc.edu.ar.'

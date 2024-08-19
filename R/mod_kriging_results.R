@@ -14,7 +14,7 @@ mod_kriging_results_ui <- function(id) {
     id = ns("noInterpolated"),
     p("No interpolation process was made.")
   ),
- shinyjs::hidden(div(
+  shinyjs::hidden(div(
     id = ns("yesInterpolated"),
     tagList(
       bslib::layout_columns(
@@ -45,41 +45,43 @@ mod_kriging_results_ui <- function(id) {
           
         },
         {
-          
-          bslib::card(
-            full_screen = TRUE,
-            bslib::card_header(
-              "Predicted values"
-            ),
-            bslib::card_body(
-              shinycssloaders::withSpinner(plotOutput(ns(
-                "KrigingPlot"
-              )))
-            ),
-            bslib::card_footer(
-              btn_dwnd_centered(ns("download_predicted_plot"),
-                                "Download Plot")
+            bslib::navset_card_pill(
+              bslib::nav_panel(title = "Predicted Plot", 
+                               shinycssloaders::withSpinner(plotOutput(ns(
+                                 "KrigingPlot"
+                               )))
+              ),
+              bslib::nav_spacer(),
+              bslib::nav_panel(
+                shiny::icon("gear"),
+                fillable = FALSE,
+               mod_ggplot_options_ui(ns("ggplot_options_pred"))
+              ),
+              bslib::nav_item(btn_dwnd_centered(ns("download_predicted_plot"),
+                                                "Download Plot")),
+              placement = "below"
             )
-          )
           
         },
         {
-          bslib::card(
-            full_screen = TRUE,
-            bslib::card_header(
-              "Predicted variance values"
-            ),
-            bslib::card_body(
-              shinycssloaders::withSpinner(plotOutput(ns(
-                "VarKrigingPlot"
-              )))
-            ),
-            bslib::card_footer(
-              btn_dwnd_centered(ns("download_variance_plot"),
-                                "Download Plot")
-            )
-          )
           
+          bslib::navset_card_pill(
+            bslib::nav_panel(title = "Predicted variance", 
+                             shinycssloaders::withSpinner(plotOutput(ns(
+                               "VarKrigingPlot"
+                             )))
+            ),
+            bslib::nav_spacer(),
+            bslib::nav_panel(
+              shiny::icon("gear"),
+              fillable = FALSE,
+              mod_ggplot_options_ui(ns("ggplot_options_var"),
+                                    pallette_selected = 'cm')
+            ),
+            bslib::nav_item(btn_dwnd_centered(ns("download_variance_plot"),
+                                              "Download Plot")),
+            placement = "below"
+          )
         },
         {
           
@@ -92,12 +94,12 @@ mod_kriging_results_ui <- function(id) {
               
               bslib::layout_columns(
                 col_widths = c(-2, 4, 4, -2),
-              btn_dwnd_centered(ns("download_pred_tiff"),
-                                "Download Tif",
-                                style = 'text-align: center; font-size:100%;'),
-              btn_dwnd_centered(ns("download_pred_gpkg"),
-                                "Download vector data",
-                                style = 'text-align: center; font-size:100%;')
+                btn_dwnd_centered(ns("download_pred_tiff"),
+                                  "Download Tif",
+                                  style = 'text-align: center; font-size:100%;'),
+                btn_dwnd_centered(ns("download_pred_gpkg"),
+                                  "Download vector data",
+                                  style = 'text-align: center; font-size:100%;')
               )
             )
           )
@@ -116,15 +118,13 @@ mod_kriging_results_ui <- function(id) {
 mod_kriging_results_server <- function(id,
                                        variablesForVariogramPlot,
                                        kriging,
-                                       kriging_plot,
-                                       variogram){
+                                       variogram) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
     myEvent <- bindEvent( reactive({
       variablesForVariogramPlot()
       kriging()
-      kriging_plot()
       variogram()
       }), {
 
@@ -191,28 +191,34 @@ mod_kriging_results_server <- function(id,
     output$VariogramPlot <- renderPlot({
       variogramPlot()
     })
+    pred_options <- mod_ggplot_options_server("ggplot_options_pred")
+    var_options <- mod_ggplot_options_server("ggplot_options_var")
     
     krigingPlot <- reactive({
       myEvent()
       req(kriging())
-      req(kriging_plot())
-      krigin_plot <- kriging_plot()
       
-      zmin <- krigin_plot$min
-      zmax <- krigin_plot$max
+      pred_options <- pred_options()
+      if (pred_options$label == 'Asd') browser()
+      zmin <- pred_options$min
+      zmax <- pred_options$max
       
-      # if (is.na(zmin)) {
-      zmin <- min(kriging()$var1.pred, na.rm = T)
-      # }
-      # if (is.na(zmax)) {
-      zmax <- max(kriging()$var1.pred, na.rm = T)
-      # }
+      pallette <- pred_options$pallette
+     
+      label_fill <- pred_options$label
+      if (is.null(label_fill)) {
+        label_fill <- "Predicted values"
+      }
+      
+      
       krigingPlot <- 
       ggplot2::ggplot() + 
         stars::geom_stars(data = kriging(), 
                           ggplot2::aes(fill = var1.pred, x = x, y = y)) +
-        ggplot2::scale_fill_gradientn(colours = grDevices::terrain.colors(20),
-                                      na.value = "transparent") +
+        ggplot2::scale_fill_gradientn(colours = pallette,
+                                      na.value = "transparent",
+                                      limits = c(zmin, zmax)) +
+        ggplot2::labs(fill = label_fill) +
         ggplot2::theme(legend.position = "bottom") +
         ggplot2::guides(fill = ggplot2::guide_colourbar(
           barwidth = 17, 
@@ -274,34 +280,31 @@ mod_kriging_results_server <- function(id,
     varkrigingPlot <- reactive({
       
       req(kriging())
-      req(kriging_plot())
       
-      krigin_plot <- kriging_plot()
+      var_options <- var_options()
+      if (var_options$label == 'Asd') browser()
+      zmin <- var_options$min
+      zmax <- var_options$max
       
-      # zmin_var <- krigin_plot$min_var
-      # zmax_var <- krigin_plot$max_var
-      # # 
-      # # outfile <- tempfile(fileext = '.png')
-      # # png(outfile, width = 900, height = 900)
-      # # 
-      # print(zmin_var)
-      # # if (is.na(zmin_var)) {
-      #   zmin_var <- min(kriging()$var1.var, na.rm = T)
-      # # }
-      # # if (is.na(zmax_var)) {
-      #   zmax_var <- max(kriging()$var1.var, na.rm = T)
-      # }
+      pallette <- var_options$pallette
+      
+      label_fill <- var_options$label
+      if (is.null(label_fill)) {
+        label_fill <- "Variance of prediction"
+      }
+      
       ggplot2::ggplot() + 
         stars::geom_stars(data = kriging(), 
                           ggplot2::aes(fill = var1.var, x = x, y = y)) +
-        ggplot2::scale_fill_gradientn(colours = grDevices::cm.colors(20),
-                                      na.value = "transparent") +
+        ggplot2::scale_fill_gradientn(colours = pallette,
+                                      na.value = "transparent",
+                                      limits = c(zmin, zmax)) +
         ggplot2::theme(legend.position = "bottom") +
+        ggplot2::labs(fill = label_fill) +
         ggplot2::guides(fill = ggplot2::guide_colourbar(
           barwidth = 17, 
           label.position = "bottom")) +
         ggplot2::coord_equal()
-      
       
     })
     
