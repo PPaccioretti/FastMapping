@@ -31,7 +31,7 @@ mod_depuration_parameters_ui <- function(id){
       checkboxGroupInput(
         inputId = ns("mDepuration"),
         label = h4("Methods"),
-        choices = list("Glogal Outliers" =
+        choices = list("Global Outliers" =
                          "outlier",
                        "Spatial Outliers" =
                          "inlier"),
@@ -187,7 +187,7 @@ mod_depuration_parameters_server <- function(id){
       
       updateCheckboxGroupInput(
         inputId = "mDepuration",
-        choices = list("Glogal Outliers" =
+        choices = list("Global Outliers" =
                          "outlier",
                        "Spatial Outliers" =
                          "inlier"),
@@ -248,7 +248,7 @@ mod_depuration_parameters_server <- function(id){
       if (input$automatic_dep == 'automatic') {
         updateCheckboxGroupInput(
           inputId = "mDepuration",
-          choices = list("Glogal Outliers" =
+          choices = list("Global Outliers" =
                            "outlier",
                          "Spatial Outliers" =
                            "inlier"),
