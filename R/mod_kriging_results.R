@@ -199,7 +199,7 @@ mod_kriging_results_server <- function(id,
       req(kriging())
       
       pred_options <- pred_options()
-      if (pred_options$label == 'Asd') browser()
+   
       zmin <- pred_options$min
       zmax <- pred_options$max
       
@@ -282,7 +282,7 @@ mod_kriging_results_server <- function(id,
       req(kriging())
       
       var_options <- var_options()
-      if (var_options$label == 'Asd') browser()
+    
       zmin <- var_options$min
       zmax <- var_options$max
       

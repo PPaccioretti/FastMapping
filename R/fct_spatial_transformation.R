@@ -42,7 +42,7 @@ spatial_transformation <-
         dataset <- sf::st_set_crs(dataset, orgn_epsg)
       }
     }
-    # browser()
+
     # After add crs or is sf do:
     if (isTRUE(sf::st_crs(dataset) != sf::st_crs(tgt_epsg))) {
       req(inherits(dataset, "sf"))
@@ -52,7 +52,7 @@ spatial_transformation <-
       if (all(sf::st_is_empty(dataset_tranf))) {
         stop("Please, check EPSG", call. = FALSE)
 
-        # browser()
+     
         dataset
       } else {
         dataset  <- dataset_tranf

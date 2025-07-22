@@ -80,7 +80,7 @@ mod_ggplot_options_server <- function(id){
         dir_pallette <- 1
       }
       ryg <-  c('red', 'yellow', 'green')
-# browser()
+
       my_pallette <- switch(
         pallette,
         "ryg" = if (dir_pallette == 1) {ryg} else {rev(ryg)},

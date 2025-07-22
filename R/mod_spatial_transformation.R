@@ -236,11 +236,11 @@ mod_spatial_transformation_server <-
         golem::print_dev('Spatial Transformation...')
         coords <- coords()
         dat <- dataset()
-        #browser()
+
         myDat <- tryCatch({
           shinyjs::show("epsg_orig")
           shinyjs::show("epsg_tgt")
-          # browser()
+
           my_sf <- 
             tryCatch({
               golem::print_dev('Running First Spatial Transformation...')
@@ -257,7 +257,7 @@ mod_spatial_transformation_server <-
                 type = 'error',
                 id = ns("sp_check_coords")
               )
-              # browser()
+
               golem::print_dev('Error First Spatial Transformation...')
               NULL
             })
@@ -271,7 +271,7 @@ mod_spatial_transformation_server <-
             )
             return(NULL)
           }
-          # browser()
+
           myCoordsNA <- sf::st_is_empty(my_sf)
           
           if (all(myCoordsNA)) {
@@ -288,7 +288,7 @@ mod_spatial_transformation_server <-
             my_sf <- my_sf[myCoordsNA,]
           }
           my_sf
-          # browser()
+
         }, error = function(e) {
           shiny::showNotification(
             as.character(e),
@@ -298,7 +298,7 @@ mod_spatial_transformation_server <-
           golem::print_dev('Error Spatial Transformation...')
           NULL
         })
-        # browser()
+ 
         golem::print_dev('End Spatial Transformation...')
         return(myDat)
         
