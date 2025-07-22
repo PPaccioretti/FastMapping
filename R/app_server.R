@@ -63,7 +63,7 @@ app_server <- function(input, output, session) {
     shinyjs::hide(selector = '#navbar li a[data-value="navzonevalid"]')
     bslib::nav_hide('navbar', target = 'navzonevalid')
 
-    if (tgtVarlgth >= 1 & data_is_not_latlong & nrow_data > 1) {
+    if (tgtVarlgth >= 1 & data_is_not_latlong & isTRUE(nrow_data > 1)) {
       shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
       shinyjs::show(selector = '#navbar li a[data-value="navallparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navanalyresults"]')
@@ -72,7 +72,7 @@ app_server <- function(input, output, session) {
 
     }
 
-    if (tgtVarlgth == 1 & data_is_not_latlong & nrow_data > 1) {
+    if (tgtVarlgth == 1 & data_is_not_latlong & isTRUE(nrow_data > 1)) {
       shinyjs::show(selector = '#navbar li a[data-value="navdepparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navkrigparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navclustparam"]')
@@ -87,7 +87,7 @@ app_server <- function(input, output, session) {
       bslib::nav_show("navresult", "navkrigresults")
     }
 
-    if (tgtVarlgth > 1 & data_is_not_latlong & nrow_data > 1) {
+    if (tgtVarlgth > 1 & data_is_not_latlong & isTRUE(nrow_data > 1)) {
       shinyjs::hide(selector = '#navbar li a[data-value="navdepparam"]')
       shinyjs::hide(selector = '#navbar li a[data-value="navkrigparam"]')
 

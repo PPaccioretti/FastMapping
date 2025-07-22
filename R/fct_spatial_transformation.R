@@ -42,11 +42,21 @@ spatial_transformation <-
         dataset <- sf::st_set_crs(dataset, orgn_epsg)
       }
     }
-    
+    # browser()
     # After add crs or is sf do:
     if (isTRUE(sf::st_crs(dataset) != sf::st_crs(tgt_epsg))) {
       req(inherits(dataset, "sf"))
-      sf::st_transform(dataset, tgt_epsg)
+      dataset_tranf <- sf::st_transform(dataset, tgt_epsg)
+      # If all coords are empty, somtehing worng may happened
+      # during transofmation. So is returned original coords. 
+      if (all(sf::st_is_empty(dataset_tranf))) {
+        stop("Please, check EPSG", call. = FALSE)
+
+        # browser()
+        dataset
+      } else {
+        dataset  <- dataset_tranf
+      }
     } else {
       dataset
       }

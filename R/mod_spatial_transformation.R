@@ -39,7 +39,7 @@ mod_spatial_transformation_ui <- function(id,
 mod_spatial_transformation_server <-
   function(id, dataset, coords, readyToShow = reactive(TRUE)) {
     stopifnot(is.reactive(dataset))
-   
+    
     moduleServer(id, function(input, output, session) {
       ns <- session$ns
       
@@ -55,7 +55,7 @@ mod_spatial_transformation_server <-
       observeEvent(length(dataset()) == 1, {
         req(dataset())
         
-       
+        
         if (inherits(dataset(), "sf") && is.na(sf::st_crs(dataset()))) { 
           shinyjs::show("epsg_orig")
           shinyjs::show("epsg_tgt")
@@ -98,7 +98,7 @@ mod_spatial_transformation_server <-
                      }
                      # req(!is.null(coords()), cancelOutput = TRUE)
                      
-                    
+                     
                      if (!inherits(dataset(), "sf") || is.na(sf::st_crs(dataset()))) {
                        shinyjs::delay(500, shinyjs::show('epsg_orig'))
                        shinyjs::delay(500, shinyjs::show('epsg_tgt'))
@@ -174,8 +174,8 @@ mod_spatial_transformation_server <-
           
           # tgtvariable <- variables$tgtvariable()
           
-         if (!is.null(input$epsg_orig)) {
-           message <- paste0(
+          if (!is.null(input$epsg_orig)) {
+            message <- paste0(
               "Converting coordinates ",
               "from epsg:",
               input$epsg_orig,
@@ -212,6 +212,20 @@ mod_spatial_transformation_server <-
         
         if (!inherits(dataset(), "sf")) {
           req(coords() != "", cancelOutput = TRUE)
+          
+          
+          if (length(unique(coords())) <= 1) {
+            shiny::showNotification(
+              paste('Please check selected coordinates.',
+                'Column names must not be equal for both X and Y coordinates'),
+              type = 'error',
+              id = ns("sp_check_coords")
+            )
+            req(length(unique(coords())) > 1, cancelOutput = TRUE)
+            return(NULL)
+          }
+          
+          
           req((!(
             is.na(test_epsg_tgt()) &
               !isTRUE(test_epsg_tgt())
@@ -219,46 +233,75 @@ mod_spatial_transformation_server <-
           
         }
         
-        golem::print_dev('Spatial Transofrmation...')
+        golem::print_dev('Spatial Transformation...')
         coords <- coords()
         dat <- dataset()
+        #browser()
         myDat <- tryCatch({
-         my_sf <- spatial_transformation(
-            dat,
-            coords = coords,
-            orgn_epsg = input$epsg_orig,
-            tgt_epsg = input$epsg_tgt
-          )
-         
-         myCoordsNA <- sf::st_is_empty(my_sf)
-         
-         if (all(myCoordsNA)) {
-           return(NULL)
-         }
-         if (any(myCoordsNA)) {
-           shiny::showNotification(
-             paste('Data has NA values in coordinates;',
-                   'these points will be removed.',
-                   'If you think is an error, please check EPSG code.'),
-             type = 'warning',
-             id = ns("sp_NA_coords")
-           )
-           my_sf <- my_sf[myCoordsNA,]
-         }
-         my_sf
-         
+          shinyjs::show("epsg_orig")
+          shinyjs::show("epsg_tgt")
+          # browser()
+          my_sf <- 
+            tryCatch({
+              golem::print_dev('Running First Spatial Transformation...')
+              spatial_transformation(
+                dat,
+                coords = coords,
+                orgn_epsg = input$epsg_orig,
+                tgt_epsg = input$epsg_tgt
+              )
+             
+            }, error = function(e) {
+              shiny::showNotification(
+                as.character(e),
+                type = 'error',
+                id = ns("sp_check_coords")
+              )
+              # browser()
+              golem::print_dev('Error First Spatial Transformation...')
+              NULL
+            })
+          
+          if (is.null(my_sf)) {
+            shiny::showNotification(
+              paste(#'Please, check uploaded dataset.',
+                    'Please check EPSG code or selected coordinates.'),
+              type = 'error',
+              id = ns("sp_check_coords")
+            )
+            return(NULL)
+          }
+          # browser()
+          myCoordsNA <- sf::st_is_empty(my_sf)
+          
+          if (all(myCoordsNA)) {
+            return(NULL)
+          }
+          if (any(myCoordsNA)) {
+            shiny::showNotification(
+              paste('Data has NA values in coordinates;',
+                    'these points will be removed.',
+                    'If you think is an error, please check EPSG code.'),
+              type = 'warning',
+              id = ns("sp_NA_coords")
+            )
+            my_sf <- my_sf[myCoordsNA,]
+          }
+          my_sf
+          # browser()
         }, error = function(e) {
           shiny::showNotification(
             as.character(e),
             type = 'error',
             id = ns("sp_transf_coords")
           )
+          golem::print_dev('Error Spatial Transformation...')
           NULL
         })
-      
-        golem::print_dev('End Spatial Transofrmation...')
+        # browser()
+        golem::print_dev('End Spatial Transformation...')
         return(myDat)
-
+        
       })
       
     })
@@ -266,6 +309,6 @@ mod_spatial_transformation_server <-
 
 ## To be copied in the UI
 # mod_spatial_transformation_ui("spatial_transformation_ui_1")
-    
+
 ## To be copied in the server
 # mod_spatial_transformation_server("spatial_transformation_ui_1")

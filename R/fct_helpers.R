@@ -20,6 +20,7 @@ print_sf_as_df <-
     } else {
       df_data <- data.frame(sf::st_drop_geometry(sf_data))
     }
+    browser()
     geometry <- sf::st_geometry(sf_data)
     
     list(data = df_data,
