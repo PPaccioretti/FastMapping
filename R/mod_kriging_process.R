@@ -194,7 +194,7 @@ mod_kriging_process_server <- function(id,
           myFormulaRefactored(),
           file,
           model = MejorModelo(),
-          cutoff = 10000,
+          # cutoff = 10000,
           cressie = myParam$cressie
         )
       
