@@ -311,7 +311,7 @@ mod_kriging_process_server <- function(
         nmax = myParam$nmax,
         nmin = myParam$nmin,
         maxdist = myParam$max_dist,
-        block = c(myParam$block, myParam$block)
+        block = c(myParam$block)
       )
 
       if (length(vars) > 1) {
