@@ -4,27 +4,22 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
 #'
-#' @importFrom shiny NS tagList 
-mod_depuration_process_ui <- function(id){
+#' @importFrom shiny NS tagList
+mod_depuration_process_ui <- function(id) {
   ns <- NS(id)
   tagList(
     div(id = ns("notification"))
     # dataTableOutput(ns("summaryResults"))
   )
 }
-    
+
 #' depuration_process Server Functions
 #'
-#' @noRd 
+#' @noRd
 mod_depuration_process_server <-
-  function(id,
-           dataset,
-           targetVar,
-           dep_param,
-           myBoundary,
-           button) {
+  function(id, dataset, targetVar, dep_param, myBoundary, button) {
     moduleServer(id, function(input, output, session) {
       ns <- session$ns
 
@@ -33,134 +28,149 @@ mod_depuration_process_server <-
         req(length(targetVar()) == 1)
         req(dep_param())
         req(myBoundary())
-        
+
         id <-
-          showNotification(loadingText("Cleaning data..."),
-                           duration = NULL,
-                           closeButton = FALSE)
+          showNotification(
+            loadingText("Cleaning data..."),
+            duration = NULL,
+            closeButton = FALSE
+          )
         on.exit(removeNotification(id), add = TRUE)
 
         myParam <- dep_param()
         myBoundary <- sf::st_zm(myBoundary())
         dataset <- dataset()
         targetVar <- targetVar()
-        
-        tryCatch({
-          paar::depurate(
-            x = dataset,
-            y = targetVar,
-            toremove = myParam$toremove,
-            buffer = myParam$buffer,
-            ylimitmax = myParam$ylimitmax,
-            ylimitmin = myParam$ylimitmin,
-            sdout = myParam$sdout,
-            ldist = myParam$ldist,
-            udist = myParam$udist,
-            criteria =  myParam$criteria,
-            zero.policy = NULL,
-            poly_border = myBoundary
-          )
-        }, error = function(e) {
-          errorCatched <- FALSE
-          if (agrepl("try modifying the ldist or udist values", e)) {
-            errorCatched <- TRUE
-            showNotification(
-              paste(
-                "Something went wrong while depurating.",
-                "Try modifying Min or Max distance value"
-              ),
-              duration = 10,
-              closeButton = FALSE,
-              type = "error"
+
+        tryCatch(
+          {
+            paar::depurate(
+              x = dataset,
+              y = targetVar,
+              toremove = myParam$toremove,
+              buffer = myParam$buffer,
+              ylimitmax = myParam$ylimitmax,
+              ylimitmin = myParam$ylimitmin,
+              sdout = myParam$sdout,
+              ldist = myParam$ldist,
+              udist = myParam$udist,
+              criteria = myParam$criteria,
+              zero.policy = TRUE,
+              poly_border = myBoundary
             )
-          }
-          
-          if (agrepl("'buffer' value (...) is higher than all polygons border lengths",
-                     e)) {
-            errorCatched <- TRUE
-            showNotification(
-              paste(
-                "Something went wrong while depurating.",
-                "Try modifying 'buffer' due to is smaller than all polygons border lengths.",
-                "Maybe select a 'buffer' value more closser to 0"
-              ),
-              duration = 10,
-              closeButton = FALSE,
-              type = "error"
-            )
-          }
-          
-          if (agrepl("spdep::dnearneigh(x, ldist, udist) : Point geometries required",
-                     e)) {
-            errorCatched <- TRUE
-            showNotification(
-              paste(
-                "Something went wrong while depurating.",
-                "Point geometries required for depuration.",
-                "Try uploading a file with points and not polygons as geometries."
-              ),
-              duration = 10,
-              closeButton = FALSE,
-              type = "error"
-            )
-          }
-          
-          if (agrepl(
-            'spdep::nb2listw(gri, style = "W", zero.policy = zero.policy) : Empty neighbour sets found',
-            e
-          )) {
-            errorCatched <- TRUE
-            showNotification(
-              paste(
-                "Something went wrong while depurating.",
-                "Empty neighbour sets found.",
-                "Try modifying Min or Max distance value."
-              ),
-              duration = 10,
-              closeButton = FALSE,
-              type = "error"
-            )
-          }
-          
-          
-          if (!errorCatched) {
+          },
+          error = function(e) {
             errorCatched <- FALSE
-            showNotification(
-              paste(
-                "Something went wrong while depurating.",
-                "Check data and parameters specified",
-                "The error was:",
+            if (agrepl("try modifying the ldist or udist values", e)) {
+              errorCatched <- TRUE
+              showNotification(
+                paste(
+                  "Something went wrong while depurating.",
+                  "Try modifying Min or Max distance value"
+                ),
+                duration = 10,
+                closeButton = FALSE,
+                type = "error"
+              )
+            }
+
+            if (
+              agrepl(
+                "'buffer' value (...) is higher than all polygons border lengths",
                 e
-              ),
-              duration = 10,
-              closeButton = FALSE,
-              type = "error"
-            )
+              )
+            ) {
+              errorCatched <- TRUE
+              showNotification(
+                paste(
+                  "Something went wrong while depurating.",
+                  "Try modifying 'buffer' due to is smaller than all polygons border lengths.",
+                  "Maybe select a 'buffer' value more closser to 0"
+                ),
+                duration = 10,
+                closeButton = FALSE,
+                type = "error"
+              )
+            }
+
+            if (
+              agrepl(
+                "spdep::dnearneigh(x, ldist, udist) : Point geometries required",
+                e
+              )
+            ) {
+              errorCatched <- TRUE
+              showNotification(
+                paste(
+                  "Something went wrong while depurating.",
+                  "Point geometries required for depuration.",
+                  "Try uploading a file with points and not polygons as geometries."
+                ),
+                duration = 10,
+                closeButton = FALSE,
+                type = "error"
+              )
+            }
+
+            if (
+              agrepl(
+                'spdep::nb2listw(gri, style = "W", zero.policy = zero.policy) : Empty neighbour sets found',
+                e
+              )
+            ) {
+              errorCatched <- TRUE
+              showNotification(
+                paste(
+                  "Something went wrong while depurating.",
+                  "Empty neighbour sets found.",
+                  "Try modifying Min or Max distance value."
+                ),
+                duration = 10,
+                closeButton = FALSE,
+                type = "error"
+              )
+            }
+
+            if (!errorCatched) {
+              errorCatched <- FALSE
+              showNotification(
+                paste(
+                  "Something went wrong while depurating.",
+                  "Check data and parameters specified",
+                  "The error was:",
+                  e
+                ),
+                duration = 10,
+                closeButton = FALSE,
+                type = "error"
+              )
+            }
+
+            NULL
           }
-          
-          NULL
-        })
-        
-      
+        )
       })
-      
-      
+
       # output$summaryResults <- renderDataTable({
       #   req(depurationResults())
       #   summary(depurationResults())
       # })
-      
+
       summaryResults <- reactive({
         summary(depurationResults())
       })
-      
+
       originalDtasetWithCondition <- reactive({
         req(depurationResults())
-        req( dataset())
-        try({cbind('condition' = depurationResults()$condition, 
-              dataset())}, silent = TRUE)
+        req(dataset())
+        try(
+          {
+            cbind('condition' = depurationResults()$condition, dataset())
+          },
+          silent = TRUE
+        )
       })
-      
+
       list(
         'wasDepurated' = reactive({
           ifelse(is.null(dep_param()), FALSE, TRUE)
@@ -183,13 +193,11 @@ mod_depuration_process_server <-
         'datasetWithCondition' = originalDtasetWithCondition,
         'summaryres' = reactive(summaryResults())
       )
-      
-      
     })
   }
-    
+
 ## To be copied in the UI
 # mod_depuration_process_ui("depuration_process_ui_1")
-    
+
 ## To be copied in the server
 # mod_depuration_process_server("depuration_process_ui_1")
