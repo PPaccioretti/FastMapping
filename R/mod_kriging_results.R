@@ -160,7 +160,6 @@ mod_kriging_results_server <- function(
     })
 
     raster_Pred <- reactive({
-      browser()
       stars::st_as_stars(kriging())
     })
 
