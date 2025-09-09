@@ -7,20 +7,24 @@
 app_server <- function(input, output, session) {
   # Your application server logic
   session$onSessionEnded(stopApp)
-  options(shiny.maxRequestSize = 1024 * 1024 ^ 2)
+  options(shiny.maxRequestSize = 1024 * 1024^2)
 
   shinyjs::hide(selector = '#navbar li a[data-value="navdataprep"]')
   shinyjs::hide(selector = '#navbar li a[data-value="navallparam"]')
   shinyjs::hide(selector = '#navbar li a[data-value="navanalyresults"]')
   shinyjs::hide(selector = '#navbar li a[data-value="navzonevalid"]')
-  
+
   myStartBtn <- mod_home_text_server("start_aplication")
-  
-  observeEvent(myStartBtn(), {
-    shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
-    bslib::nav_select("navbar", selected = "navdataprep", session)
-  }, ignoreInit = TRUE)
-  
+
+  observeEvent(
+    myStartBtn(),
+    {
+      shinyjs::show(selector = '#navbar li a[data-value="navdataprep"]')
+      bslib::nav_select("navbar", selected = "navdataprep", session)
+    },
+    ignoreInit = TRUE
+  )
+
   #FIXIT: This Does not work. Uncomment  actionButton("zoneResults",----
   # observeEvent(input$zoneResults, {
   #   bslib::nav_select(id = "navbar",
@@ -32,30 +36,37 @@ app_server <- function(input, output, session) {
   #   bslib::nav_select(id = "navresult",
   #                     selected = "navzonecompparam",
   #                     session = session)
-  # 
+  #
   #   }, ignoreInit = FALSE)
   #End This Does not work ----
-  
-  observeEvent(datasetTransf(), {
-    shinyjs::enable(selector = '#navbar li a[data-value="navallparam"]')
-    shinyjs::enable(selector = '#navbar li a[data-value="navanalyresults"]')
-    shinyjs::enable(selector = '#navbar li a[data-value="navzonevalid"]')
-    if (test_latlong(datasetTransf())) {
-      shinyjs::disable(selector = '#navbar li a[data-value="navallparam"]')
-      shinyjs::disable(selector = '#navbar li a[data-value="navanalyresults"]')
-      shinyjs::disable(selector = '#navbar li a[data-value="navzonevalid"]')
-      showNotification('Target CRS must be a Planar Coordinate System.' ,
-                       type = "warning",
-                       duration = 7,
-                       id = 'target_crs_planar',
-                       session = session)
-    }
-  }, ignoreInit = TRUE)
 
+  observeEvent(
+    datasetTransf(),
+    {
+      shinyjs::enable(selector = '#navbar li a[data-value="navallparam"]')
+      shinyjs::enable(selector = '#navbar li a[data-value="navanalyresults"]')
+      shinyjs::enable(selector = '#navbar li a[data-value="navzonevalid"]')
+      if (test_latlong(datasetTransf())) {
+        shinyjs::disable(selector = '#navbar li a[data-value="navallparam"]')
+        shinyjs::disable(
+          selector = '#navbar li a[data-value="navanalyresults"]'
+        )
+        shinyjs::disable(selector = '#navbar li a[data-value="navzonevalid"]')
+        showNotification(
+          'Target CRS must be a Planar Coordinate System.',
+          type = "warning",
+          duration = 7,
+          id = 'target_crs_planar',
+          session = session
+        )
+      }
+    },
+    ignoreInit = TRUE
+  )
 
   observeEvent(myVariables$tgtvariable() == 1 & is.null(datasetTransf()), {
     tgtVarlgth <- length(myVariables$tgtvariable())
-    data_is_not_latlong <-  !test_latlong(datasetTransf())
+    data_is_not_latlong <- !test_latlong(datasetTransf())
     nrow_data <- nrow(datasetTransf())
 
     shinyjs::hide(selector = '#navbar li a[data-value="navallparam"]')
@@ -68,8 +79,6 @@ app_server <- function(input, output, session) {
       shinyjs::show(selector = '#navbar li a[data-value="navallparam"]')
       shinyjs::show(selector = '#navbar li a[data-value="navanalyresults"]')
       shinyjs::show(selector = '#navbar li a[data-value="navzonevalid"]')
-
-
     }
 
     if (tgtVarlgth == 1 & data_is_not_latlong & isTRUE(nrow_data > 1)) {
@@ -99,64 +108,67 @@ app_server <- function(input, output, session) {
       bslib::nav_hide("navresult", "navdepresults")
       bslib::nav_hide("navresult", "navkrigresults")
     }
-
-
   })
 
-  observeEvent(input$navbar, {
-    req(myVariables$tgtvariable())
-    tgtVarlgth <- length(myVariables$tgtvariable())
+  observeEvent(
+    input$navbar,
+    {
+      req(myVariables$tgtvariable())
+      tgtVarlgth <- length(myVariables$tgtvariable())
 
-    if (input$navbar == "navallparam") {
-      if (tgtVarlgth > 1) {
-        updateTabsetPanel(session, "navparam", selected = "navclustparam")
+      if (input$navbar == "navallparam") {
+        if (tgtVarlgth > 1) {
+          updateTabsetPanel(session, "navparam", selected = "navclustparam")
+        }
+        if (tgtVarlgth == 1) {
+          updateTabsetPanel(session, "navparam", selected = "navdepparam")
+        }
       }
-      if (tgtVarlgth == 1) {
-        updateTabsetPanel(session, "navparam", selected = "navdepparam")
+
+      if (input$navbar == "navanalyresults") {
+        if (tgtVarlgth > 1) {
+          updateTabsetPanel(session, "navresult", selected = "navclustresults")
+        }
+        if (tgtVarlgth == 1) {
+          updateTabsetPanel(session, "navresult", selected = "navdepresults")
+        }
       }
-    }
+    },
+    ignoreInit = TRUE
+  )
 
-    if (input$navbar == "navanalyresults") {
-      if (tgtVarlgth > 1) {
-        updateTabsetPanel(session, "navresult", selected = "navclustresults")
-      }
-      if (tgtVarlgth == 1) {
-        updateTabsetPanel(session, "navresult", selected = "navdepresults")
-      }
-    }
-
-  }, ignoreInit = TRUE)
-
-
-
-  myDataset <- mod_upload_file_server("dataset",
-                                      disable = FALSE,
-                                      n_check_nrow = 10)
-  mod_show_data_table_server("dataset_print",
-                             myDataset)
+  myDataset <- mod_upload_file_server(
+    "dataset",
+    disable = FALSE,
+    n_check_nrow = 10
+  )
+  mod_show_data_table_server("dataset_print", myDataset)
 
   myVariables <-
-    mod_select_variables_server("dataset_cols",
-                                myDataset)
+    mod_select_variables_server("dataset_cols", myDataset)
 
   datasetTransf <-
-    mod_spatial_transformation_server("dataset_spatial_transf",
-                                      myDataset,
-                                      myVariables$coords,
-                                      myVariables$tgtvariable)
+    mod_spatial_transformation_server(
+      "dataset_spatial_transf",
+      myDataset,
+      myVariables$coords,
+      myVariables$tgtvariable
+    )
 
-  mod_visualize_spatial_data_server("mymap",
-                                    datasetTransf,
-                                    myVariables$tgtvariable)
+  mod_visualize_spatial_data_server(
+    "mymap",
+    datasetTransf,
+    myVariables$tgtvariable
+  )
 
-  field_boundary <- mod_make_boundary_server("make_boundary",
-                                             datasetTransf)
+  field_boundary <- mod_make_boundary_server("make_boundary", datasetTransf)
 
-
-  mod_visualize_spatial_data_server("boundaryMap",
-                                    datasetTransf,
-                                    reactive(NULL),
-                                    field_boundary)
+  mod_visualize_spatial_data_server(
+    "boundaryMap",
+    datasetTransf,
+    reactive(NULL),
+    field_boundary
+  )
 
   myDepParams <-
     mod_depuration_parameters_server("depuration_param")
@@ -171,19 +183,16 @@ app_server <- function(input, output, session) {
       myDepParams$btnStart
     )
 
-  mod_depuration_results_server("depuration_results",
-                                myDepResults$wasDepurated,
-                                myDepResults$datasetWithCondition,
-                                myDepResults$depurated,
-                                myDepResults$summaryres)
-
+  mod_depuration_results_server(
+    "depuration_results",
+    myDepResults$wasDepurated,
+    myDepResults$datasetWithCondition,
+    myDepResults$depurated,
+    myDepResults$summaryres
+  )
 
   krigParams <-
-    mod_kriging_parameters_server("kriging_param",
-                                  myVariables$tgtvariable)
-
-
-
+    mod_kriging_parameters_server("kriging_param", myVariables$tgtvariable)
 
   kriging_process <-
     mod_kriging_process_server(
@@ -202,35 +211,41 @@ app_server <- function(input, output, session) {
     kriging_process$variogram
   )
   cluster_param <-
-    mod_cluster_parameters_server("cluster_param",
-                                  myVariables$tgtvariable)
+    mod_cluster_parameters_server("cluster_param", myVariables$tgtvariable)
 
   dataSet_cluster <- reactive({
     req(datasetTransf())
-    tryCatch({
-      miDf <- kriging_process$kriging()
+    tryCatch(
+      {
+        req(length(myVariables$tgtvariable()) == 1)
+        miDf <- kriging_process$kriging()
 
-      if (inherits(miDf, "stars")) {
-        miDf <- sf::st_as_sf(miDf)
-        colnames(miDf)[colnames(miDf) %in% "var1.pred"] <- myVariables$tgtvariable()
+        if (inherits(miDf, "stars")) {
+          miDf <- sf::st_as_sf(miDf)
+          colnames(miDf)[
+            colnames(miDf) %in% "var1.pred"
+          ] <- myVariables$tgtvariable()
+          miDf
+        }
         miDf
+      },
+      error = function(e) {
+        req(length(myVariables$tgtvariable()) == 1)
+        myDepResults$depurated()
+      },
+      error = function(e) {
+        datasetTransf()
       }
-      miDf
-    },
-    error = function(e) {
-      myDepResults$depurated()
-    },
-    error = function(e) {
-      datasetTransf()
-    })
+    )
   })
 
-
   cluster_process <-
-    mod_cluster_process_server("cluster_precess",
-                               dataSet_cluster,
-                               cluster_param$params,
-                               cluster_param$btnStart)
+    mod_cluster_process_server(
+      "cluster_precess",
+      dataSet_cluster,
+      cluster_param$params,
+      cluster_param$btnStart
+    )
 
   observeEvent(cluster_process$cluster(), {
     myRes <- try(cluster_process$cluster(), silent = TRUE)
@@ -244,26 +259,27 @@ app_server <- function(input, output, session) {
     "cluster_results",
     clusterResults = cluster_process$cluster,
     variablesUsed = myVariables$tgtvariable,
-    data_and_cluster =  cluster_process$data_and_cluster
+    data_and_cluster = cluster_process$data_and_cluster
   )
 
   # It needs results from cluster process. This could be change to use an other
   # result from FastMapping. Maybe with Observer over datasets?
   zone_param <-
-    mod_zoneCompare_parameters_server("zone_param",
-                                      cluster_process$data_and_cluster
-                                      # myDepResults$finalDataset
+    mod_zoneCompare_parameters_server(
+      "zone_param",
+      cluster_process$data_and_cluster
+      # myDepResults$finalDataset
     )
 
   zone_process <-
-    mod_zoneCompare_process_server("zone_precess",
-                                   zone_param$zoneCompare_param,
-                                   zone_param$btnStart)
+    mod_zoneCompare_process_server(
+      "zone_precess",
+      zone_param$zoneCompare_param,
+      zone_param$btnStart
+    )
 
   mod_zoneCompare_results_server(
     "zone_results",
     zone_process
   )
-
-  
 }
