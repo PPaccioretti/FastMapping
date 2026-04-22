@@ -13,8 +13,7 @@ mod_home_text_ui <- function(id) {
     div(
       id = 'content',
       class = 'app-header',
-      h1(style = "text-align: center",
-         'Welcome to FastMapping'),
+      h1(style = "text-align: center", 'Welcome to FastMapping'),
       img(
         id = 'logo',
         class = 'ribbon',
@@ -24,7 +23,7 @@ mod_home_text_ui <- function(id) {
         src = "www/hex-FastMapping.png"
       )
     ),
-    
+
     div(
       style = "text-align: center",
       class = 'mb-3',
@@ -44,57 +43,74 @@ mod_home_text_ui <- function(id) {
         class = "mb-3",
         bslib::accordion_panel(
           title = "Tools",
-          div(class = 'mt-3 mb-1',
-              fluidRow(
-                column_md(
-                  width = 6,
-                  h3("Tools for univariate analysis:"),
-                  tags$ul(
-                    tags$li("Depuration",
-                            tags$ul(
-                              tags$li("Global outliers"),
-                              tags$li("Spatial outliers"),
-                              tags$li("Border effects")
-                            )),
-                    tags$li("Spatial interpolation",
-                            tags$ul(
-                              tags$li("Variogram fitting"),
-                              tags$li("Kriging prediction")
-                            )),
-                    tags$li("Classification",
-                            tags$ul(tags$li(
-                              "Fuzzy k-means cluster"
-                            )))
-                    
-                  ),
-                  h5("Example dataset:"),
-                  tags$ul(tags$li(
-                    a("Mapping yield data in a barley field",
-                      href = "https://drive.google.com/uc?export=download&id=1ZzWDd9BHeZuebq_xPpNgSv9XsRmXEOTb")
+          div(
+            class = 'mt-3 mb-1',
+            fluidRow(
+              column_md(
+                width = 6,
+                h3("Tools for univariate analysis:"),
+                tags$ul(
+                  tags$li(
+                    "Depuration",
+                    tags$ul(
+                      tags$li("Global outliers"),
+                      tags$li("Spatial outliers"),
+                      tags$li("Border effects")
+                    )
                   ),
                   tags$li(
-                    a("Wheat raw data",
-                      href = "https://drive.google.com/uc?export=download&id=1bpCkvEoC7EvmycSFQwrtnzWCJ5WBDrIL")
-                  ))
-                  
-                ),
-                column_md(
-                  width = 6,
-                  h3("Tools for multivariate analysis:"),
-                  tags$ul(
-                    tags$li("Spatial Principal Components"),
-                    tags$li("Fuzzy k-means on spatial principal components (KM-sPC)")
+                    "Spatial interpolation",
+                    tags$ul(
+                      tags$li("Variogram fitting"),
+                      tags$li("Kriging prediction")
+                    )
                   ),
-                  h5("Example dataset:"),
-                  tags$ul(tags$li(
-                    a("Zoning a field from yield and soil properties",
-                      href = "https://drive.google.com/uc?export=download&id=1SeJYNmzg-d26E_nydzKtcImshEYZB6UO"),
-                    "."
-                  ))
+                  tags$li(
+                    "Classification",
+                    tags$ul(tags$li(
+                      "Fuzzy k-means cluster"
+                    ))
+                  )
+                ),
+                h5("Example dataset:"),
+                tags$ul(
+                  tags$li(
+                    a(
+                      "Mapping yield data in a barley field",
+                      href = "https://drive.google.com/uc?export=download&id=1ZzWDd9BHeZuebq_xPpNgSv9XsRmXEOTb"
+                    )
+                  ),
+                  tags$li(
+                    a(
+                      "Wheat raw data",
+                      href = "https://drive.google.com/uc?export=download&id=1bpCkvEoC7EvmycSFQwrtnzWCJ5WBDrIL"
+                    )
+                  )
                 )
-              ))),
+              ),
+              column_md(
+                width = 6,
+                h3("Tools for multivariate analysis:"),
+                tags$ul(
+                  tags$li("Spatial Principal Components"),
+                  tags$li(
+                    "Fuzzy k-means on spatial principal components (KM-sPC)"
+                  )
+                ),
+                h5("Example dataset:"),
+                tags$ul(tags$li(
+                  a(
+                    "Zoning a field from yield and soil properties",
+                    href = "https://drive.google.com/uc?export=download&id=1SeJYNmzg-d26E_nydzKtcImshEYZB6UO"
+                  ),
+                  "."
+                ))
+              )
+            )
+          )
+        ),
         bslib::accordion_panel(
-          title =  "News",
+          title = "News",
           # id = 'contaccordion',
           div(
             class = 'mt-3 mb-1',
@@ -114,13 +130,15 @@ mod_home_text_ui <- function(id) {
             p(
               "We have a new installer (only for windows) you can download it",
               "from",
-              a('here',
+              a(
+                'here',
                 href = 'https://drive.google.com/drive/u/2/folders/1gAYwvjSrX7AnzjnW_mbX7mZoVx2oUDxl',
-                target = "_blank")
+                target = "_blank"
+              )
             )
           )
         ),
-        
+
         bslib::accordion_panel(
           title = "Contact",
           # id = 'contaccordion',
@@ -129,38 +147,62 @@ mod_home_text_ui <- function(id) {
             p(
               'If you have any question please write to fastmapping@agro.unc.edu.ar,',
               'brief tutorial is available in ',
-              a("this link.",
+              a(
+                "this link.",
                 href = "https://drive.google.com/open?id=1r2-tx35NGLzIjL0CLNR6E783ZRDsWQmf",
-                target = "_blank")
+                target = "_blank"
+              )
             ),
             p(
               'You can create an issue or a bug report at',
-              a('github.',
+              a(
+                'github.',
                 href = ' https://github.com/PPaccioretti/FastMapping/issues',
-                target = "_blank"),
-              'Also, you can send us an email.'),
-            p(shiny::strong("Citation:"),
-            'Paccioretti, P., Córdoba, M., & Balzarini, M. (2020). ',
-            'FastMapping: Software to create field maps and identify management ',
-            'zones in precision agriculture. ',
-            'In Computers and Electronics in Agriculture (Vol. 175, p. 105556). ',
-            'Elsevier BV. ',
-            a("https://doi.org/10.1016/j.compag.2020.105556",
-              href = "https://doi.org/10.1016/j.compag.2020.105556",
-              target = "_blank")
-          ),
+                target = "_blank"
+              ),
+              'Also, you can send us an email.'
+            ),
+            p(
+              shiny::strong("Citation:"),
+              'Paccioretti, P., Córdoba, M., & Balzarini, M. (2020). ',
+              'FastMapping: Software to create field maps and identify management ',
+              'zones in precision agriculture. ',
+              'In Computers and Electronics in Agriculture (Vol. 175, p. 105556). ',
+              'Elsevier BV. ',
+              a(
+                "https://doi.org/10.1016/j.compag.2020.105556",
+                href = "https://doi.org/10.1016/j.compag.2020.105556",
+                target = "_blank"
+              )
+            ),
             helpText(paste(
               'Package version:',
               utils::packageVersion('FastMapping'),
               ifelse(isFALSE(getOption("golem.app.prod")), 'in dev mode.', '')
             )),
-            helpText(ifelse(isTRUE(Sys.getenv('INSTALLER_VERSION') != ''),
-                   paste(
-                     'Installer version:',
-                     Sys.getenv('INSTALLER_VERSION')
-                   ), ''))
+            helpText(ifelse(
+              isTRUE(Sys.getenv('INSTALLER_VERSION') != ''),
+              paste(
+                'Installer version:',
+                Sys.getenv('INSTALLER_VERSION')
+              ),
+              ''
+            ))
           )
         )
+      )
+    ),
+    div(
+      style = "text-align: center",
+      class = "mb-3",
+
+      actionButton(
+        ns("cafecito"),
+        "Apoyar FastMapping ☕",
+        icon = icon("mug-hot"),
+        class = "btn-warning",
+        style = "font-size:110%; margin: 5px;",
+        onclick = "window.open('https://cafecito.app/fastmapping', '_blank')"
       )
     )
   )
@@ -168,23 +210,23 @@ mod_home_text_ui <- function(id) {
 
 #' home_text Server Functions
 #'
-#' @noRd 
-mod_home_text_server <- function(id){
-  moduleServer( id, function(input, output, session){
+#' @noRd
+mod_home_text_server <- function(id) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
+
     observeEvent(input$startApl, {
       shinyjs::onclick(
-        "showtxt", 
-        shinyjs::runjs("gtag('event', 'StartApp', '1');"))
-      
+        "showtxt",
+        shinyjs::runjs("gtag('event', 'StartApp', '1');")
+      )
     })
     reactive(input$startApl)
   })
 }
-    
+
 ## To be copied in the UI
 # mod_home_text_ui("home_text_ui_1")
-    
+
 ## To be copied in the server
 # mod_home_text_server("home_text_ui_1")
