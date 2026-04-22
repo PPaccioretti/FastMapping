@@ -198,7 +198,7 @@ mod_home_text_ui <- function(id) {
 
       actionButton(
         ns("cafecito"),
-        "Apoyar FastMapping ☕",
+        "Support FastMapping ☕",
         icon = icon("mug-hot"),
         class = "btn-warning",
         style = "font-size:110%; margin: 5px;",
